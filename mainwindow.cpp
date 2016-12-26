@@ -1,3 +1,5 @@
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
@@ -135,8 +137,8 @@ void MainWindow::setupCoreWidgets()
     aboutLabel = new aboutWidget(generalLayoutWidget);
     generalLayout->addWidget(aboutLabel);
 
-    settingsWidget = new QWidget(generalLayoutWidget);
-    generalLayout->addWidget(settingsWidget);
+    settingsLabel = new settingsWidget(generalLayoutWidget);
+    generalLayout->addWidget(settingsLabel);
 
     overlay = new TipOverlay(outerLayoutWidget);
     connect(libraryTable, SIGNAL(songSelected(QString)), this, SLOT(startPlayMode(QString)));
@@ -176,7 +178,7 @@ void MainWindow::setSettingsMode()
     menuLayoutWidget->show();
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
-    settingsWidget->show();
+    settingsLabel->show();
 }
 
 void MainWindow::startPlayMode(QString path)
@@ -367,7 +369,7 @@ void MainWindow::HideEverything()
     generalLayoutWidget->hide();
     libraryTable->hide();
     aboutLabel->hide();
-    settingsWidget->hide();
+    settingsLabel->hide();
     for(int row=0; row < MUSICALPI_MAXROWS; row++)
         for(int column=0; column < MUSICALPI_MAXCOLUMNS; column++)
         {

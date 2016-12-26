@@ -1,3 +1,5 @@
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "pdfdocument.h"
 
 //  PDFDOcument - responsible for manaing the document iself

@@ -1,4 +1,6 @@
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "aboutwidget.h"
 
 aboutWidget::aboutWidget(QWidget* parent)
@@ -16,7 +18,7 @@ aboutWidget::aboutWidget(QWidget* parent)
            "to hold your library and there is no reason to re-invent. In my case Calibre is "
            "running on a different computer, but it could also reside on the computer at the "
            "piano.</p>"
-        "<p>This software is provided under the ????? license, and is Copyright(C) 2016 by "
+        "<p>This software is provided under the Apache 2.0 license, and is Copyright(C) 2016 by "
         "LE Ferguson, LLC and all rights are reserved except as provided therein.</p>"
       );
     this->setAlignment(Qt::AlignLeft);

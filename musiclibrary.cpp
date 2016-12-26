@@ -1,3 +1,5 @@
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "musiclibrary.h"
 
 // Isolate specific librarydetails in this class so we could switch to different

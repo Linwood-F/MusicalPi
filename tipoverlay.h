@@ -1,6 +1,8 @@
 #ifndef TIPOVERLAY_H
 #define TIPOVERLAY_H
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QObject>
 #include <QLabel>
 #include <QTimer>

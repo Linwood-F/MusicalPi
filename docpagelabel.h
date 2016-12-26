@@ -1,6 +1,8 @@
 #ifndef DOCPAGELABEL_H
 #define DOCPAGELABEL_H
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QObject>
 #include <QWidget>
 #include <QLabel>

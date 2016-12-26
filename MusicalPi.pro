@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     debugmessages.cpp \
     renderthread.cpp \
     musiclibrary.cpp \
-    aboutwidget.cpp
+    aboutwidget.cpp \
+    settingswidget.cpp
 
 HEADERS  += mainwindow.h \
     pdfdocument.h \
@@ -32,7 +33,8 @@ HEADERS  += mainwindow.h \
     piconstants.h \
     renderthread.h \
     musiclibrary.h \
-    aboutwidget.h
+    aboutwidget.h \
+    settingswidget.h
 
 DISTFILES += \
     MusicalPi.gif \

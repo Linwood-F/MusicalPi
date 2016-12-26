@@ -1,6 +1,8 @@
 #ifndef RENDERTHREAD_H
 #define RENDERTHREAD_H
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QThread>
 #include <QMutex>
 #include <QImage>

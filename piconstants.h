@@ -1,6 +1,8 @@
 #ifndef PICONSTANTS
 #define PICONSTANTS
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #define MUSICALPI_MAXPAGES 1000   // Maximum pages in any PDF -- minimal impact to make bigger
 
 // review/play screen maximum "up" sizes - moderate memory impact if larger (but indirect large impact on cache as below)
@@ -34,12 +36,11 @@
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING "black"
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING_QT Qt::black
 
+// SplashBackend seems to render better quality and only slightly slower.
 #define POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
 //#define POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
 
 // Calibre path must be reachable and writeable (eventually)
-// Sample mount command: mount -t cifs //lef.leferguson.com/t /mnt/lef/t -o username=ferguson   (then enter password)
-// ??? does this survive a reboot ??? Disconnection ???  -- no, needs to be set up differently
 #define MUSICALPI_CALIBRE_PATH "/mnt/lef/t/Calibre Library"
 #define MUSICALPI_CALIBRE_DATABASE "metadata.db"
 // Tag must be set up in Calibre

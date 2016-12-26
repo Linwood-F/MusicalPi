@@ -1,5 +1,5 @@
-#ifndef ABOUTWIDGET_H
-#define ABOUTWIDGET_H
+#ifndef SETTINGSWIDGET_H
+#define SETTINGSWIDGET_H
 
 // Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
 
@@ -8,11 +8,11 @@
 #include <QLabel>
 #include <QFont>
 
-class aboutWidget : public QLabel
+class settingsWidget : public QLabel
 {
     Q_OBJECT
 public:
-    aboutWidget(QWidget *parent = 0);
+    settingsWidget(QWidget *parent = 0);
 };
 
-#endif // ABOUTWIDGET_H
+#endif // SETTINGSWIDGET_H

@@ -1,12 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QMainWindow>
 #include <QLabel>
 #include <QImage>
 #include <QLayout>
 #include <QPushButton>
-//#include <QWidget>
 #include <QMouseEvent>
 #include <QColor>
 
@@ -15,6 +16,7 @@
 #include "pdfdocument.h"
 #include "musiclibrary.h"
 #include "aboutwidget.h"
+#include "settingswidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -60,7 +62,7 @@ private:
             QLabel* logoLabel;
             musicLibrary* libraryTable;
             aboutWidget* aboutLabel;
-            QWidget* settingsWidget;
+            settingsWidget* settingsLabel;
        docPageLabel* visiblePages[MUSICALPI_MAXROWS * MUSICALPI_MAXCOLUMNS];  // used for play mode panes; layout is ignored for these and explicitly positioned
        TipOverlay* overlay;                                                   // fits (briefly) over the whole window when play-playing mode starts.
 

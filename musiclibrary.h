@@ -1,6 +1,8 @@
 #ifndef DBCALIBRE_H
 #define DBCALIBRE_H
 
+// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QSql>
 #include <QSqlDatabase>
 #include <QSqlQuery>
