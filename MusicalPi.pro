@@ -9,7 +9,7 @@ QT       += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = TestMusic
+TARGET = MusicalPi
 TEMPLATE = app
 
 CONFIG += c++11
@@ -36,12 +36,10 @@ HEADERS  += mainwindow.h \
 
 DISTFILES += \
     MusicalPi.gif \
-    MusicalPi.psd
-
-FORMS +=
+    MusicalPi.psd \
+    LICENSE \
+    README
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
 
-#INCLUDEPATH += /usr/include/poppler/qt5
-#DEPENDPATH += /usr/include/poppler/qt5

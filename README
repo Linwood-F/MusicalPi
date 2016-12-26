@@ -1,0 +1,29 @@
+MusicalPi - Sheet music display
+
+This project is a Calibre-integrated, music display designed for a touch screen
+on a Raspberry Pi (only tested on 3B version).
+
+It is written in QT (version 5.5 as of this note), and dynamically linked (i.e.
+you must have a working QT install as described).
+
+The software is licensed for use under the Apache 2.0 license; QT is separately
+licensed as described in their distribution.
+
+This software is provided without any warranty or support, though I welcome comments
+and contributions.
+
+Please note that as of this writing (12/26/2016) this is a very preliminary commit
+that functions, but is hardly ready for any serious use.  In particular, I have yet
+to write setup and installation instructions (short version is download, run
+qmake and make, and run the MusicalPi executable from it produces in the same folder;
+testing on QT 5.5 on Ubuntu 16.04 with Mate Raspberry Pi distribution, and yes I realize
+that does not tell you all the dependancies - more to follow).
+
+Music is stored as PDF's in the Calibre eBook software, and you must make the Calibre
+library database visible to this program directly - this does NOT use the Calibre server
+but accesses the SQLite database directly.
+
+Poppler is used for rendering the PDF documents.
+
+Subsequent commits will update this README as installation and configuration steps
+become more stable.
