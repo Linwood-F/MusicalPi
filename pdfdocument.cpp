@@ -180,7 +180,11 @@ void PDFDocument::adjustCache(int leftmostPage)
 
 void PDFDocument::checkResetImageSize(int width, int height)
 {
-    if(width == imageWidth && height == imageHeight) return; // nothing to do
+    if(width == imageWidth && height == imageHeight)
+    {
+        qDebug() << "Image sizes match, returning with nothing to do";
+        return;
+    }
     // First just reset future size to the new size
     imageWidth = std::max(width,imageWidth);
     imageHeight = std::max(height,imageHeight);

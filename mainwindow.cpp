@@ -432,7 +432,7 @@ void MainWindow::resizeEvent(QResizeEvent*e)
     // General resizing stuff goes here.  Regular widget resizing will handle itself.
 
     qDebug() << "Resize event, new size = " << e->size().width() << "x" << e->size().height();
-    if(nowMode == playMode) setPlayMode(playing, pagesNowAcross, pagesNowDown);
+    if(nowMode == playMode && pagesNowAcross && pagesNowDown ) setPlayMode(playing, pagesNowAcross, pagesNowDown);
     else sizeLogo();
 }
 

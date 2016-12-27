@@ -14,10 +14,9 @@ and contributions.
 
 Please note that as of this writing (12/26/2016) this is a very preliminary commit
 that functions, but is hardly ready for any serious use.  In particular, I have yet
-to write setup and installation instructions (short version is download, run
-qmake and make, and run the MusicalPi executable from it produces in the same folder;
-testing on QT 5.5 on Ubuntu 16.04 with Mate Raspberry Pi distribution, and yes I realize
-that does not tell you all the dependancies - more to follow).
+to write setup and installation instructions for the Pi. There are setup instructions
+for the development environment on Ubuntu 16.04 on a HyperV VM which could be used to
+create a similar setup on other environments.
 
 Music is stored as PDF's in the Calibre eBook software, and you must make the Calibre
 library database visible to this program directly - this does NOT use the Calibre server
