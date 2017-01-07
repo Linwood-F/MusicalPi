@@ -44,4 +44,5 @@ DISTFILES += \
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
+unix|win32: LIBS += -ltse3
 

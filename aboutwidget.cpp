@@ -29,4 +29,42 @@ aboutWidget::aboutWidget(QWidget* parent)
     this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
     this->setFont(QFont("Arial",14));
 }
+void aboutWidget::play()
+{
+    // Test to see if we can play Midi
 
+#define MUSICALPI_MIDIPORT 20
+
+    qDebug() << "Starting MIDI test";
+    std::string midiFile = "/home/ferguson/bumble_bee.mid";
+    TSE3::MidiFileImport *mfi = new TSE3::MidiFileImport(midiFile);
+    qDebug() << "Invoking load of midi file";
+    TSE3::Song *song;
+    try
+    {
+        song = mfi->load();
+    }
+    catch (const TSE3::MidiFileImportError &mf)
+    {
+        qDebug() << "caught error in load, error = " << QString::fromStdString(*mf);
+        return;
+    }
+    qDebug() << "load appears successful";
+    TSE3::Metronome                 metronome;
+    TSE3::Util::StreamMidiScheduler scheduler;
+    TSE3::Transport                 transport(&metronome, &scheduler);
+
+    qDebug() << "Set port";
+    transport.filter()->setPort(MUSICALPI_MIDIPORT);
+    qDebug() << "Playing";
+    transport.play(song,0);
+    int cnt = 0;
+    while(transport.status() != TSE3::Transport::Resting && cnt < 10)
+    {
+        transport.poll();
+        qDebug() << "Sleeping";
+        sleep(1);
+        cnt++;
+    }
+    qDebug() << "Ending play";
+}

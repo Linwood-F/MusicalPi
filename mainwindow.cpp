@@ -167,6 +167,8 @@ void MainWindow::setAboutMode()
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
     aboutLabel->show();
+    // ?? ?? test tse3
+    aboutLabel->play();
 }
 
 void MainWindow::setSettingsMode()
