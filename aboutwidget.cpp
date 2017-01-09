@@ -2,6 +2,7 @@
 // Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "aboutwidget.h"
+#include "tse3play.h"
 
 aboutWidget::aboutWidget(QWidget* parent)
 {
@@ -36,35 +37,8 @@ void aboutWidget::play()
 #define MUSICALPI_MIDIPORT 20
 
     qDebug() << "Starting MIDI test";
-    std::string midiFile = "/home/ferguson/bumble_bee.mid";
-    TSE3::MidiFileImport *mfi = new TSE3::MidiFileImport(midiFile);
-    qDebug() << "Invoking load of midi file";
-    TSE3::Song *song;
-    try
-    {
-        song = mfi->load();
-    }
-    catch (const TSE3::MidiFileImportError &mf)
-    {
-        qDebug() << "caught error in load, error = " << QString::fromStdString(*mf);
-        return;
-    }
-    qDebug() << "load appears successful";
-    TSE3::Metronome                 metronome;
-    TSE3::Util::StreamMidiScheduler scheduler;
-    TSE3::Transport                 transport(&metronome, &scheduler);
+    char* args[7] = { "program", "--verbose", "-list", "-port", "20", "-alsa", "/home/ferguson/bumble_bee.mid" };
 
-    qDebug() << "Set port";
-    transport.filter()->setPort(MUSICALPI_MIDIPORT);
-    qDebug() << "Playing";
-    transport.play(song,0);
-    int cnt = 0;
-    while(transport.status() != TSE3::Transport::Resting && cnt < 10)
-    {
-        transport.poll();
-        qDebug() << "Sleeping";
-        sleep(1);
-        cnt++;
-    }
+    TSE3_Utilities_Play::TSE3Play(7,args);
     qDebug() << "Ending play";
 }
