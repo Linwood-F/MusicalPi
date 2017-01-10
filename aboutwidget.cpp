@@ -39,6 +39,8 @@ void aboutWidget::play()
     qDebug() << "Starting MIDI test";
     char* args[7] = { "program", "--verbose", "-list", "-port", "20", "-alsa", "/home/ferguson/bumble_bee.mid" };
 
-    TSE3_Utilities_Play::TSE3Play(7,args);
+    tse3play* p = new tse3play();
+    p->go();
+
     qDebug() << "Ending play";
 }
