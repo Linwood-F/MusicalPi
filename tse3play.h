@@ -17,6 +17,9 @@
 #ifndef TSE3PLAY_TSE3PLAY_H
 #define TSE3PLAY_TSE3PLAY_H
 
+#include <QString>
+#include <QDebug>
+
 #include <iostream>
 
 #include "tse3/MidiFile.h"
@@ -25,18 +28,23 @@
 #include "tse3/util/MidiScheduler.h"
 #include "tse3/Transport.h"
 #include "tse3/plt/Factory.h"
-
+#include "tse3/Track.h"
+#include "tse3/Part.h"
 #include "tse3/Song.h"
+#include "tse3/Mixer.h"
 
 #include <chrono>
 #include <thread>
 
+
 class tse3play
 {
 public:
-    tse3play();
+    tse3play(QString);
     ~tse3play();
     void go();
+private:
+    QString midiFile;
 };
 
 #endif

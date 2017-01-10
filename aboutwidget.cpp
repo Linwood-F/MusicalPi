@@ -37,9 +37,8 @@ void aboutWidget::play()
 #define MUSICALPI_MIDIPORT 20
 
     qDebug() << "Starting MIDI test";
-    char* args[7] = { "program", "--verbose", "-list", "-port", "20", "-alsa", "/home/ferguson/bumble_bee.mid" };
 
-    tse3play* p = new tse3play();
+    tse3play* p = new tse3play("/home/ferguson/bumble_bee.mid");
     p->go();
 
     qDebug() << "Ending play";
