@@ -38,19 +38,20 @@ void tse3play::go()
       transport->filter()->setPort(20);
       qDebug() << "transport->filter()->maxVelocity()=" << transport->filter()->maxVelocity() <<
                   ", transport->filter()->minVelocity()=" << transport->filter()->minVelocity() <<
-                  ", transport->filter()->timeScale()=" << transport->filter()->timeScale();
-      TSE3::Mixer* mix = new TSE3::Mixer(sch->numPorts(),transport);
-      for(unsigned int pt=0; pt < sch->numPorts(); pt++)
-      {
-          TSE3::MixerPort* mp = (*mix)[pt];
-          for(unsigned int ch=0; ch < 16; ch++)
-          {
-              qDebug() << "For port[" << pt << "] volume = " << (*mix)[pt]->volume() << ", channel[" << ch << "] volume = " << (*mp)[ch]->volume();
-              (*mp)[ch]->setVolume(10);
+                  ", transport->filter()->timeScale()=" << transport->filter()->timeScale() <<
+                  ", transport->filter()->velocityScale()=" << transport->filter()->velocityScale();
+//      TSE3::Mixer* mix = new TSE3::Mixer(sch->numPorts(),transport);
+//      for(unsigned int pt=0; pt < sch->numPorts(); pt++)
+//      {
+//          TSE3::MixerPort* mp = (*mix)[pt];
+//          for(unsigned int ch=0; ch < 16; ch++)
+//          {
+//              qDebug() << "For port[" << pt << "] volume = " << (*mix)[pt]->volume() << ", channel[" << ch << "] volume = " << (*mp)[ch]->volume();
+//              (*mp)[ch]->setVolume(10);
 
-          }
-      }
-
+//          }
+//      }
+      transport->filter()->setVelocityScale(10);
       transport->play(song, 0);
       while (transport->status() != TSE3::Transport::Resting && cnt < 10)
       {
@@ -58,7 +59,8 @@ void tse3play::go()
           std::this_thread::sleep_for(std::chrono::seconds(1));
           cnt++;
           qDebug() << "Going up 10";
-          (*(*mix)[0])[10]->setVolume((*(*mix)[0])[10]->volume()+10);
+          transport->filter()->setVelocityScale(transport->filter()->velocityScale() + 10);
+//          (*(*mix)[0])[10]->setVolume((*(*mix)[0])[10]->volume()+10);
       }
       transport->play(0,0);
       delete song;
