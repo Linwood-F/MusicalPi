@@ -32,6 +32,8 @@
 #include "tse3/Part.h"
 #include "tse3/Song.h"
 #include "tse3/Mixer.h"
+#include "tse3/TempoTrack.h"
+#include "tse3/TimeSigTrack.h"
 
 #include <chrono>
 #include <thread>

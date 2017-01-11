@@ -1,4 +1,4 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "renderthread.h"
 #include "pdfdocument.h"   // has to be here not header as it needs renderThread defined
@@ -69,6 +69,7 @@ void renderThread::run()
         float scaleY = mHeight / (thisPageSize.height() / 72.0);
         float desiredScale = std::min(scaleX, scaleY);
         qDebug() << "Starting render on thread " << mWhich << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
+        ((PDFDocument*)mParent)->document->setRenderHint(Poppler::Document::Antialiasing);
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
         qDebug() << "Page " << mPage << " was rendered on thread " << mWhich << " produced size " << theImage->width() << "x" << theImage->height();
