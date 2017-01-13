@@ -11,6 +11,7 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     _midiFile = midiFile;
     openAndLoadFile();
     doPlayingLayout();
+    updateSliders();
     transport->play(song,0);
 }
 
@@ -104,13 +105,20 @@ void midiPlayer::openAndLoadFile()
                     ", transport->filter()->minVelocity()=" << transport->filter()->minVelocity() <<
                     ", transport->filter()->timeScale()=" << transport->filter()->timeScale() <<
                     ", transport->filter()->velocityScale()=" << transport->filter()->velocityScale();
-        transport->filter()->setVelocityScale(10);
+        transport->filter()->setVelocityScale(80);
     }
     catch (const TSE3::Error &e)
     {
         errorLabel->setText("Failure creating transport and such, Error='" + QString::number(e.reason()) + "'.");
         return;
     }
+    catch (...)
+    {
+        errorLabel->setText("Failure in creating transport of non TSEe type");
+        return;
+    }
+
+    qDebug() << "Transport all set, ready to play";
     canPlay = true;
 }
 
@@ -169,6 +177,8 @@ void midiPlayer::doPlayingLayout()
     volumeLabel = new QLabel("Volume %", this);
     volumeSlider = new QSlider(Qt::Horizontal,this);
     volumeValueLabel = new QLabel("???",this);
+    volumeSlider->setMaximum(200);
+    volumeSlider->setMinimum(1);
     h4Layout->addWidget(volumeLabel);
     h4Layout->addWidget(volumeSlider);
     h4Layout->addWidget(volumeValueLabel);
@@ -182,12 +192,19 @@ void midiPlayer::doPlayingLayout()
 
 void midiPlayer::updateSliders()
 {
+    qDebug() << "Updating sliders";
     int bar, beat, pulse;
-    tempoSlider->setValue(transport->filter()->timeScale());
-    volumeSlider->setValue(transport->filter()->velocityScale());
-    volumeSlider->setMinimum(transport->filter()->minVelocity());
-    volumeSlider->setMaximum(transport->filter()->maxVelocity());
+    int ts, vs;
+    ts = transport->filter()->timeScale();
+    qDebug() << "ts=" << ts;
+    tempoSlider->setValue(ts);
+    tempoValueLabel->setText(QString::number(tempoSlider->value()) + " %");
+    vs = transport->filter()->velocityScale();
+    qDebug() << "vs=" << vs;
+    volumeSlider->setValue(vs);
+    volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
     tst->barBeatPulse(sch->clock(), bar, beat, pulse);
     positionSlider->setValue(bar);
     positionValueLabel->setText(QString::number(bar));
+    qDebug() << "Exiting slider update";
 }
