@@ -1,7 +1,7 @@
 #ifndef PDFDOCUMENT_H
 #define PDFDOCUMENT_H
 
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <string>
 #include <poppler/qt5/poppler-qt5.h>
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <QColor>
 #include <QMutex>
+#include <QFileInfo>
 
 #include "piconstants.h"
 #include "docpagelabel.h"

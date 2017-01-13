@@ -71,7 +71,7 @@ private:
     TSE3::MidiSchedulerFactory *msf;
     TSE3::MidiScheduler *sch;
     TSE3::Transport *transport;
-    QTimer* timer;
+    QTimer* timer = 0;
     int playStatus;   // what is the last pooled status value (only valid after first call and if canPlay)
 
 private slots:

@@ -1,4 +1,4 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "pdfdocument.h"
 
@@ -31,6 +31,14 @@ PDFDocument::PDFDocument(QString _filePath)
         pageThreadActive[i]=false;
         pageThreadPageLoading[i]=0;
     }
+    if(filepath.endsWith(".pdf",Qt::CaseInsensitive))
+    {
+        midiFilePath = filepath.replace(filepath.length() - 4,4,".mid");  // tentative path
+        QFileInfo check_file(midiFilePath);
+        if(!check_file.exists() || !check_file.isFile()) midiFilePath = ""; // if not there, just blank it out to tell others
+    }
+    else midiFilePath = "";
+
     document = Poppler::Document::load(filepath);
     document->setRenderBackend(POPPLER_BACKEND);
     assert(document && !document->isLocked());

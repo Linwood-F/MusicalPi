@@ -15,6 +15,7 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     updatePosition(1);
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);
     updateTempo(MUSICALPI_INITIAL_TIME_SCALE);
+    updateSliders();  // This is really only needed for error conditions since the above won't update then
 }
 
 
@@ -124,7 +125,6 @@ void midiPlayer::doPlayingLayout()
     measureInLabel->setText("Go to measure number: ");
     measureIn = new QLineEdit("",this);    // Leave default as blank so we can tell if value entered
     measureInRange = new QLabel(this);
-    measureInRange->setText("1-" + QString::number(lastBar));
 
     gridLayout->addWidget(measureGo,0,0,1,1);
     gridLayout->addWidget(measureInLabel,0,1,1,1);
@@ -174,11 +174,11 @@ void midiPlayer::doPlayingLayout()
 
 void midiPlayer::updateSliders()
 {
-    qDebug() << "Updating sliders";
     int bar, beat, pulse;
 
     if(canPlay)
     {
+        qDebug() << "Updating sliders while can play";
         transport->poll();  // Must call this frequently to keep data going
         playStatus = transport->status();
          // Don't update the slider unnecessarily as it causes the change routine to fire even if not changed
@@ -219,6 +219,7 @@ void midiPlayer::updateSliders()
     }
     else
     {
+        qDebug() << "Updating sliders but can't play";
         // Disable controls
         tempoSlider->setDisabled(true);
         volumeSlider->setDisabled(true);
@@ -238,6 +239,7 @@ void midiPlayer::updatePosition(int newPosition)
     //Positions are bars, turn into clock
     if(!canPlay) return;  // Shouldn't get here but just in case
     positionSlider->setMaximum(lastBar);  // Can't set this at beginning as it's not known so set here
+    measureInRange->setText("1-" + QString::number(lastBar));
     if(transport->status() == TSE3::Transport::Playing) transport->play(song, barsClock[newPosition]);
     updateSliders();  // hasten reflection of new info
 }
@@ -272,7 +274,7 @@ void midiPlayer::go()
             qDebug() << "Picked new bar " << newBar;
         }
         transport->play(song,newClock);
-        if(!timer)
+        if(timer!=NULL)
         {
             timer = new QTimer(this);
             connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
@@ -290,8 +292,8 @@ void midiPlayer::go()
     }
     else if (!canPlay)
     {
-        qDebug() << "Can't play so doing nothing in go"
+        qDebug() << "Can't play so doing nothing in go";
         measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
     }
-    else qDebug() << "Bad logic in Go, fell through";
+    else qDebug() << "Bad logic in Go, fell through status = " << playStatus;
 }
