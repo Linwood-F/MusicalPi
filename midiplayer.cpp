@@ -112,11 +112,6 @@ void midiPlayer::openAndLoadFile()
         errorLabel->setText("Failure creating transport and such, Error='" + QString::number(e.reason()) + "'.");
         return;
     }
-    catch (...)
-    {
-        errorLabel->setText("Failure in creating transport of non TSEe type");
-        return;
-    }
 
     qDebug() << "Transport all set, ready to play";
     canPlay = true;
@@ -141,7 +136,7 @@ void midiPlayer::doPlayingLayout()
     measureGo = new QPushButton("Start Playing",this);
     measureInLabel = new QLabel(this);
     measureInLabel->setText("Go to measure number: ");
-    measureIn = new QLineEdit("1");
+    measureIn = new QLineEdit("1",this);
     measureInRange = new QLabel(this);
     measureInRange->setText("1-" + QString::number(lastBar));
 
