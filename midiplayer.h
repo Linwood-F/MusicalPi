@@ -8,7 +8,7 @@
 #include <QWidget>
 #include <QDebug>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QSlider>
@@ -42,7 +42,7 @@ public:
 
 private:
     QVBoxLayout *outLayout;
-    QHBoxLayout *h1Layout, *h2Layout, *h3Layout, *h4Layout;
+    QGridLayout *gridLayout;
     QLabel      *measureInLabel;
     QLineEdit   *measureIn;
     QLabel      *measureInRange;
@@ -59,8 +59,10 @@ private:
 
     void doPlayingLayout();
     void openAndLoadFile();
+    void go();
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
+    QString errorEncountered;  // Blank is no error, otherwise a fatal error
     TSE3::Clock barsClock[MUSICALPI_MAX_MEASURE];
     TSE3::MidiFileImport* mfi;
     TSE3::Song *song;
@@ -70,9 +72,13 @@ private:
     TSE3::MidiScheduler *sch;
     TSE3::Transport *transport;
     QTimer* timer;
+    int playStatus;   // what is the last pooled status value (only valid after first call and if canPlay)
 
 private slots:
     void updateSliders();
+    void updatePosition(int);
+    void updateVolume(int);
+    void updateTempo(int);
 };
 
 #endif // MIDIPLAYER_H

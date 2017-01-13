@@ -1,7 +1,7 @@
 #ifndef PICONSTANTS
 #define PICONSTANTS
 
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #define MUSICALPI_MAXPAGES 1000   // Maximum pages in any PDF -- minimal impact to make bigger
 
@@ -48,8 +48,10 @@
 // Cosmetic - set fraction of screen width logo takes up
 #define MUSICALPI_LOGO_PCT 0.20
 
-#define MUSICALPI_MIDI_PORT 20
+#define MUSICALPI_MIDI_PORT 20   // Need a better way
 #define MUSICALPI_MAX_MEASURE 10000
+#define MUSICALPI_INITIAL_VELOCITY_SCALE 50
+#define MUSICALPI_INITIAL_TIME_SCALE 100
 
 #endif // PICONSTANTS
 
