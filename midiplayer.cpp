@@ -274,7 +274,7 @@ void midiPlayer::go()
             qDebug() << "Picked new bar " << newBar;
         }
         transport->play(song,newClock);
-        if(timer!=NULL)
+        if(timer==NULL)
         {
             timer = new QTimer(this);
             connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
