@@ -11,8 +11,13 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     _midiFile = midiFile;
     openAndLoadFile();
     doPlayingLayout();
-    updateSliders();
-    transport->play(song,0);
+    if(canPlay)
+    {
+        transport->play(song,0);
+        timer = new QTimer(this);
+        connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
+        timer->start(1000);
+    }
 }
 
 midiPlayer::~midiPlayer()
@@ -187,19 +192,36 @@ void midiPlayer::doPlayingLayout()
 
 void midiPlayer::updateSliders()
 {
+    transport->poll();  // Must call this frequently to keep data going
     qDebug() << "Updating sliders";
     int bar, beat, pulse;
-    int ts, vs;
-    ts = transport->filter()->timeScale();
-    qDebug() << "ts=" << ts;
-    tempoSlider->setValue(ts);
+    tempoSlider->setValue(transport->filter()->timeScale());
     tempoValueLabel->setText(QString::number(tempoSlider->value()) + " %");
-    vs = transport->filter()->velocityScale();
-    qDebug() << "vs=" << vs;
-    volumeSlider->setValue(vs);
+    volumeSlider->setValue(transport->filter()->velocityScale());
     volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
     tst->barBeatPulse(sch->clock(), bar, beat, pulse);
     positionSlider->setValue(bar);
     positionValueLabel->setText(QString::number(bar));
     qDebug() << "Exiting slider update";
+    int status = transport->status();
+    switch(status)
+    {
+    case TSE3::Transport::Resting:
+        errorLabel->setText("Song is resting (done or not started)");
+        break;
+    case TSE3::Transport::Playing:
+        errorLabel->setText("Song is playing");
+        break;
+    case TSE3::Transport::Recording:
+        errorLabel->setText("Song is recording (never should get here!!)");
+        break;
+    case TSE3::Transport::SynchroPlaying:
+        errorLabel->setText("Song is Synchro-playing (never should get here!!)");
+        break;
+    case TSE3::Transport::SynchroRecording:
+        errorLabel->setText("Song is Synchro-Recording (never should get here!!)");
+        break;
+    default:
+        errorLabel->setText("Received invalid status from transport - bug");
+    }
 }

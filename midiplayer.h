@@ -13,6 +13,7 @@
 #include <QLineEdit>
 #include <QSlider>
 #include <QPushButton>
+#include <QTimer>
 
 #include "piconstants.h"
 
@@ -58,7 +59,6 @@ private:
 
     void doPlayingLayout();
     void openAndLoadFile();
-    void updateSliders();
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
     TSE3::Clock barsClock[MUSICALPI_MAX_MEASURE];
@@ -69,11 +69,10 @@ private:
     TSE3::MidiSchedulerFactory *msf;
     TSE3::MidiScheduler *sch;
     TSE3::Transport *transport;
+    QTimer* timer;
 
-
-
-
+private slots:
+    void updateSliders();
 };
 
 #endif // MIDIPLAYER_H
-

@@ -54,5 +54,4 @@ void aboutWidget::play()
 aboutWidget::~aboutWidget()
 {
     qDebug() << "In destructor";
-    delete mp;
 }
