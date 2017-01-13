@@ -33,6 +33,7 @@ public:
     ~PDFDocument();
     void getOnePage(docPageLabel * where, int pageToGet, docPageLabel::docTransition); // Starting page 1
     QString filepath;
+    QString midiFilePath;  // As a convenience this object checks if there is a midi file as well
     int numPages;  // Number of pages in document
     int imageWidth;  // Current width of image window we are using (adjusted for roomForMenu if needed)
     int imageHeight;   // Current height of image window we are using

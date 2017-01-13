@@ -15,7 +15,6 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     updatePosition(1);
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);
     updateTempo(MUSICALPI_INITIAL_TIME_SCALE);
-    updateSliders();
 }
 
 
@@ -119,7 +118,8 @@ void midiPlayer::doPlayingLayout()
 
     measureGo = new QPushButton("???",this);
     measureGo->setStyleSheet("padding: 2px;");
-    connect(measureGo,&QPushButton::clicked,this,&midiPlayer::go);
+    connect(measureGo,&QPushButton::clicked, this, &midiPlayer::go);
+
     measureInLabel = new QLabel(this);
     measureInLabel->setText("Go to measure number: ");
     measureIn = new QLineEdit("",this);    // Leave default as blank so we can tell if value entered
@@ -134,7 +134,6 @@ void midiPlayer::doPlayingLayout()
     positionLabel = new QLabel("Position", this);
     positionSlider = new QSlider(Qt::Horizontal,this);
     positionSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
-    positionSlider->setMaximum(lastBar);
     positionSlider->setMinimum(1);
     positionSlider->setValue(1);
     connect(positionSlider,SIGNAL(valueChanged(int)),this,SLOT(updatePosition(int)));
@@ -181,18 +180,21 @@ void midiPlayer::updateSliders()
     if(canPlay)
     {
         transport->poll();  // Must call this frequently to keep data going
+        playStatus = transport->status();
+         // Don't update the slider unnecessarily as it causes the change routine to fire even if not changed
 
-        tempoSlider->setValue(transport->filter()->timeScale());
+        if(tempoSlider->value() != transport->filter()->timeScale()) tempoSlider->setValue(transport->filter()->timeScale());
         tempoValueLabel->setText(QString::number(tempoSlider->value()) + " %");
 
-        volumeSlider->setValue(transport->filter()->velocityScale());
+        if(volumeSlider->value() != transport->filter()->velocityScale()) volumeSlider->setValue(transport->filter()->velocityScale());
         volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
 
         tst->barBeatPulse(sch->clock(), bar, beat, pulse);
-        positionSlider->setValue(bar);
+        if (positionSlider->value() != bar) positionSlider->setValue(bar);
         positionValueLabel->setText(QString::number(bar));
-        // use error slot but not highlighted
-        switch(transport->status())
+
+        // use error slot but not highlighted for status
+        switch(playStatus)
         {
             case TSE3::Transport::Resting:
                 errorLabel->setText("Song is resting (done or not started)");
@@ -232,14 +234,17 @@ void midiPlayer::updateSliders()
 
 void midiPlayer::updatePosition(int newPosition)
 {
+    qDebug() << "Entered";
     //Positions are bars, turn into clock
     if(!canPlay) return;  // Shouldn't get here but just in case
-    transport->play(song, barsClock[newPosition]);
+    positionSlider->setMaximum(lastBar);  // Can't set this at beginning as it's not known so set here
+    if(transport->status() == TSE3::Transport::Playing) transport->play(song, barsClock[newPosition]);
     updateSliders();  // hasten reflection of new info
 }
 
 void midiPlayer::updateVolume(int newVolume)
 {
+    qDebug() << "Entered";
     if(!canPlay) return;  // Shouldn't get here but just in case
     transport->filter()->setVelocityScale(newVolume);
     updateSliders();  // hasten reflection of new info
@@ -247,6 +252,7 @@ void midiPlayer::updateVolume(int newVolume)
 
 void midiPlayer::updateTempo(int newTempo)
 {
+    qDebug() << "Entered";
     if(!canPlay) return;  // Shouldn't get here but just in case
     transport->filter()->setTimeScale(newTempo);
     updateSliders();  // hasten reflection of new info
@@ -256,27 +262,36 @@ void midiPlayer::go()
 {
     if(canPlay && playStatus == TSE3::Transport::Resting)  // Hitting play from here uses measure or starts over if blank
     {
+        qDebug() << "Entered Go and resting, switching to playing";
         TSE3::Clock newClock(0);
         if(measureIn->text() != "" )
         {
             int newBar = measureIn->text().toInt();
             newBar = std::max(1,std::min(lastBar,newBar));
             newClock = barsClock[newBar];
+            qDebug() << "Picked new bar " << newBar;
         }
         transport->play(song,newClock);
-        timer = new QTimer(this);
-        connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
-        timer->start(1000);
+        if(!timer)
+        {
+            timer = new QTimer(this);
+            connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
+            timer->start(1000);
+            qDebug() << "First time through, starting timer";
+        }
         measureGo->setText("Stop");
     }
     else if (canPlay && playStatus == TSE3::Transport::Playing)  // Hitting stop ends play entirely but updates measure to where we were
     {
+        qDebug() << "Playing, so changing to stopped";
         measureIn->setText(positionValueLabel->text());  // Depend on update to keep this current
         transport->play(0,0);
         measureGo->setText("Play");
     }
     else if (!canPlay)
     {
+        qDebug() << "Can't play so doing nothing in go"
         measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
     }
+    else qDebug() << "Bad logic in Go, fell through";
 }
