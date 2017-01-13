@@ -21,17 +21,20 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
 
 midiPlayer::~midiPlayer()
 {
-    qDebug() << "In destructor";
-
+    qDebug() << "Freeing transport";
     delete transport;
+    qDebug() << "Freeing sch";
     delete sch;
+    qDebug() << "Freeing msf";
     delete msf;
+    qDebug() << "Freeing metronome";
     delete metronome;
+    qDebug() << "Freeing tst";
     delete tst;
+    qDebug() << "Freeing song";
     delete song;
+    qDebug() << "Freeing mfi";
     delete mfi;
-
-    qDebug() << "Exiting destructor";
 }
 
 
@@ -73,9 +76,7 @@ void midiPlayer::openAndLoadFile()
                     tst->barBeatPulse(barsClock[newBar],bar, beat, pulse);  // This is current setting (may be zero if not set)
                     if (bar < newBar || (bar == newBar && beat > newBeat) || (bar == newBar && beat == newBeat && pulse > newPulse ) ) barsClock[newBar] = TSE3::Clock(me.time);   // We want the first event in the bar
                 }
-                delete Pt;
             }
-            delete Tk;
         }
         qDebug() << "Last measure = " << lastBar;
         step = "Creating metronome";
@@ -142,7 +143,6 @@ void midiPlayer::doPlayingLayout()
     gridLayout->addWidget(positionSlider,1,2,1,1);
     gridLayout->addWidget(positionValueLabel,1,3,1,1);
 
-
     tempoLabel = new QLabel("Tempo %: ",this);
     tempoSlider = new QSlider(Qt::Horizontal,this);
     tempoSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
@@ -179,8 +179,8 @@ void midiPlayer::updateSliders()
     if(canPlay)
     {
         qDebug() << "Updating sliders while can play";
-        transport->poll();  // Must call this frequently to keep data going
         playStatus = transport->status();
+        if(playStatus == TSE3::Transport::Playing) transport->poll();  // Must call this frequently to keep data going, only if playing
          // Don't update the slider unnecessarily as it causes the change routine to fire even if not changed
 
         if(tempoSlider->value() != transport->filter()->timeScale()) tempoSlider->setValue(transport->filter()->timeScale());
@@ -292,7 +292,7 @@ void midiPlayer::go()
     }
     else if (!canPlay)
     {
-        qDebug() << "Can't play so doing nothing in go";
+        qDebug() << "Can't play so doing nothing in go -- shouldn't be able to get here";
         measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
     }
     else qDebug() << "Bad logic in Go, fell through status = " << playStatus;

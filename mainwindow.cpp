@@ -117,6 +117,10 @@ void MainWindow::setupCoreWidgets()
     playerMenuLayout->addWidget(fourByTwoButton);
     connect(fourByTwoButton,&QPushButton::clicked, this, [this](){this->setPlayMode(false,4,2);});
 
+    playMidiButton = new QPushButton("Play Midi");
+    playerMenuLayout->addWidget(playMidiButton);
+    connect(playMidiButton,&QPushButton::clicked, this, &MainWindow::doMidiPlayer);
+
     // ALl details of this get filled in during use in play section; not all may be use, this is max.
     for (int i=0; i < (MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS); i++)
     {
@@ -191,6 +195,8 @@ void MainWindow::startPlayMode(QString path)
         PDF = new PDFDocument(path);
         leftmostPage = 1;   // Always start new document from zero
         connect(PDF,&PDFDocument::newImageReady,this, [this]{this->checkQueueVsCache();});
+        //Hide or show button if midi there
+        playMidiButton->setVisible(PDF->midiFilePath != "");
     }
     setPlayMode(false,2,1);
 }
@@ -459,4 +465,11 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
         case Qt::Key_PageDown: qDebug() << "Received PageDown"; playingNextPage(); break;
         case Qt::Key_PageUp:   qDebug() << "Received PageUp";   playingPrevPage(); break;
     }
+}
+
+void MainWindow::doMidiPlayer()
+{
+    mp = new midiPlayer(this,PDF->midiFilePath);
+    mp->show();
+    mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
 }
