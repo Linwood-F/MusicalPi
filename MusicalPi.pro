@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     musiclibrary.cpp \
     aboutwidget.cpp \
     settingswidget.cpp \
-    tse3play.cpp
+    tse3play.cpp \
+    midiplayer.cpp
 
 HEADERS  += mainwindow.h \
     pdfdocument.h \
@@ -36,7 +37,8 @@ HEADERS  += mainwindow.h \
     musiclibrary.h \
     aboutwidget.h \
     settingswidget.h \
-    tse3play.h
+    tse3play.h \
+    midiplayer.h
 
 DISTFILES += \
     MusicalPi.gif \

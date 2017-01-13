@@ -48,5 +48,8 @@
 // Cosmetic - set fraction of screen width logo takes up
 #define MUSICALPI_LOGO_PCT 0.20
 
+#define MUSICALPI_MIDI_PORT 20
+#define MUSICALPI_MAX_MEASURE 10000
+
 #endif // PICONSTANTS
 

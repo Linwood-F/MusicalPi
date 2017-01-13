@@ -9,12 +9,17 @@
 #include <QFont>
 #include <QDebug>
 
+#include "midiplayer.h"
+
 class aboutWidget : public QLabel
 {
     Q_OBJECT
 public:
     aboutWidget(QWidget *parent = 0);
+    ~aboutWidget();
     void play();
+private:
+    midiPlayer* mp;
 };
 
 #endif // ABOUTWIDGET_H

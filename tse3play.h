@@ -23,7 +23,6 @@
 #include <iostream>
 
 #include "tse3/MidiFile.h"
-
 #include "tse3/Metronome.h"
 #include "tse3/util/MidiScheduler.h"
 #include "tse3/Transport.h"
@@ -34,6 +33,7 @@
 #include "tse3/Mixer.h"
 #include "tse3/TempoTrack.h"
 #include "tse3/TimeSigTrack.h"
+#include "tse3/Phrase.h"
 
 #include <chrono>
 #include <thread>

@@ -3,6 +3,7 @@
 
 #include "aboutwidget.h"
 #include "tse3play.h"
+#include "midiplayer.h"
 
 aboutWidget::aboutWidget(QWidget* parent)
 {
@@ -36,10 +37,22 @@ void aboutWidget::play()
 
 #define MUSICALPI_MIDIPORT 20
 
-    qDebug() << "Starting MIDI test";
+    qDebug() << "Opening player window";
 
-    tse3play* p = new tse3play("/home/ferguson/bumble_bee.mid");
-    p->go();
+    mp = new midiPlayer(this,"/home/ferguson/bumble_bee.mid");
+    mp->show();
+    mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
 
-    qDebug() << "Ending play";
+//    qDebug() << "Starting MIDI test";
+
+    //tse3play* p = new tse3play("/home/ferguson/bumble_bee.mid");
+    //p->go();
+
+    qDebug() << "Leaving about ";
+}
+
+aboutWidget::~aboutWidget()
+{
+    qDebug() << "In destructor";
+    delete mp;
 }
