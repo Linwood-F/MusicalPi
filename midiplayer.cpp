@@ -85,6 +85,9 @@ void midiPlayer::openAndLoadFile()
         step = "Setting panic";
         setPanic(transport->startPanic());
         setPanic(transport->endPanic());
+        qDebug() << "Adaptive lookahead is " << transport->adaptiveLookAhead() << " (setting to true).";
+        transport->setAdaptiveLookAhead(true);
+        qDebug() << "Lookahead = " << transport->lookAhead();
     }
     catch (const TSE3::Error &e)
     {
@@ -244,7 +247,7 @@ void midiPlayer::go()
         {
             int newBar = measureIn->text().toInt();
             newBar = std::max(1,std::min(lastBar,newBar));
-            newClock = barsClock[newBar];
+            newClock = barsClock[newBar - 1];   // I do not know but I seem to have to start a measure ahead (and can't seem to start on the first)
             qDebug() << "Picked new bar " << newBar;
         }
         transport->play(song,newClock);
@@ -261,6 +264,7 @@ void midiPlayer::go()
     {
         qDebug() << "Playing, so changing to stopped";
         sch->stop();
+        transport->play(0,0);
         measureGo->setText("Play");
     }
     else if (!canPlay)
