@@ -172,8 +172,6 @@ void midiPlayer::updateSliders()
         if(volumeSlider->value() != transport->filter()->velocityScale()) volumeSlider->setValue(transport->filter()->velocityScale());
         volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
 
-        tst->barBeatPulse(sch->clock(), bar, beat, pulse);
-        measureIn->setText(QString::number(bar));
 
         // use error slot but not highlighted for status
         switch(playStatus)
@@ -189,6 +187,8 @@ void midiPlayer::updateSliders()
                 measureGo->setText(" Stop ");
                 tempoSlider->setDisabled(true);
                 volumeSlider->setDisabled(true);
+                tst->barBeatPulse(sch->clock(), bar, beat, pulse);
+                measureIn->setText(QString::number(bar));
                 break;
             case TSE3::Transport::Recording:
                 errorLabel->setText("Song is recording (never should get here!!)");
