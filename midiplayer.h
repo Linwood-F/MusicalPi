@@ -75,6 +75,7 @@ private:
     QTimer* timer = NULL;
     int playStatus;   // what is the last pooled status value (only valid after first call and if canPlay)
     void closeEvent(QCloseEvent*);
+    void setPanic(TSE3::Panic*);
 
 private slots:
     void updateSliders();

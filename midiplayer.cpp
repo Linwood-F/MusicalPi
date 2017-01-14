@@ -8,7 +8,7 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     qDebug() << "Entered";
     setWindowTitle("Midi Player");
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again
-    this->setWindowFlags(Qt::Window);
+    this->setWindowFlags(Qt::Window|Qt::Dialog);
     _midiFile = midiFile;
     doPlayingLayout();  // This is needed even if not playing to show error
     openAndLoadFile();
@@ -82,6 +82,9 @@ void midiPlayer::openAndLoadFile()
         transport = new TSE3::Transport(metronome, sch);
         step = "Setting port";
         transport->filter()->setPort(MUSICALPI_MIDI_PORT);
+        step = "Setting panic";
+        setPanic(transport->startPanic());
+        setPanic(transport->endPanic());
     }
     catch (const TSE3::Error &e)
     {
@@ -257,7 +260,7 @@ void midiPlayer::go()
     else if (canPlay && playStatus == TSE3::Transport::Playing)  // Hitting stop ends play entirely but updates measure to where we were
     {
         qDebug() << "Playing, so changing to stopped";
-        transport->play(0,0);
+        sch->stop();
         measureGo->setText("Play");
     }
     else if (!canPlay)
@@ -273,4 +276,12 @@ void midiPlayer::closeEvent(QCloseEvent *event)
     event->ignore();  // We ignore it here and signal the caller to delete us, but do stop any playing
     if(canPlay && playStatus == TSE3::Transport::Playing) transport->play(0,0);
     emit requestToClose();
+}
+
+void midiPlayer::setPanic(TSE3::Panic *panic)
+{
+    panic->setMidiReset(true);
+    panic->setGmReset(true);
+    panic->setGsReset(true);
+    panic->setXgReset(true);
 }
