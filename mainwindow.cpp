@@ -171,8 +171,6 @@ void MainWindow::setAboutMode()
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
     aboutLabel->show();
-    // ?? ?? test tse3
-    aboutLabel->play();
 }
 
 void MainWindow::setSettingsMode()
@@ -472,4 +470,12 @@ void MainWindow::doMidiPlayer()
     mp = new midiPlayer(this,PDF->midiFilePath);
     mp->show();
     mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
+    connect(mp,&midiPlayer::requestToClose,this,[this]{this->closeMidiPlayer();});
 }
+
+void MainWindow::closeMidiPlayer()
+{
+    qDebug() << "Request to close midi";
+    if(mp!=NULL) delete mp;
+}
+

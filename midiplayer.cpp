@@ -2,7 +2,7 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-
+#define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; }
 midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
 {
     qDebug() << "Entered";
@@ -12,7 +12,6 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
     _midiFile = midiFile;
     doPlayingLayout();  // This is needed even if not playing to show error
     openAndLoadFile();
-    updatePosition(1);
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);
     updateTempo(MUSICALPI_INITIAL_TIME_SCALE);
     updateSliders();  // This is really only needed for error conditions since the above won't update then
@@ -21,20 +20,12 @@ midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
 
 midiPlayer::~midiPlayer()
 {
-    qDebug() << "Freeing transport";
-    delete transport;
-    qDebug() << "Freeing sch";
-    delete sch;
-    qDebug() << "Freeing msf";
-    delete msf;
-    qDebug() << "Freeing metronome";
-    delete metronome;
-    qDebug() << "Freeing tst";
-    delete tst;
-    qDebug() << "Freeing song";
-    delete song;
-    qDebug() << "Freeing mfi";
-    delete mfi;
+    DELETE_LOG(transport);
+    DELETE_LOG(sch);
+    DELETE_LOG(msf);
+    DELETE_LOG(metronome);
+    DELETE_LOG(song);
+    DELETE_LOG(mfi);
 }
 
 
@@ -123,25 +114,14 @@ void midiPlayer::doPlayingLayout()
     connect(measureGo,&QPushButton::clicked, this, &midiPlayer::go);
 
     measureInLabel = new QLabel(this);
-    measureInLabel->setText("Go to measure number: ");
-    measureIn = new QLineEdit("",this);    // Leave default as blank so we can tell if value entered
+    measureInLabel->setText("Go to measure#: ");
+    measureIn = new QLineEdit("1",this);    // Leave default as blank so we can tell if value entered
     measureInRange = new QLabel(this);
 
     gridLayout->addWidget(measureGo,0,0,1,1);
     gridLayout->addWidget(measureInLabel,0,1,1,1);
     gridLayout->addWidget(measureIn,0,2,1,1);
     gridLayout->addWidget(measureInRange,0,3,1,1);
-
-    positionLabel = new QLabel("Position", this);
-    positionSlider = new QSlider(Qt::Horizontal,this);
-    positionSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
-    positionSlider->setMinimum(1);
-    positionSlider->setValue(1);
-    connect(positionSlider,SIGNAL(valueChanged(int)),this,SLOT(updatePosition(int)));
-    positionValueLabel = new QLabel("???",this);
-    gridLayout->addWidget(positionLabel,1,1,1,1);
-    gridLayout->addWidget(positionSlider,1,2,1,1);
-    gridLayout->addWidget(positionValueLabel,1,3,1,1);
 
     tempoLabel = new QLabel("Tempo %: ",this);
     tempoSlider = new QSlider(Qt::Horizontal,this);
@@ -150,9 +130,9 @@ void midiPlayer::doPlayingLayout()
     tempoSlider->setMinimum(1);
     connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
     tempoValueLabel = new QLabel("???",this);
-    gridLayout->addWidget(tempoLabel,2,1,1,1);
-    gridLayout->addWidget(tempoSlider,2,2,1,1);
-    gridLayout->addWidget(tempoValueLabel,2,3,1,1);
+    gridLayout->addWidget(tempoLabel,1,1,1,1);
+    gridLayout->addWidget(tempoSlider,1,2,1,1);
+    gridLayout->addWidget(tempoValueLabel,1,3,1,1);
 
     volumeLabel = new QLabel("Volume %", this);
     volumeSlider = new QSlider(Qt::Horizontal,this);
@@ -161,9 +141,9 @@ void midiPlayer::doPlayingLayout()
     volumeSlider->setMaximum(200);
     volumeSlider->setMinimum(1);
     connect(volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(updateVolume(int)));
-    gridLayout->addWidget(volumeLabel,3,1,1,1);
-    gridLayout->addWidget(volumeSlider,3,2,1,1);
-    gridLayout->addWidget(volumeValueLabel,3,3,1,1);
+    gridLayout->addWidget(volumeLabel,2,1,1,1);
+    gridLayout->addWidget(volumeSlider,2,2,1,1);
+    gridLayout->addWidget(volumeValueLabel,2,3,1,1);
     qDebug() << "Volume Slider setup done";
 
     songLabel = new QLabel(_midiFile,this);
@@ -190,8 +170,7 @@ void midiPlayer::updateSliders()
         volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
 
         tst->barBeatPulse(sch->clock(), bar, beat, pulse);
-        if (positionSlider->value() != bar) positionSlider->setValue(bar);
-        positionValueLabel->setText(QString::number(bar));
+        measureIn->setText(QString::number(bar));
 
         // use error slot but not highlighted for status
         switch(playStatus)
@@ -199,10 +178,14 @@ void midiPlayer::updateSliders()
             case TSE3::Transport::Resting:
                 errorLabel->setText("Song is resting (done or not started)");
                 measureGo->setText(" Play ");
+                tempoSlider->setEnabled(true);
+                volumeSlider->setEnabled(true);
                 break;
             case TSE3::Transport::Playing:
                 errorLabel->setText("Song is playing");
                 measureGo->setText(" Stop ");
+                tempoSlider->setDisabled(true);
+                volumeSlider->setDisabled(true);
                 break;
             case TSE3::Transport::Recording:
                 errorLabel->setText("Song is recording (never should get here!!)");
@@ -223,7 +206,6 @@ void midiPlayer::updateSliders()
         // Disable controls
         tempoSlider->setDisabled(true);
         volumeSlider->setDisabled(true);
-        positionSlider->setDisabled(true);
         measureGo->setDisabled(true);
         measureGo->setText("Error");
 
@@ -231,17 +213,6 @@ void midiPlayer::updateSliders()
         errorLabel->setText(errorEncountered);
         errorLabel->setStyleSheet("color: red;");
     }
-}
-
-void midiPlayer::updatePosition(int newPosition)
-{
-    qDebug() << "Entered";
-    //Positions are bars, turn into clock
-    if(!canPlay) return;  // Shouldn't get here but just in case
-    positionSlider->setMaximum(lastBar);  // Can't set this at beginning as it's not known so set here
-    measureInRange->setText("1-" + QString::number(lastBar));
-    if(transport->status() == TSE3::Transport::Playing) transport->play(song, barsClock[newPosition]);
-    updateSliders();  // hasten reflection of new info
 }
 
 void midiPlayer::updateVolume(int newVolume)
@@ -286,7 +257,6 @@ void midiPlayer::go()
     else if (canPlay && playStatus == TSE3::Transport::Playing)  // Hitting stop ends play entirely but updates measure to where we were
     {
         qDebug() << "Playing, so changing to stopped";
-        measureIn->setText(positionValueLabel->text());  // Depend on update to keep this current
         transport->play(0,0);
         measureGo->setText("Play");
     }
@@ -296,4 +266,11 @@ void midiPlayer::go()
         measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
     }
     else qDebug() << "Bad logic in Go, fell through status = " << playStatus;
+}
+
+void midiPlayer::closeEvent(QCloseEvent *event)
+{
+    event->ignore();  // We ignore it here and signal the caller to delete us, but do stop any playing
+    if(canPlay && playStatus == TSE3::Transport::Playing) transport->play(0,0);
+    emit requestToClose();
 }

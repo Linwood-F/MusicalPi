@@ -14,6 +14,7 @@
 #include <QSlider>
 #include <QPushButton>
 #include <QTimer>
+#include <QCloseEvent>
 
 #include "piconstants.h"
 
@@ -64,21 +65,24 @@ private:
     bool canPlay;   // Set to indicate if the song is loaded and playable
     QString errorEncountered;  // Blank is no error, otherwise a fatal error
     TSE3::Clock barsClock[MUSICALPI_MAX_MEASURE];
-    TSE3::MidiFileImport* mfi;
-    TSE3::Song *song;
-    TSE3::TimeSigTrack *tst;
-    TSE3::Metronome *metronome;
-    TSE3::MidiSchedulerFactory *msf;
-    TSE3::MidiScheduler *sch;
-    TSE3::Transport *transport;
-    QTimer* timer = 0;
+    TSE3::MidiFileImport* mfi = NULL;
+    TSE3::Song *song = NULL;
+    TSE3::TimeSigTrack *tst = NULL;
+    TSE3::Metronome *metronome = NULL;
+    TSE3::MidiSchedulerFactory *msf = NULL;
+    TSE3::MidiScheduler *sch = NULL;
+    TSE3::Transport *transport = NULL;
+    QTimer* timer = NULL;
     int playStatus;   // what is the last pooled status value (only valid after first call and if canPlay)
+    void closeEvent(QCloseEvent*);
 
 private slots:
     void updateSliders();
-    void updatePosition(int);
     void updateVolume(int);
     void updateTempo(int);
+
+signals:
+    void requestToClose();
 };
 
 #endif // MIDIPLAYER_H

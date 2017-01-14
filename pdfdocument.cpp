@@ -33,7 +33,8 @@ PDFDocument::PDFDocument(QString _filePath)
     }
     if(filepath.endsWith(".pdf",Qt::CaseInsensitive))
     {
-        midiFilePath = filepath.replace(filepath.length() - 4,4,".mid");  // tentative path
+        midiFilePath = filepath;
+        midiFilePath.replace(filepath.length() - 4,4,".mid");  // tentative path
         QFileInfo check_file(midiFilePath);
         if(!check_file.exists() || !check_file.isFile()) midiFilePath = ""; // if not there, just blank it out to tell others
     }

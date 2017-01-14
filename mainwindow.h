@@ -88,9 +88,11 @@ private:
     void resizeEvent(QResizeEvent *event);
     void sizeLogo();
     void keyPressEvent(QKeyEvent* e);
+    void closeMidiPlayer();
 
 private slots:
     void startPlayMode(QString);
+
 };
 
 #endif // MAINWINDOW_H

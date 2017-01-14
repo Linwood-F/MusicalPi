@@ -1,9 +1,7 @@
 
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "aboutwidget.h"
-#include "tse3play.h"
-#include "midiplayer.h"
 
 aboutWidget::aboutWidget(QWidget* parent)
 {
@@ -30,25 +28,6 @@ aboutWidget::aboutWidget(QWidget* parent)
     this->setStyleSheet("background-color: rgb(240,240,200);");
     this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
     this->setFont(QFont("Arial",14));
-}
-void aboutWidget::play()
-{
-    // Test to see if we can play Midi
-
-#define MUSICALPI_MIDIPORT 20
-
-    qDebug() << "Opening player window";
-
-    mp = new midiPlayer(this,"/home/ferguson/bumble_bee.mid");
-    mp->show();
-    mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
-
-//    qDebug() << "Starting MIDI test";
-
-    //tse3play* p = new tse3play("/home/ferguson/bumble_bee.mid");
-    //p->go();
-
-    qDebug() << "Leaving about ";
 }
 
 aboutWidget::~aboutWidget()
