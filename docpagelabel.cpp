@@ -115,6 +115,7 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     int newX = (this->width() - newW)/2;
     int newY = (this->height() - newH)/2;
     QPainter pNew(&newImage);
+    pNew.setRenderHint(QPainter::SmoothPixmapTransform);
     pNew.drawImage( QRectF (newX, newY, newW, newH), *newImageBuffer);  // This implicitly draws the whole from image, scaling if needed
     qDebug() << "After drawing new image centered on new QImage";
 

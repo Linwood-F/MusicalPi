@@ -84,6 +84,10 @@ void musicLibrary::loadData()
             libTable.setColumnHidden(field,true);
             columnForPath=field;
         }
+        if(rec.fieldName(field)=="Title")
+        {
+            columnForTitle=field;  // And remember this one
+        }
     }
     libTable.setHorizontalHeaderItem(libTable.columnCount()-1, new QTableWidgetItem("Tags"));
     int row=0;
@@ -137,7 +141,7 @@ void musicLibrary::loadData()
 void musicLibrary::onChosen(int row, int column)
 {
     qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << MUSICALPI_CALIBRE_PATH "/" << libTable.item(row, columnForPath)->text();
-    emit songSelected(tr(MUSICALPI_CALIBRE_PATH "/%1").arg(libTable.item(row,columnForPath)->text()));
+    emit songSelected(tr(MUSICALPI_CALIBRE_PATH "/%1").arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
 }
 
 void musicLibrary::filterTable(QString filter)

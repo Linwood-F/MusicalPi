@@ -35,7 +35,7 @@ class midiPlayer : public QWidget
 {
     Q_OBJECT
 public:
-    midiPlayer(QWidget *parent, QString midiFile);
+    midiPlayer(QWidget *parent, QString midiFile, QString titleName);
     ~midiPlayer();
 
     int lastBar;
@@ -44,6 +44,7 @@ public:
 private:
     QVBoxLayout *outLayout;
     QGridLayout *gridLayout;
+    QLabel      *helpLabel;
     QLabel      *measureInLabel;
     QLineEdit   *measureIn;
     QLabel      *measureInRange;
@@ -56,7 +57,7 @@ private:
     QLabel      *volumeLabel, *volumeValueLabel;
     QLabel      *songLabel;
     QLabel      *errorLabel;
-    QString     _midiFile;     // Passed in file
+    QString     midiFile;     // Passed in file
 
     void doPlayingLayout();
     void openAndLoadFile();

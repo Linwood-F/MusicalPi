@@ -3,13 +3,13 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; }
-midiPlayer::midiPlayer(QWidget *parent, QString midiFile) : QWidget(parent)
+midiPlayer::midiPlayer(QWidget *parent, QString _midiFile, QString _titleName) : QWidget(parent)
 {
     qDebug() << "Entered";
-    setWindowTitle("Midi Player");
+    setWindowTitle("Midi Player - " + _titleName);
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again
     this->setWindowFlags(Qt::Window|Qt::Dialog);
-    _midiFile = midiFile;
+    midiFile = _midiFile;
     doPlayingLayout();  // This is needed even if not playing to show error
     openAndLoadFile();
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);
@@ -44,7 +44,7 @@ void midiPlayer::openAndLoadFile()
     try
     {
         step = "Importing file";
-        mfi = new TSE3::MidiFileImport(_midiFile.toStdString().c_str(), 1);
+        mfi = new TSE3::MidiFileImport(midiFile.toStdString().c_str(), 1);
         step = "Loading song";
         song = mfi->load();
         step = "Creating time sig track";
@@ -129,6 +129,9 @@ void midiPlayer::doPlayingLayout()
     gridLayout->addWidget(measureIn,0,2,1,1);
     gridLayout->addWidget(measureInRange,0,3,1,1);
 
+    helpLabel = new QLabel("Adjust tempo and volume only when stopped");
+    gridLayout->addWidget(helpLabel,1,1,1,3);
+
     tempoLabel = new QLabel("Tempo %: ",this);
     tempoSlider = new QSlider(Qt::Horizontal,this);
     tempoSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
@@ -136,9 +139,9 @@ void midiPlayer::doPlayingLayout()
     tempoSlider->setMinimum(1);
     connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
     tempoValueLabel = new QLabel("???",this);
-    gridLayout->addWidget(tempoLabel,1,1,1,1);
-    gridLayout->addWidget(tempoSlider,1,2,1,1);
-    gridLayout->addWidget(tempoValueLabel,1,3,1,1);
+    gridLayout->addWidget(tempoLabel,2,1,1,1);
+    gridLayout->addWidget(tempoSlider,2,2,1,1);
+    gridLayout->addWidget(tempoValueLabel,2,3,1,1);
 
     volumeLabel = new QLabel("Volume %", this);
     volumeSlider = new QSlider(Qt::Horizontal,this);
@@ -147,13 +150,11 @@ void midiPlayer::doPlayingLayout()
     volumeSlider->setMaximum(200);
     volumeSlider->setMinimum(1);
     connect(volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(updateVolume(int)));
-    gridLayout->addWidget(volumeLabel,2,1,1,1);
-    gridLayout->addWidget(volumeSlider,2,2,1,1);
-    gridLayout->addWidget(volumeValueLabel,2,3,1,1);
+    gridLayout->addWidget(volumeLabel,3,1,1,1);
+    gridLayout->addWidget(volumeSlider,3,2,1,1);
+    gridLayout->addWidget(volumeValueLabel,3,3,1,1);
     qDebug() << "Volume Slider setup done";
 
-    songLabel = new QLabel(_midiFile,this);
-    outLayout->addWidget(songLabel);
     errorLabel = new QLabel("",this);
     outLayout->addWidget(errorLabel);
 }

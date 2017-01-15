@@ -43,6 +43,7 @@ private:
     QWidget* mParent;
     int columnForPath;
     int columnForID;
+    int columnForTitle;
     QTableWidget libTable;
     QWidget search;
     QHBoxLayout searchLayout;
@@ -54,7 +55,7 @@ private:
 
 
 signals:
-    void songSelected(QString);
+    void songSelected(QString, QString);
 
 private slots:
     void onChosen(int, int);

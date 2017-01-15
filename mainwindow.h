@@ -91,7 +91,7 @@ private:
     void closeMidiPlayer();
 
 private slots:
-    void startPlayMode(QString);
+    void startPlayMode(QString,QString);
 
 };
 

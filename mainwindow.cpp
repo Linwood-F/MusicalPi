@@ -145,7 +145,7 @@ void MainWindow::setupCoreWidgets()
     generalLayout->addWidget(settingsLabel);
 
     overlay = new TipOverlay(outerLayoutWidget);
-    connect(libraryTable, SIGNAL(songSelected(QString)), this, SLOT(startPlayMode(QString)));
+    connect(libraryTable, SIGNAL(songSelected(QString,QString)), this, SLOT(startPlayMode(QString,QString)));
 }
 
 void MainWindow::setLibraryMode()
@@ -185,12 +185,12 @@ void MainWindow::setSettingsMode()
     settingsLabel->show();
 }
 
-void MainWindow::startPlayMode(QString path)
+void MainWindow::startPlayMode(QString path, QString _titlePlaying)
 {
     if(PDF==NULL || PDF->filepath != path)
     {
         deletePDF();
-        PDF = new PDFDocument(path);
+        PDF = new PDFDocument(path, _titlePlaying);
         leftmostPage = 1;   // Always start new document from zero
         connect(PDF,&PDFDocument::newImageReady,this, [this]{this->checkQueueVsCache();});
         //Hide or show button if midi there
@@ -467,8 +467,9 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
 
 void MainWindow::doMidiPlayer()
 {
-    mp = new midiPlayer(this,PDF->midiFilePath);
+    mp = new midiPlayer(this,PDF->midiFilePath, PDF->titleName);
     mp->show();
+    qDebug() << "Position of this = (" << this->x() << "," << this->y() << "), maptoglobal=(" << mapToGlobal(this->pos()).x() << "," << mapToGlobal(this->pos()).y() << ")";
     mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
     connect(mp,&midiPlayer::requestToClose,this,[this]{this->closeMidiPlayer();});
 }

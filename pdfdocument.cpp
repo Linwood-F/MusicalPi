@@ -13,10 +13,11 @@
 
 double degree2radian(int d) { return (double)d * 3.1415926535 / 180.0 ;}
 
-PDFDocument::PDFDocument(QString _filePath)
+PDFDocument::PDFDocument(QString _filePath, QString _titleName)
 {
     qDebug() << "initializing with " << _filePath;
     filepath = _filePath;
+    titleName = _titleName;
     imageWidth = 0;
     imageHeight = 0;
     for(int i=0; i<MUSICALPI_MAXPAGES; i++)
