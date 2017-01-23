@@ -61,7 +61,6 @@ void renderThread::run()
     {
         running = true;
         if(abort) return;
-
         Poppler::Page* tmpPage = ((PDFDocument*)mParent)->document->page(mPage - 1);  // Document starts at page 0, we use 1
         assert(tmpPage!=NULL);
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch

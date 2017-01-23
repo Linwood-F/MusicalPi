@@ -1,5 +1,19 @@
 MusicalPi - Sheet music display
 
+****** NOTE *****  I realized I have been commiting changes to this that
+                   do not match the documentation, but instead are really for
+                   a next version.  I am new to Github and probably should have
+                   branched or labeled or something.  The last commit at December 28
+                   2016 is the one that matches the documentation.  I will try to
+                   find a way to separate it clearly for a git clone.  Virtually
+                   all of the changes are in the midiplay module, which you could
+                   just delete/ignore.  Or try to use (note TSE3 needs to be built
+                   from source to work -- the distro version will not link for
+                   some entry points for reasons unclear, but the distro source
+                   at launchpad (with patch also there) will work, leading me
+                   to think it is a bad build that has hit the distro (both
+                   intel and pi versions).
+
 This project is a Calibre-integrated, music display designed for a touch screen
 on a Raspberry Pi (only tested on 3B version).
 

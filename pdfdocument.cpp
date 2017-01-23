@@ -42,9 +42,10 @@ PDFDocument::PDFDocument(QString _filePath, QString _titleName)
     else midiFilePath = "";
 
     document = Poppler::Document::load(filepath);
-    document->setRenderBackend(POPPLER_BACKEND);
+    document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
+
     assert(numPages <= MUSICALPI_MAXPAGES);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
     cacheRangeEnd = MUSICALPI_MAX_CACHE;

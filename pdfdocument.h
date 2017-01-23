@@ -3,8 +3,6 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <string>
-#include <poppler/qt5/poppler-qt5.h>
 
 #include <QImage>
 #include <QLabel>
@@ -24,6 +22,9 @@
 #include "piconstants.h"
 #include "docpagelabel.h"
 #include "renderthread.h"
+
+#include <string>
+#include <poppler/qt5/poppler-qt5.h>
 
 class PDFDocument : public QObject
 {

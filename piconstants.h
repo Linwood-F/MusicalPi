@@ -37,8 +37,8 @@
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING_QT Qt::black
 
 // SplashBackend seems to render better quality and only slightly slower.
-#define POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
-//#define POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
+#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
+//#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
 
 // Calibre path must be reachable and writeable (eventually)
 #define MUSICALPI_CALIBRE_PATH "/mnt/lef/t/Calibre Library"

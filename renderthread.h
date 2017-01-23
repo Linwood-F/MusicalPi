@@ -10,6 +10,7 @@
 #include <QDebug>
 
 #include <cassert>
+#include "piconstants.h"
 #include "poppler/qt5/poppler-qt5.h"
 
 class renderThread : public QThread
