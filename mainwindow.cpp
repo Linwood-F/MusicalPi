@@ -467,11 +467,11 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
 
 void MainWindow::doMidiPlayer()
 {
-    mp = new midiPlayer(this,PDF->midiFilePath, PDF->titleName);
+    mp = new midiPlayerV2(this,PDF->midiFilePath, PDF->titleName);
     mp->show();
     qDebug() << "Position of this = (" << this->x() << "," << this->y() << "), maptoglobal=(" << mapToGlobal(this->pos()).x() << "," << mapToGlobal(this->pos()).y() << ")";
     mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
-    connect(mp,&midiPlayer::requestToClose,this,[this]{this->closeMidiPlayer();});
+    connect(mp,&midiPlayerV2::requestToClose,this,[this]{this->closeMidiPlayer();});
 }
 
 void MainWindow::closeMidiPlayer()

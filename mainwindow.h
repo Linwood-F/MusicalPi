@@ -17,7 +17,7 @@
 #include "musiclibrary.h"
 #include "aboutwidget.h"
 #include "settingswidget.h"
-#include "midiplayer.h"
+#include "midiplayerV2.h"
 
 class MainWindow : public QMainWindow
 {
@@ -68,7 +68,8 @@ private:
        docPageLabel* visiblePages[MUSICALPI_MAXROWS * MUSICALPI_MAXCOLUMNS];  // used for play mode panes; layout is ignored for these and explicitly positioned
        TipOverlay* overlay;                                                   // fits (briefly) over the whole window when play-playing mode starts.
 
-    midiPlayer* mp; // This widget is a free floating window
+    midiPlayerV2* mp; // This widget is a free floating window
+
     int loadPagePendingNumber[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS]; // 0 indicates none pending
     docPageLabel::docTransition loadPagePendingTransition[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS];
 
@@ -83,11 +84,11 @@ private:
     void playingPrevPage();
     void deletePDF();
     void checkQueueVsCache();
-    void doMidiPlayer();
     void mouseReleaseEvent(QMouseEvent *event);
     void resizeEvent(QResizeEvent *event);
     void sizeLogo();
     void keyPressEvent(QKeyEvent* e);
+    void doMidiPlayer();
     void closeMidiPlayer();
 
 private slots:

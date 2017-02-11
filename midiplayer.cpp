@@ -3,6 +3,7 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; }
+
 midiPlayer::midiPlayer(QWidget *parent, QString _midiFile, QString _titleName) : QWidget(parent)
 {
     qDebug() << "Entered";
@@ -63,10 +64,22 @@ void midiPlayer::openAndLoadFile()
                 for (unsigned int mCnt=0; mCnt < Pt->phrase()->size(); mCnt++)
                 {
                     TSE3::MidiEvent me = (*(Pt->phrase()))[mCnt];   // Part contains phrase which contains [] MidiEvents
-                    tst->barBeatPulse(me.time, newBar, newBeat, newPulse);
-                    tst->barBeatPulse(barsClock[newBar],bar, beat, pulse);  // This is current setting (may be zero if not set)
-                    if (bar < newBar || (bar == newBar && beat > newBeat) || (bar == newBar && beat == newBeat && pulse > newPulse ) ) barsClock[newBar] = TSE3::Clock(me.time);   // We want the first event in the bar
+                    if(me.data.isNote())
+                    {
+                        tst->barBeatPulse(me.time, newBar, newBeat, newPulse);
+                        qDebug() << "New midi event = " << me.time << " = [" << newBar << "," << newBeat << "," << newPulse << "], " << (me.data.isNote() ? me.data.data1 : 0);
+                        tst->barBeatPulse(barsClock[newBar],bar, beat, pulse);  // This is current setting (may be zero if not set)
+                        if (bar < newBar || (bar == newBar && beat > newBeat) || (bar == newBar && beat == newBeat && pulse > newPulse ) ) barsClock[newBar] = TSE3::Clock(me.time);   // We want the first event in the bar
+                    }
                 }
+            }
+        }
+        for(int i=0; i < sizeof(barsClock)/sizeof(barsClock[0]); i++)
+        {
+            if(barsClock[i]!=0 || i == 0)
+            {
+                tst->barBeatPulse(barsClock[i], newBar, newBeat, newPulse);
+                qDebug() << "   barsClock[" << i << "] contains " << barsClock[i] << " = [" << newBar << "," << newBeat << "," << newPulse << "]";
             }
         }
         qDebug() << "Last measure = " << lastBar;
@@ -85,8 +98,9 @@ void midiPlayer::openAndLoadFile()
         step = "Setting panic";
         setPanic(transport->startPanic());
         setPanic(transport->endPanic());
-        qDebug() << "Adaptive lookahead is " << transport->adaptiveLookAhead() << " (setting to true).";
-        transport->setAdaptiveLookAhead(true);
+        qDebug() << "Adaptive lookahead is " << transport->adaptiveLookAhead() << " (setting to false, and lookahead to 512).";
+        transport->setAdaptiveLookAhead(false);
+        transport->setLookAhead(TSE3::Clock(512));
         qDebug() << "Lookahead = " << transport->lookAhead();
     }
     catch (const TSE3::Error &e)
@@ -121,22 +135,23 @@ void midiPlayer::doPlayingLayout()
 
     measureInLabel = new QLabel(this);
     measureInLabel->setText("Go to measure#: ");
-    measureIn = new QLineEdit("1",this);    // Leave default as blank so we can tell if value entered
-    measureInRange = new QLabel(this);
+    measureIn = new QLineEdit("",this);
+    measureNowAt = new QLabel(this);
+    measureNowAt->setText("");
 
     gridLayout->addWidget(measureGo,0,0,1,1);
     gridLayout->addWidget(measureInLabel,0,1,1,1);
     gridLayout->addWidget(measureIn,0,2,1,1);
-    gridLayout->addWidget(measureInRange,0,3,1,1);
+    gridLayout->addWidget(measureNowAt,0,3,1,1);
 
     helpLabel = new QLabel("Adjust tempo and volume only when stopped");
     gridLayout->addWidget(helpLabel,1,1,1,3);
 
-    tempoLabel = new QLabel("Tempo %: ",this);
+    tempoLabel = new QLabel("Tempo: ",this);
     tempoSlider = new QSlider(Qt::Horizontal,this);
     tempoSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
-    tempoSlider->setMaximum(500);  // I can't find a variable for this
-    tempoSlider->setMinimum(1);
+    tempoSlider->setMaximum(200);  // Is this large enough?
+    tempoSlider->setMinimum(30);   // Small enough
     connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
     tempoValueLabel = new QLabel("???",this);
     gridLayout->addWidget(tempoLabel,2,1,1,1);
@@ -170,12 +185,17 @@ void midiPlayer::updateSliders()
         if(playStatus == TSE3::Transport::Playing) transport->poll();  // Must call this frequently to keep data going, only if playing
          // Don't update the slider unnecessarily as it causes the change routine to fire even if not changed
 
-        if(tempoSlider->value() != transport->filter()->timeScale()) tempoSlider->setValue(transport->filter()->timeScale());
-        tempoValueLabel->setText(QString::number(tempoSlider->value()) + " %");
+        if(tempoSlider->value() != sch->tempo())
+        {
+            tempoSlider->setValue(sch->tempo());
+            tempoValueLabel->setText(QString::number(tempoSlider->value()) + " bpm");
+        }
 
-        if(volumeSlider->value() != transport->filter()->velocityScale()) volumeSlider->setValue(transport->filter()->velocityScale());
-        volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
-
+        if(volumeSlider->value() != transport->filter()->velocityScale())
+        {
+            volumeSlider->setValue(transport->filter()->velocityScale());
+            volumeValueLabel->setText(QString::number(volumeSlider->value()) + " %");
+        }
 
         // use error slot but not highlighted for status
         switch(playStatus)
@@ -192,7 +212,7 @@ void midiPlayer::updateSliders()
                 tempoSlider->setDisabled(true);
                 volumeSlider->setDisabled(true);
                 tst->barBeatPulse(sch->clock(), bar, beat, pulse);
-                measureIn->setText(QString::number(bar));
+                measureNowAt->setText(QString::number(bar + 1));
                 break;
             case TSE3::Transport::Recording:
                 errorLabel->setText("Song is recording (never should get here!!)");
@@ -234,7 +254,11 @@ void midiPlayer::updateTempo(int newTempo)
 {
     qDebug() << "Entered";
     if(!canPlay) return;  // Shouldn't get here but just in case
-    transport->filter()->setTimeScale(newTempo);
+    if(sch->tempo() != newTempo)
+    {
+        qDebug() << "Changing temp from " << sch->tempo() << " to " << newTempo;
+        sch->setTempo(newTempo, sch->clock());
+    }
     updateSliders();  // hasten reflection of new info
 }
 
@@ -246,9 +270,9 @@ void midiPlayer::go()
         TSE3::Clock newClock(0);
         if(measureIn->text() != "" )
         {
-            int newBar = measureIn->text().toInt();
-            newBar = std::max(1,std::min(lastBar,newBar));
-            newClock = barsClock[newBar - 1];   // I do not know but I seem to have to start a measure ahead (and can't seem to start on the first)
+            int newBar = measureIn->text().toInt() - 1;  // Internally bars are reference 0 not 1; only the gui shows ref 1
+            newBar = std::max(0,std::min(lastBar,newBar));
+            newClock = barsClock[newBar];
             qDebug() << "Picked new bar " << newBar;
         }
         transport->play(song,newClock);
@@ -256,7 +280,7 @@ void midiPlayer::go()
         {
             timer = new QTimer(this);
             connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
-            timer->start(1000);
+            timer->start(100);
             qDebug() << "First time through, starting timer";
         }
         measureGo->setText("Stop");

@@ -27,7 +27,7 @@ SOURCES += main.cpp\
     aboutwidget.cpp \
     settingswidget.cpp \
     midiplayer.cpp \
-    tse3play.cpp
+    midiplayerV2.cpp
 
 HEADERS  += mainwindow.h \
     pdfdocument.h \
@@ -40,7 +40,7 @@ HEADERS  += mainwindow.h \
     aboutwidget.h \
     settingswidget.h \
     midiplayer.h \
-    tse3play.h
+    midiplayerV2.h
 
 DISTFILES += \
     MusicalPi.gif \
@@ -50,5 +50,8 @@ DISTFILES += \
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
-unix|win32: LIBS += -ltse3
+unix|win32: LIBS += -ltse3    #  Will not be needed later of TSE3 goes away but needed now for compilation
+unix|win32: LIBS += -L../midifile/lib -lmidifile
+INCLUDEPATH += ../midifile/include
+
 
