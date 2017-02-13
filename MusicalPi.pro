@@ -52,6 +52,8 @@ unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
 unix|win32: LIBS += -ltse3    #  Will not be needed later of TSE3 goes away but needed now for compilation
 unix|win32: LIBS += -L../midifile/lib -lmidifile
+unix|win32: LIBS += -lasound
+
 INCLUDEPATH += ../midifile/include
 
 
