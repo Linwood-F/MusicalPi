@@ -36,7 +36,7 @@ public:
     midiPlayerV2(QWidget *parent, QString midiFile, QString titleName);
     ~midiPlayerV2();
 
-    int lastBar;
+    int lastMeasure;
 
 private:
     QVBoxLayout *outLayout;
@@ -45,6 +45,7 @@ private:
     QLabel      *measureInLabel;
     QLineEdit   *measureIn;
     QLabel      *measureNowAt;
+    QLabel      *measureMax;
     QPushButton *measureGo;
     QSlider     *tempoSlider;
     QSlider     *positionSlider;
@@ -54,26 +55,30 @@ private:
     QLabel      *volumeLabel, *volumeValueLabel;
     QLabel      *songLabel;
     QLabel      *errorLabel;
+
     QString     midiFile;     // Passed in file
 
     void doPlayingLayout();
     void openAndLoadFile();
     void getQueueInfo();
-    void go();
+    bool go();
+    void closeEvent(QCloseEvent*);
+    bool sendIt(snd_seq_event_t* ep_ptr);
+    bool parseFileAndPlay(bool playFlag, int playAtMeasure);
+    bool openSequencerInitialize();
+    void startOrStopUpdateSliderTimer(bool start);
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
     QString errorEncountered;  // Blank is no error, otherwise a fatal error
-    void closeEvent(QCloseEvent*);
-    QString guessSpelling(int note, int keySigNum, bool majorKey);
-    void sendIt(snd_seq_event_t* ep_ptr);
-    bool parseFileAndPlay(bool playFlag, int playAtMeasure);
-    bool openSequencerInitialize();
+    QString guessSpelling(int note, int keySigNum);
 
     int keySig; // Last encountered key signature while scanning file (as coded in midi)
     const int keySig_offset = 7; // Add to key signature to index our name array (-7 -> 0)
     bool keySigMajor; // Was last key signature minor or magor
     const QString keySigs[15] = {"Cb","Gb","Db","Ab","Eb","Bb","F","C","G","D","A","E","B","F#","C#"};
+
     MidiFile mfi;  // Structure the library creates on read (we'll only do one at a time)
+
     struct measureInfo_type
     {
         // Index 0 = measure number 1
@@ -113,12 +118,24 @@ private:
     int startAtTick;     // What tick are we starting from (this is an offset so the queue starts at zero)
 
 private slots:
-    void updateSliders();
+    bool updateSliders();
     void updateVolume(int);
     void updateTempo(int);
 
 signals:
     void requestToClose();
+
+// This macro is used to simplify checks after calling ALSA routines; it presumes a "return false" is the correct handling
+#define checkALSAreturn(ret,Msg) \
+    if( (ret) < 0 )   \
+    { \
+       qDebug() <<  Msg << " error=" << snd_strerror(errno); \
+       errorEncountered = Msg + QString(" error=") + QString(snd_strerror(errno)); \
+       return false; \
+    }
+
 };
+
+
 
 #endif // MIDIPLAYER2_H

@@ -49,10 +49,20 @@
 #define MUSICALPI_LOGO_PCT 0.20
 
 //#define MUSICALPI_MIDI_PORT 20   // Need a better way
-#define MUSICALPI_MIDI_PORT 128   // Need a better way
+#define MUSICALPI_MIDI_PORT 128    // Need a better way
 #define MUSICALPI_MAX_MEASURE 10000
 #define MUSICALPI_INITIAL_VELOCITY_SCALE 10
 #define MUSICALPI_INITIAL_TIME_SCALE 100
+
+// Debug output controls for some verbose stuff
+
+//#define MUSICALPI_DEBUG_MIDI_SEND_DETAILS
+//#define MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS
+//#define MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
+
+// Midi output changes
+
+#define MUSICALPI_MIDI_QUASH_RESET_ALL    // My piano misses the next note if these are sent
 
 #endif // PICONSTANTS
 

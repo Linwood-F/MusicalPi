@@ -12,19 +12,22 @@ midiPlayerV2::midiPlayerV2(QWidget *parent, QString _midiFile, QString _titleNam
     this->setWindowFlags(Qt::Window|Qt::Dialog);
     timer = NULL;
     handle = 0; // indicates we haven't initialized sequencer
-    currentIsRunning = 0; // and of course we can't be running the queue yet
+    currentIsRunning = false; // and of course we can't be running the queue yet
     midiFile = _midiFile;
     doPlayingLayout();  // This is needed even if not playing to show error
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);
     updateTempo(MUSICALPI_INITIAL_TIME_SCALE);
     openAndLoadFile();
-    updateSliders();  // This is really only needed for error conditions since the above won't update then
+    updateSliders();
 }
 
 midiPlayerV2::~midiPlayerV2()
 {
-    // Clean up allocations???
+    if(handle) snd_seq_free_queue(handle,queue);
+    DELETE_LOG(timer);
 }
+
+// How do I know when to stop the queue?!?!?  I.e. when done?
 
 bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
 {
@@ -58,57 +61,56 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
 
     if(handle == 0 and canPlay) canPlay= openSequencerInitialize();  // set up early just in case we are playing and analyzing both
     if(!canPlay) return canPlay;
-    if(playFlag)
+    if(playFlag) // Are we playing on this pass?
     {
         getQueueInfo();
-        if (currentIsRunning&& 1==2)  // ???
+        if (currentIsRunning)
         {
-            qDebug() << "Stopping queue so we can (if needed) reposition during a play call";
-            snd_seq_stop_queue(handle, queue, NULL);  // to reposition stop queue first
-            snd_seq_drain_output(handle);
-            // Note we leave it stopped until we get the first event below so we have a tick for start time, it's started in sendIt()
+            qDebug() << "Stopping queue so we can reposition during a play call";
+            checkALSAreturn(snd_seq_stop_queue(handle, queue, NULL),"Stopping queue to reposition")  // to reposition stop queue first
+            checkALSAreturn(snd_seq_drain_output(handle),"Draining output after stop queue for reposition")
+            // Note we leave it stopped until we get the first event below so as not to rush it if this code takes a while
             currentIsRunning = false;
+            startOrStopUpdateSliderTimer(false);
         }
     }
-
     MidiEvent *ptr;
     int noteOnSent = 0;
-    // This look goes through events, starting on requested position (or first time at beginning)
+    // This goes through all events, starting on requested position (or first time at beginning)
     int startAtEvent = (playAtMeasure <= 1 ? 0 : measures[playAtMeasure - 1].startEventNumber);
     startAtTick = (&(mfi[0][startAtEvent]))->tick;
     qDebug() << "Starting event processing at event " << startAtEvent << ", using startAtTick=" << startAtTick;
-    for (int i = 0; i < mfi.getEventCount(0); i++)  // Always starting at zero, just don't send unless we need to
+    for (int thisEvent = 0; thisEvent < mfi.getEventCount(0); thisEvent++)  // Always starting at zero, just don't send unless we need to
     {
         QString midiDataText;  // Cumulative debug output for this event
-        ptr = &(mfi[0][i]);    // Point to an event
+        ptr = &(mfi[0][thisEvent]);    // Point to an event
 
-        // initialize an ALSA event in case we need it based on this event's time (only really needed if playing but easier to keep in scope by always doing)
+        // initialize an ALSA event in case we need it based on this event's time
         // Note that the tick is calculated, since any restart has the queue time at zero
         snd_seq_event_t ep;  // new event
         snd_seq_ev_clear(&ep);
-        // The max() on the tick below prevents early events (like tempo) from being missed when sent ahead of the real notes
+        // The max() on the tick below prevents early events (like tempo) from being missed when sent ahead of the real notes, so everything's relative is at least zero
         snd_seq_ev_schedule_tick(&ep, queue, 1, max(0,ptr->tick - startAtTick));  // 3rd parameter 0=absolute, <>0 = relative  ?? support for absolute files?   ???
-
         ep.source = sourceAddress;
         ep.dest = destAddress;
 
         // Since we always start at zero, it's not significantly more work to recalculate measures (and the code is cleaner without all the exceptions)
         while (ptr->tick >= runningMeasureStartTick + runningTicksPerMeasure)
         {
-            if(2==1) // Need a better test for detailed debugging
-                qDebug() << "Finished measure " << runningMeasureNumber
-                         << ", start tick = " << measures[runningMeasureNumber - 1].startTick
-                         << ", ticks per measure = " << measures[runningMeasureNumber - 1].ticksPerMeasure
-                         << ", uSec per tick = " << measures[runningMeasureNumber - 1].uSecPerTick;
+            #ifdef MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
+            qDebug() << "Finished measure " << runningMeasureNumber
+                     << ", start tick = " << measures[runningMeasureNumber - 1].startTick
+                     << ", ticks per measure = " << measures[runningMeasureNumber - 1].ticksPerMeasure
+                     << ", uSec per tick = " << measures[runningMeasureNumber - 1].uSecPerTick;
+            #endif
             runningMeasureNumber++;   // Step in whole measures and increments until we are inside a measure
             runningMeasureStartTick += runningTicksPerMeasure;
-            // Note we initialize these based on running, but tempo/time sign will change them
             measures[runningMeasureNumber - 1].startTick = runningMeasureStartTick;
             measures[runningMeasureNumber - 1].ticksPerMeasure = runningTicksPerMeasure;
             measures[runningMeasureNumber - 1].uSecPerTick = runninguSecPerTick;
-            measures[runningMeasureNumber - 1].startEventNumber = i;
+            measures[runningMeasureNumber - 1].startEventNumber = thisEvent;
         }
-
+        // Here we deal with all possible midi events (likely there are some we are missing and need to add)
         if(ptr->isAftertouch())
         {
             midiDataText = "Aftertouch channel " + QString::number(ptr->getChannel()) + " note " + QString::number(ptr->getP1()) + " to value " + QString::number(ptr->getP2());
@@ -121,6 +123,7 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
         }
         else if(ptr->isController())
         {
+            bool sendFlag = true;
             QString ctrlr = "Controller " + QString::number(ptr->getP1());  // default use number
             switch (ptr->getP1()) // controller is
             {
@@ -129,11 +132,15 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
                 case  64: ctrlr = "Damper pedal"; break;
                 case  66: ctrlr = "Sustenuto"; break;
                 case  91: ctrlr = "Effects 1 Depth"; break;
-                case 121: ctrlr = "Reset all"; break;
+                case 121: ctrlr = "Reset all";
+                          #ifdef MUSICALPI_MIDI_QUASH_RESET_ALL
+                          sendFlag=false;
+                          #endif
+                          break;
             }
 
             midiDataText = ctrlr + " on channel " + QString::number(ptr->getChannel()) + " to value " + QString::number(ptr->getP2());
-            if(playFlag && i >= startAtEvent)  // Don't send these (basically pedals) if we don't need them
+            if(sendFlag && playFlag && thisEvent >= startAtEvent)  // Send these (mostly pedals) only if we are actually playing (not just skipping forward)
             {
                 ep.type = SND_SEQ_EVENT_CONTROLLER;
                 ep.data.control.channel = ptr->getChannel();
@@ -145,8 +152,8 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
         else if(ptr->isEndOfTrack())  midiDataText = "EndOfTrack";  // No play action needed this is info only
         else if(ptr->isNoteOn())
         {
-            midiDataText = "NoteOn " + guessSpelling(ptr->getKeyNumber(),keySig,keySigMajor);
-            if(playFlag && i >= startAtEvent)
+            midiDataText = "NoteOn " + guessSpelling(ptr->getKeyNumber(),keySig);
+            if(playFlag && thisEvent >= startAtEvent)
             {
                 ep.type = SND_SEQ_EVENT_NOTEON;
                 ep.data.note.channel = ptr->getChannel();
@@ -156,17 +163,16 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
                 noteOnSent++;
             }
         }
-        else if(ptr->isNoteOff())
+        else if(ptr->isNoteOff())  // Note the underlying parse will set this with a noteon, velocity=0
         {
-            midiDataText = "NoteOff " + guessSpelling(ptr->getKeyNumber(),keySig,keySigMajor);
-            if(playFlag && i>= startAtEvent)
+            midiDataText = "NoteOff " + guessSpelling(ptr->getKeyNumber(),keySig);
+            if(playFlag && thisEvent>= startAtEvent)
             {
                 ep.type = SND_SEQ_EVENT_NOTEOFF;
                 ep.data.note.channel = ptr->getChannel();
                 ep.data.note.note = ptr->getKeyNumber();
                 ep.data.note.velocity = max(0,min(127,(velocityScale * ptr->getVelocity() / 100)));  // ok, should always be zero, but just in case go ahead and scale
                 sendIt(&ep);
-                // Is there just a "note" that needs to be dealt with???   Turn note-on with velocity 0 = note off?
             }
         }
         else if(ptr->isPatchChange())
@@ -215,14 +221,14 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
             measures[runningMeasureNumber - 1].ticksPerMeasure = runningTicksPerMeasure;  // This reats sig changes as always at start of measure, which may not be true, and may throw off count??
             measures[runningMeasureNumber - 1].uSecPerTick = runninguSecPerTick;
             midiDataText = "Time Sig " + QString::number(runningTimeNumerator) + "/" + QString::number(runningTimeDenominator) + ", ticks per measure = " + QString::number(runningTicksPerMeasure);
-            // no time signature is sent while playing
+            // no time signature is sent while playing, used only in measure counts
         }
         else if(ptr->isKeySignature())
         {
             keySig = (signed char)ptr->getP3();  // Save running key
             keySigMajor = (ptr->data()[4] == 0);  // We change this to a boolean!
             midiDataText = "Key Sig " + keySigs[keySig + keySig_offset] + (keySigMajor ? "-Major" : "-Minor");
-            // no key signature is sent while playing
+            // no key signature is sent while playing, its info only
         }
         else if(ptr->isMetaMessage())
         {
@@ -230,7 +236,7 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
             {
                 case 0x21: // Midi Port
                     midiDataText = "Midi port " + QString::number(ptr->data()[4]);
-                    if(playFlag) qDebug() << "No midi port is sent while playing at tick " << ptr->tick;  // needed??
+                    if(playFlag) qDebug() << "No midi port is sent while playing (needed???) at tick " << ptr->tick;  // needed??
                     break;
                 case 0x01: // text
                 case 0x02: // Copyright
@@ -261,52 +267,34 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
            if (j == 0) midiDataNumbers += "0x" + QString::number((int)(*ptr)[j],16) + " ";
            else midiDataNumbers += QString::number((int)(*ptr)[j],10) + " ";
         }
-        if(1==2)  // Find better way to flag this >???
-            qDebug() << "Event " << i << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
-                     << ", seconds = " << mfi.getTimeInSeconds(0,i) << ", " << midiDataText << ", " << midiDataNumbers;
+        #ifdef MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS
+        qDebug() << "Event " << thisEvent << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
+                 << ", seconds = " << mfi.getTimeInSeconds(0,thisEvent) << ", " << midiDataText << ", " << midiDataNumbers;
+        #endif
     }
-    if(1==2)  // flag whether to show detailed debugging of parse - need better way ???
-    {
+    #ifdef MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
         qDebug() << "Last measure " << runningMeasureNumber
                  << ", start tick = " << measures[runningMeasureNumber - 1].startTick
                  << ", ticks per measure = " << measures[runningMeasureNumber - 1].ticksPerMeasure
                  << ", uSec per tick = " << measures[runningMeasureNumber - 1].uSecPerTick;
-    }
-    lastBar = runningMeasureNumber;
-    snd_seq_drain_output(handle);  // Do I need to drain more frequently?   Buffer output in stages?
+    #endif
+    lastMeasure = runningMeasureNumber;
+    checkALSAreturn(snd_seq_drain_output(handle),"After all events processed")  // Do I need to drain more frequently?   Buffer output in stages?
     return canPlay;
 }
 
 bool midiPlayerV2::openSequencerInitialize()
 {
     // See if we can open the sequencer
-    if(snd_seq_open(&handle,"hw",SND_SEQ_OPEN_OUTPUT,0) < 0 )
-    {
-        qDebug() << "Failed to open sequencer, error = " << snd_strerror(errno);
-        return false;
-    }
-    queue = snd_seq_alloc_queue(handle);
-    if (queue < 0 )
-    {
-        qDebug() << "Failed to create queue, error=" << snd_strerror(errno);
-        return false;
-    }
+    checkALSAreturn(snd_seq_open(&handle,"hw",SND_SEQ_OPEN_OUTPUT,0),"Failed to open ALSO sequencer")
+    checkALSAreturn(queue = snd_seq_alloc_queue(handle),"Failed to create ALSA queue")
     sourceAddress.client = snd_seq_client_id(handle);
     int ret = snd_seq_create_simple_port(handle,NULL,SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_READ,  SND_SEQ_PORT_TYPE_MIDI_GENERIC);
-    if (ret < 0 )
-    {
-        qDebug() << "Failed to create port, error=" << snd_strerror(errno);
-        return false;
-    }
-    else sourceAddress.port = ret;
+    checkALSAreturn(ret,"Failed to create ALSA port")
+    sourceAddress.port = ret;
     destAddress.client = MUSICALPI_MIDI_PORT;  // yeah, alsa calls this the client not port, port is zero for our use
     destAddress.port = 0;
-    ret = snd_seq_connect_to(handle, sourceAddress.port, destAddress.client, destAddress.port);
-    if (ret < 0 )
-    {
-        qDebug() << "Failed to connect to, error = " << snd_strerror(errno);
-        return false;
-    }
+    checkALSAreturn(snd_seq_connect_to(handle, sourceAddress.port, destAddress.client, destAddress.port),"Failed to connect to destination (MIDI) port")
 
     // Set initial tempo (do not use this form while playing only for defaults)
     snd_seq_queue_tempo_t *qtempo;
@@ -315,25 +303,10 @@ bool midiPlayerV2::openSequencerInitialize()
     snd_seq_queue_tempo_set_ppq(qtempo, mfi.getTicksPerQuarterNote());
     snd_seq_queue_tempo_set_tempo(qtempo, 60*1000000/120);  // Default to 120 changes can come later
 
-    ret = snd_seq_set_queue_tempo(handle, queue, qtempo);
-    if (ret < 0 )
-    {
-        qDebug() << "Failure to set initial tempo error = " << snd_strerror(errno);
-        return false;
-    }
-    snd_seq_drain_output(handle);
+    checkALSAreturn(snd_seq_set_queue_tempo(handle, queue, qtempo),"Failure to set initial (default) tempo")
+    checkALSAreturn(snd_seq_drain_output(handle),"Drain after initialization set tempo")
     qDebug() << "Queue = " << queue << ", handle=" << handle << ", source client=" << sourceAddress.client
              << ", source port = " << sourceAddress.port;
-
-    // Is this where this should occur??
-
-    if(timer==NULL)
-    {
-        timer = new QTimer(this);
-        connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
-        timer->start(1000);
-        qDebug() << "First time through, starting timer";
-    }
     return true;
 }
 
@@ -365,33 +338,26 @@ void midiPlayerV2::openAndLoadFile()
     /// Need try/catch for MidiFile read???  Set canPlay=false
 }
 
-void midiPlayerV2::sendIt(snd_seq_event_t* ep_ptr)
+bool midiPlayerV2::sendIt(snd_seq_event_t* ep_ptr)
 {
     // If we are not actually running now, we start the queue (this is so we have an event defined for a tick
     if(!currentIsRunning)
     {
 
         qDebug() << "Starting queue since it is stopped and we are playing";
-        int ret = snd_seq_start_queue(handle, queue, NULL);  // Note this always starts at tick 0.
-        if(ret < 0)
-        {
-            qDebug() << "Starting queue returned error " << strerror(errno);
-            return;
-        }
-        snd_seq_drain_output(handle);
+        checkALSAreturn(snd_seq_start_queue(handle, queue, NULL),"Starting queue on first send returned error ");
+        checkALSAreturn(snd_seq_drain_output(handle),"Drain after start queue command")
         currentIsRunning = true;
+        startOrStopUpdateSliderTimer(true);
     }
-//    if(2==1)   // Change if you want detailed note transmission debugging
-        qDebug() << "Sending to queue=" << ep_ptr->queue << ", tick (incl offset)=" << ep_ptr->time.tick + startAtTick
+    #ifdef MUSICALPI_DEBUG_MIDI_SEND_DETAILS
+    qDebug() << "Sending to queue=" << ep_ptr->queue << ", tick (incl offset)=" << ep_ptr->time.tick + startAtTick
                  << ", source client=" << ep_ptr->source.client << ", source port" << ep_ptr->source.port
                  << ", dest client=" << ep_ptr->dest.client << ", dest port=" << ep_ptr->dest.port
                  << ", type=" << ep_ptr->type;
-    int ret = snd_seq_event_output(handle,ep_ptr);
-    if(ret < 0)
-    {
-        qDebug() << "send note event returned error " << strerror(errno);
-        return;
-    }
+    #endif
+    checkALSAreturn(snd_seq_event_output(handle,ep_ptr),"Send note event")
+    return true;
 }
 
 void midiPlayerV2::doPlayingLayout()
@@ -400,9 +366,6 @@ void midiPlayerV2::doPlayingLayout()
     outLayout->setSpacing(15);
     gridLayout = new QGridLayout();
     gridLayout->setVerticalSpacing(15);
-
-    qDebug() << "Layouts created";
-
     outLayout->addLayout(gridLayout);
 
     measureGo = new QPushButton("???",this);
@@ -414,11 +377,14 @@ void midiPlayerV2::doPlayingLayout()
     measureIn = new QLineEdit("",this);
     measureNowAt = new QLabel(this);
     measureNowAt->setText("");
+    measureMax = new QLabel(this);
+    measureMax->setText("");
 
     gridLayout->addWidget(measureGo,0,0,1,1);
     gridLayout->addWidget(measureInLabel,0,1,1,1);
     gridLayout->addWidget(measureIn,0,2,1,1);
     gridLayout->addWidget(measureNowAt,0,3,1,1);
+    gridLayout->addWidget(measureMax,0,4,1,1);
 
     helpLabel = new QLabel("Adjust tempo and volume only when stopped");
     gridLayout->addWidget(helpLabel,1,1,1,3);
@@ -450,7 +416,7 @@ void midiPlayerV2::doPlayingLayout()
     outLayout->addWidget(errorLabel);
 }
 
-void midiPlayerV2::updateSliders()
+bool midiPlayerV2::updateSliders()
 {
     if(canPlay)
     {
@@ -458,13 +424,22 @@ void midiPlayerV2::updateSliders()
         tempoValueLabel->setText(QString::number(tempoScale));
 
         getQueueInfo();
-
         qDebug() << "Updating sliders, canPlay=true, Tick=" << currentTick << ", Tick(including offset)=" << currentTick + startAtTick
                  << ", Events in queue = " << currentEvents << ", measure=" << currentMeasure
                  << ", tempo=" << currentTempo << ", skew=" << currentSkew
                  << ", skewBase=" << currentSkewBase << ", running=" << currentIsRunning;
 
-        // use error slot but not highlighted for status
+        measureMax->setText(QString::number(lastMeasure));
+        // If we're playing and we run off the end AND no events queued, just stop the queue
+        if(currentIsRunning && currentMeasure >= lastMeasure && currentEvents == 0)
+        {
+            qDebug() << "Stopping queue since it appears we are done";
+            snd_seq_stop_queue(handle, queue, NULL);
+            checkALSAreturn(snd_seq_drain_output(handle),"After stop queue when done playing")
+            currentIsRunning = false;
+            startOrStopUpdateSliderTimer(false);
+        }
+
         if (currentIsRunning)
         {
             errorLabel->setText("Song is playing (stop to adjust sliders)");
@@ -494,6 +469,7 @@ void midiPlayerV2::updateSliders()
         errorLabel->setText(errorEncountered);
         errorLabel->setStyleSheet("color: red;");
     }
+    return true;
 }
 
 void midiPlayerV2::updateVolume(int newVolume)
@@ -512,7 +488,7 @@ void midiPlayerV2::updateTempo(int newTempo)
     updateSliders();  // hasten reflection of new info
 }
 
-void midiPlayerV2::go()
+bool midiPlayerV2::go()
 {
     if(canPlay && !currentIsRunning)  // Hitting play from here uses measure or starts over if blank
     {
@@ -520,31 +496,32 @@ void midiPlayerV2::go()
         if(measureIn->text() != "")
         {
             int newBar = measureIn->text().toInt();  // Internally bars are reference 0 not 1; only the gui shows ref 1
-            measureToPlay = std::max(0,std::min(lastBar,newBar));
+            measureToPlay = std::max(0,std::min(lastMeasure,newBar));
         }
-        qDebug() << "Starting play=true, measure= " << measureToPlay;
+        qDebug() << "Go: Not playing, Starting play=true, measure= " << measureToPlay;
         parseFileAndPlay(true,measureToPlay);
     }
     else if (canPlay && currentIsRunning)  // Hitting stop ends play entirely but updates measure to where we were
     {
         qDebug() << "Go: Playing, so changing to stopped, stopping queue ";
-        int ret = snd_seq_stop_queue(handle,queue, NULL);
-        if(ret<0)
-        {
-            qDebug() << "Stop queue failed, returned error " << strerror(errno) << " (continuing anyway)";
-        }
-        snd_seq_drain_output(handle);
+        checkALSAreturn(snd_seq_stop_queue(handle,queue, NULL),"Stop queue failed on manual request ");
+        checkALSAreturn(snd_seq_drain_output(handle),"Drain after manual stop queue")
         measureGo->setText("Play");
+        startOrStopUpdateSliderTimer(false);
+        updateSliders();
     }
     else
     {
         qDebug() << "Can't play so doing nothing in go -- shouldn't be able to get here";
         measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
     }
+    return true;
 }
+
 void midiPlayerV2::getQueueInfo() // set the "current" fields for the queue
 {
     if(handle==0) return;  // not ready yet
+
     snd_seq_queue_status_t* qStatus;
     snd_seq_queue_status_alloca(&qStatus);
     memset(qStatus,0,snd_seq_queue_status_sizeof());
@@ -553,6 +530,7 @@ void midiPlayerV2::getQueueInfo() // set the "current" fields for the queue
     currentTick = snd_seq_queue_status_get_tick_time(qStatus);
     currentEvents = snd_seq_queue_status_get_events(qStatus);
     currentIsRunning = snd_seq_queue_status_get_status(qStatus);
+
     snd_seq_queue_tempo_t* qTempo;
     snd_seq_queue_tempo_alloca(&qTempo);
     memset(qTempo,0,snd_seq_queue_tempo_sizeof());
@@ -561,19 +539,41 @@ void midiPlayerV2::getQueueInfo() // set the "current" fields for the queue
     currentTempo = snd_seq_queue_tempo_get_tempo(qTempo);
     currentSkew = snd_seq_queue_tempo_get_skew_base(qTempo);
     currentSkewBase = snd_seq_queue_tempo_get_skew(qTempo);
-    // With the tick we can find measure (note we have to skew by the startAtTick as the queue tick always starts at zero
+
+    // With the (adjusted) tick we can find measure
     // remember measure counts are also skewed by 1, so 1 below is [0]
     for(currentMeasure = 1; measures[currentMeasure].startTick <= currentTick+ startAtTick; currentMeasure++);
 }
 
 void midiPlayerV2::closeEvent(QCloseEvent *event)
 {
-    event->ignore();  // We ignore it here and signal the caller to delete us, but do stop any playing
-//    if(canPlay && playStatus == TSE3::Transport::Playing) transport->play(0,0);
+    event->ignore();
     emit requestToClose();
 }
 
-QString midiPlayerV2::guessSpelling(int note, int keySigNum, bool majorKey)
+void midiPlayerV2::startOrStopUpdateSliderTimer(bool start)
+{
+    if(start)
+    {
+        if(timer==NULL)  timer = new QTimer(this);
+        if(!timer->isActive())
+        {
+            connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
+            timer->start(500);
+            qDebug() << "Starting update slider timer";
+        }
+    }
+    else // stopping timer
+    {
+        if(timer!=NULL && timer->isActive())
+        {
+            timer->stop();
+            qDebug() << "Stopping update slider timer";
+        }
+    }
+}
+
+QString midiPlayerV2::guessSpelling(int note, int keySigNum)
 {
     // Get a reasonable spelling of the note based on key signature (e.g. give preference to flats if sig includes it, sharps if includes, etc.)
     // This is all just guesswork, so I did a lot of duplication in case it is desirable to fine tune any
