@@ -1,8 +1,8 @@
-#-------------------------------------------------
+#--------------------------------------------------------------------
 #
-# Project created by QtCreator 2016-10-29T21:05:21
+# Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 #
-#-------------------------------------------------
+#--------------------------------------------------------------------
 
 QT       += core gui
 QT       += sql
@@ -26,7 +26,6 @@ SOURCES += main.cpp\
     musiclibrary.cpp \
     aboutwidget.cpp \
     settingswidget.cpp \
-    midiplayer.cpp \
     midiplayerV2.cpp
 
 HEADERS  += mainwindow.h \
@@ -39,7 +38,6 @@ HEADERS  += mainwindow.h \
     musiclibrary.h \
     aboutwidget.h \
     settingswidget.h \
-    midiplayer.h \
     midiplayerV2.h
 
 DISTFILES += \
@@ -50,7 +48,6 @@ DISTFILES += \
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
-unix|win32: LIBS += -ltse3    #  Will not be needed later of TSE3 goes away but needed now for compilation
 unix|win32: LIBS += -L../midifile/lib -lmidifile
 unix|win32: LIBS += -lasound
 
