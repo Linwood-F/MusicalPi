@@ -58,6 +58,15 @@ bool midiPlayerV2::parseFileAndPlay(bool playFlag, int playAtMeasure)
     runningTimeNumerator = 4;
     runningTimeDenominator = 4;
     runningMeasureStartTick = 0;
+    // Initialize the whole array just so it makes sense if we run off the end or such
+    // Should this be a dynamic strucure???
+    for(int i=0; i<MUSICALPI_MAX_MEASURE; i++)  // Note [0] is measure # 1
+    {
+        measures[i].startTick = (i==0 ? 0 : 987654321);
+        measures[i].ticksPerMeasure = runningTicksPerMeasure;
+        measures[i].uSecPerTick = runninguSecPerTick;
+        measures[i].startEventNumber = (i==0 ? 0 : 987654321) ;
+    }
 
     if(handle == 0 and canPlay) canPlay= openSequencerInitialize();  // set up early just in case we are playing and analyzing both
     if(!canPlay) return canPlay;
@@ -313,15 +322,6 @@ bool midiPlayerV2::openSequencerInitialize()
 
 void midiPlayerV2::openAndLoadFile()
 {
-    // Initialize the whole array just so it makes sense if we run off the end or such
-    // Should this be a dynamic strucure???
-    for(int i=0; i<MUSICALPI_MAX_MEASURE; i++)  // Note [0] is measure # 1
-    {
-        measures[i].startTick = (i==0 ? 0 : 987654321);
-        measures[i].ticksPerMeasure = runningTicksPerMeasure;
-        measures[i].uSecPerTick = runninguSecPerTick;
-        measures[i].startEventNumber = (i==0 ? 0 : 987654321) ;
-    }
     canPlay = false;  // Will indicate if file is usable
     qDebug() << "Reading file";
     mfi.read(midiFile.toStdString());
@@ -418,11 +418,11 @@ void midiPlayerV2::doPlayingLayout()
 
 bool midiPlayerV2::updateSliders()
 {
+    volumeValueLabel->setText(QString::number(velocityScale));
+    tempoValueLabel->setText(QString::number(tempoScale));
+
     if(canPlay)
     {
-        volumeValueLabel->setText(QString::number(velocityScale));
-        tempoValueLabel->setText(QString::number(tempoScale));
-
         getQueueInfo();
         qDebug() << "Updating sliders, canPlay=true, Tick=" << currentTick << ", Tick(including offset)=" << currentTick + startAtTick
                  << ", Events in queue = " << currentEvents << ", measure=" << currentMeasure
