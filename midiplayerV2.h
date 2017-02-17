@@ -22,12 +22,12 @@
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiMessage.h"
+#include "midiplayerv2thread.h"
 
-//extern "C" {
 #include <alsa/asoundlib.h>
-//}
 #include <string>
 
+class midiplayerV2Thread;
 
 class midiPlayerV2 : public QWidget
 {
@@ -35,8 +35,20 @@ class midiPlayerV2 : public QWidget
 public:
     midiPlayerV2(QWidget *parent, QString midiFile, QString titleName);
     ~midiPlayerV2();
+    unsigned int lastMeasure;
 
-    int lastMeasure;
+    typedef struct
+    {
+        snd_seq_event_t snd_seq_event;
+        int measureNum;
+        bool containsTempo;   // implies we may need to scale velocity before sending
+        bool containsNoteOn;  // implies we may need to scale tempbefore sending
+        int ticksPerMeasure;
+        int uSecPerTick;
+    } playableEvent_t;
+    std::map<int, playableEvent_t> events;  // sparese structure for only playable (at least sendable) items
+    int overallTicksPerQuarter;  // from header
+
 
 private:
     QVBoxLayout *outLayout;
@@ -59,12 +71,10 @@ private:
     QString     midiFile;     // Passed in file
 
     void doPlayingLayout();
-    void openAndLoadFile();
-    void getQueueInfo();
+    bool openAndLoadFile();
     bool go();
     void closeEvent(QCloseEvent*);
-    bool sendIt(snd_seq_event_t* ep_ptr);
-    bool parseFileAndPlay(bool playFlag, int playAtMeasure);
+    bool parseFileForPlayables();
     bool openSequencerInitialize();
     void startOrStopUpdateSliderTimer(bool start);
 
@@ -79,43 +89,23 @@ private:
 
     MidiFile mfi;  // Structure the library creates on read (we'll only do one at a time)
 
-    struct measureInfo_type
-    {
-        // Index 0 = measure number 1
-        int startTick;
-        int ticksPerMeasure;
-        int uSecPerTick;
-        int startEventNumber;
+    QTimer* timer;  // Used to keep sliders updated -- should this be dynamic instead now??
 
-    } measures[MUSICALPI_MAX_MEASURE];
-
-    QTimer* timer;
-    // These describe the (only) queue and context we use.
-    snd_seq_t* handle;
-    int queue;
-    snd_seq_addr_t sourceAddress;
-    snd_seq_addr_t destAddress;
-    int currentTick;
-    int currentEvents;
-    int currentMeasure;
-    int currentTempo;  // as uSec per tick
-    int currentSkew;
-    int currentSkewBase;
-    int currentIsRunning;
-    int overallTicksPerQuarter;  // from header
-
-    int runningMeasureNumber;
+    // Used in the parse only -0 not used in play
+    unsigned int runningMeasureNumber;
     unsigned int runningTempoAsuSec;
     unsigned int runningTempoAsQPM;
-    int runningTimeNumerator;
-    int runningTimeDenominator;
-    int runningMeasureStartTick;
+    unsigned int runningTimeNumerator;
+    unsigned int runningTimeDenominator;
+    unsigned int runningMeasureStartTick;
 #define runningTicksPerMeasure (overallTicksPerQuarter * 4 * runningTimeNumerator / runningTimeDenominator)
 #define runninguSecPerTick ((1000000*60)/(overallTicksPerQuarter * runningTempoAsQPM))
 
-    int tempoScale;      // integral percentage, 100 = as written, 50 = half speed, 150 = twice speed
-    int velocityScale;   // integral percentage (e.g. 50 = half, 150 = half-again volume as written)
-    int startAtTick;     // What tick are we starting from (this is an offset so the queue starts at zero)
+    // Value of sliders -- ??? do these need to be realized as opposed to coming from slider?
+    unsigned int tempoScale;      // integral percentage, 100 = as written, 50 = half speed, 150 = twice speed
+    unsigned int velocityScale;   // integral percentage (e.g. 50 = half, 150 = half-again volume as written)
+
+    midiplayerV2Thread* playThread;
 
 private slots:
     bool updateSliders();
@@ -124,18 +114,6 @@ private slots:
 
 signals:
     void requestToClose();
-
-// This macro is used to simplify checks after calling ALSA routines; it presumes a "return false" is the correct handling
-#define checkALSAreturn(ret,Msg) \
-    if( (ret) < 0 )   \
-    { \
-       qDebug() <<  Msg << " error=" << snd_strerror(errno); \
-       errorEncountered = Msg + QString(" error=") + QString(snd_strerror(errno)); \
-       return false; \
-    }
-
 };
-
-
 
 #endif // MIDIPLAYER2_H

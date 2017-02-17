@@ -58,11 +58,18 @@
 
 //#define MUSICALPI_DEBUG_MIDI_SEND_DETAILS
 //#define MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS
-//#define MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
+#define MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
 
 // Midi output changes
 
 #define MUSICALPI_MIDI_QUASH_RESET_ALL    // My piano misses the next note if these are sent
+
+// ALSA interface tuning
+
+#define MUSICALPI_ALSA_LOW_WATER 10     // Integral percent of total space (e.t. 15 = 15% of max size) at which we stop filling
+#define MUSICALPI_ALSA_HIGH_WATER 25     // Integral percent of total space (e.t. 15 = 15% of max size) at which we restart filling
+#define MUSICALPI_ALSA_MAX_OUTPUT_BUFFER 512 // Maximum we'll go in trying to set buffer size
+#define MUSICALPI_ALSA_PACING_INTERVAL 5 // How long in mSec we wait when queue is full before checking again
 
 #endif // PICONSTANTS
 

@@ -43,12 +43,10 @@ void renderThread::render(QImage** image, int thePage, int maxWidth, int maxHeig
 
     if(!isRunning())
     {
-        qDebug() << "Starting new thread " << mWhich;
         start(LowPriority);
     }
     else
     {
-        qDebug() << "Waking up thread " << mWhich;
         condition.wakeOne();
     }
     mutex.unlock();
