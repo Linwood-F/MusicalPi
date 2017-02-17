@@ -1,12 +1,5 @@
 #include "midiplayerv2thread.h"
 
-#define checkALSAreturn(ret,Msg) \
-    if( (ret) < 0 )   \
-    { \
-       qDebug() <<  Msg << " error=" << snd_strerror(errno); \
-       assert(ret>=0); \
-    }
-
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 // This object is created as soon as we know we need to play
@@ -26,19 +19,26 @@ midiplayerV2Thread::midiplayerV2Thread(midiPlayerV2 *parent): QThread(parent)
     requestType = none;
     mParent = parent; // the parent widget
     handle = 0;
-    queryQueueInterval = 0;
     lastTickProcessed = -1;
-    maxFree = 0;
-    minFree = 123456789;
     currentIsRunning = false;
+
+    // This timer is used to wake the worker up to see if any new instructions or if the queue can accept more data
+    // For example, when the queue is too full, the worker puts itself to sleep (indefinitely) and this is a wakeup to check if more room is available
     workTimer = new QTimer();
     connect(workTimer, SIGNAL(timeout()), this, SLOT(gooseThread()));
     workTimer->start(MUSICALPI_ALSA_PACING_INTERVAL);
+    // Debug output
+    if(MUSICALPI_DEBUG_QUEUE_INFO_INTERVAL > 0)
+    {
+        queueInfoDebug = new QTimer();
+        connect(queueInfoDebug,SIGNAL(timeout()), this, SLOT(queueInfoDebugOutput()));
+        queueInfoDebug->start(MUSICALPI_DEBUG_QUEUE_INFO_INTERVAL);
+    }
     start();
 }
 
 
-midiplayerV2Thread::~midiplayerV2Thread()
+midiplayerV2Thread::~midiplayerV2Thread()  // Note most ALSA cleanup is in the thread under the abort IF
 {
     qDebug() << "In destructor for object";
     mutex.lock();
@@ -46,17 +46,6 @@ midiplayerV2Thread::~midiplayerV2Thread()
     condition.wakeOne();
     mutex.unlock();
     wait();  // Since constructor/destructor are in the parent thread, this waits for the worker thread to exit before the base class destructor is called;
-    if(handle) snd_seq_free_queue(handle,queue);
-    //        snd_seq_drop_output(ctxp->handle);
-    //		t = 0;
-    //		seq_midi_event_init(ctxp, &ev, t, 0);
-    //		seq_midi_control(ctxp, &ev, 0, MIDI_CTL_ALL_SOUNDS_OFF, 0);
-    //		seq_send_to_all(ctxp, &ev);
-    //		snd_seq_drain_output(ctxp->handle);
-
-    //		snd_seq_free_queue(ctxp->handle, ctxp->queue);
-    //		snd_seq_close(ctxp->handle);
-    //        g_free(ctxtp);
     delete workTimer;
 }
 
@@ -85,12 +74,19 @@ void midiplayerV2Thread::stop()
 }
 void midiplayerV2Thread::gooseThread() // Encourage it to run a loop if it's waiting for work, just to check queue/etc.
 {
-    condition.wakeOne(); // we don't need to look anything out, just give it a start if it's waiting
+    condition.wakeOne(); // just give it a start if it's waiting
 }
 
 bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent thread but ONLY before play thread started
 {
-    // See if we can open the sequencer
+#define checkALSAreturn(ret,Msg) \
+    if( (ret) < 0 )   \
+    { \
+       qDebug() <<  Msg << " error=" << snd_strerror(errno); \
+       mParent->errorEncountered = Msg + QString(", error=") + QString(snd_strerror(errno)); \
+       return false; \
+    }
+    // See if we can open the sequencer - errors return false and pass out message
     checkALSAreturn(snd_seq_open(&handle,"hw",SND_SEQ_OPEN_OUTPUT,0),"Failed to open ALSO sequencer")
     checkALSAreturn(queue = snd_seq_alloc_queue(handle),"Failed to create ALSA queue")
     sourceAddress.client = snd_seq_client_id(handle);
@@ -123,7 +119,11 @@ bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent t
         else break;
     }
     qDebug() << "Determined output size max = " << outputSize << ", tid=" << syscall(__NR_gettid);
-    return true;
+    getQueueInfo();
+    // Safety checks:
+    assert(outBufferSize == outputSize);  // Let's make sure we actually got what we think we did
+    assert(MUSICALPI_QUEUE_CHUNK_SIZE < MUSICALPI_ALSA_LOW_WATER); // Make sure someone didn't screw up sizing
+    return true; // will set canPlay true
 }
 
 void midiplayerV2Thread::getQueueInfo() //  CALL ONLY FROM THREAD!!!!
@@ -132,8 +132,7 @@ void midiplayerV2Thread::getQueueInfo() //  CALL ONLY FROM THREAD!!!!
     snd_seq_queue_status_t* qStatus;
     snd_seq_queue_status_alloca(&qStatus);
     memset(qStatus,0,snd_seq_queue_status_sizeof());
-    int ret = snd_seq_get_queue_status(handle, queue, qStatus);
-    assert(ret>=0);
+    assert(snd_seq_get_queue_status(handle, queue, qStatus) >= 0);
     currentTick = snd_seq_queue_status_get_tick_time(qStatus);
     currentEvents = snd_seq_queue_status_get_events(qStatus);
     currentIsRunning = snd_seq_queue_status_get_status(qStatus);
@@ -141,23 +140,15 @@ void midiplayerV2Thread::getQueueInfo() //  CALL ONLY FROM THREAD!!!!
     snd_seq_queue_tempo_t* qTempo;
     snd_seq_queue_tempo_alloca(&qTempo);
     memset(qTempo,0,snd_seq_queue_tempo_sizeof());
-    ret = snd_seq_get_queue_tempo(handle, queue, qTempo);
-    assert(ret>=0);
+    assert(snd_seq_get_queue_tempo(handle, queue, qTempo) >= 0);
     currentTempo = snd_seq_queue_tempo_get_tempo(qTempo);
-
 
     snd_seq_client_pool_t* pool;
     snd_seq_client_pool_alloca(&pool);
     memset(pool,0,snd_seq_client_pool_sizeof());
-    ret = snd_seq_get_client_pool(handle,pool);
-    assert(ret>=0);
+    assert(snd_seq_get_client_pool(handle,pool) >= 0);
     outputFree = snd_seq_client_pool_get_output_free(pool);
-    outputRoom = snd_seq_client_pool_get_output_room(pool);
     outputSize = snd_seq_client_pool_get_output_pool(pool);
-    maxFree = max(maxFree,outputFree);
-    minFree = min(minFree,outputFree);
-
-    assert(outBufferSize == outputSize);  // Let's make sure we actually got what we think we did
 
     // With the (adjusted) tick we can find measure
     for(std::map<int,midiPlayerV2::playableEvent_t>::iterator thisEvent = mParent->events.begin(); thisEvent != mParent->events.end(); thisEvent++)
@@ -166,23 +157,6 @@ void midiplayerV2Thread::getQueueInfo() //  CALL ONLY FROM THREAD!!!!
             currentMeasure = thisEvent->second.measureNum;
             break;
         }
-
-    snd_seq_queue_timer_t* qtime;
-    snd_seq_queue_timer_alloca(&qtime);
-    memset(qtime,0,snd_seq_queue_timer_sizeof());
-    ret = snd_seq_get_queue_timer(handle, queue, qtime);
-    assert(ret>=0);
-    snd_seq_queue_timer_type_t qtype = snd_seq_queue_timer_get_type(qtime);
-
-    snd_seq_queue_info_t* qinfo;
-    snd_seq_queue_info_alloca(&qinfo);
-    memset(qinfo,0,snd_seq_queue_info_sizeof());
-    ret = snd_seq_get_queue_info(handle,queue,qinfo);
-    int qlocked = snd_seq_queue_info_get_locked(qinfo);
-    qDebug() << "Measure=" << currentMeasure << ", events="
-             << currentEvents << (currentIsRunning ? ", Running" : ", Stopped")
-             << ", Queue Tick=" << currentTick << ", lastTick=" << lastTickProcessed
-             << ", tempo=" << currentTempo << ", queue type=" << qtype << ", locked=" << qlocked;
 }
 
 void midiplayerV2Thread::run()
@@ -191,21 +165,37 @@ void midiplayerV2Thread::run()
     std::map<int,midiPlayerV2::playableEvent_t>::iterator playStartEvent;
     forever
     {
-        if(++queryQueueInterval % 10 == 0 )
+        getQueueInfo();  // Find out what we know about the queue (if anything)
+        if(currentIsRunning && currentMeasure >= mParent->lastMeasure && currentEvents == 0)
         {
-            getQueueInfo();  // Find out what we know about the queue (if anything)
-
-            if(currentIsRunning && currentMeasure >= mParent->lastMeasure && currentEvents == 0)
-            {
-                qDebug() << "In thread, play is stopping as reached end of song.";
-                requestType = stopPlay;
-            }
+            qDebug() << "In thread, play is stopping as reached end of song.";
+            requestType = stopPlay;
         }
-
         // General loop checks what we are being asked to do -- different sections are NOT mutually exclusive
         if(requestType == abort)
         {
             qDebug() << "Aborting on playing thread";
+            if(handle)
+            {
+                qDebug() << "Sending all-sounds-off to all channels";
+                snd_seq_drop_output(handle);
+                for(int channel=0; channel<16; channel++)
+                {
+                    snd_seq_event_t ep;
+                    snd_seq_ev_clear(&ep);
+                    snd_seq_ev_schedule_tick(&ep, queue, 0, 0);
+                    ep.source = sourceAddress;
+                    ep.dest = destAddress;
+                    ep.type = SND_SEQ_EVENT_CONTROLLER;
+                    ep.data.control.channel = 0;
+                    ep.data.control.param = MIDI_CTL_ALL_SOUNDS_OFF;
+                    ep.data.control.value = 0;
+                    assert(snd_seq_event_output(handle,&ep)>=0);
+                }
+                drainQueue();
+                snd_seq_free_queue(handle, queue);
+                snd_seq_close(handle);
+            }
             return;
         }
 
@@ -215,7 +205,7 @@ void midiplayerV2Thread::run()
             {
                 if(requestType == stopPlay) qDebug() << "Stopping on playing thread by stop request with queue running";
                 else if(currentIsRunning) qDebug() << "Stopping on playing thread because it is running and we have a new play request";
-                checkALSAreturn(snd_seq_stop_queue(handle, queue, NULL),"Stopping queue to reposition")
+                assert(snd_seq_stop_queue(handle, queue, NULL) >= 0);
                 drainQueue();
                 // Note we leave it stopped until we get the first event below so as not to rush it if this code takes a while
                 currentIsRunning = false;
@@ -240,7 +230,7 @@ void midiplayerV2Thread::run()
                 {
                     playStartEvent = thisEvent;
                     qDebug() << "Starting queue since it is stopped and we are playing";
-                    checkALSAreturn(snd_seq_start_queue(handle, queue, NULL),"Starting queue on first send returned error ");
+                    assert(snd_seq_start_queue(handle, queue, NULL) >= 0);
                     drainQueue();
                     currentIsRunning = true;
                     startAtTick = thisEvent->second.snd_seq_event.time.tick;  // We'll scale everything else to this
@@ -255,7 +245,7 @@ void midiplayerV2Thread::run()
                                  << ", tick (incl offset)=" << prelimTempoEvent.time.tick
                                  << ", tempo(usec) = " << prelimTempoEvent.data.queue.param.value;
                         #endif
-                        checkALSAreturn(snd_seq_event_output(handle,&prelimTempoEvent),"Send prelim tempo event")
+                        assert(snd_seq_event_output(handle,&prelimTempoEvent)>=0);
                     }
                     break;   // Don't keep looping here
                 }
@@ -269,39 +259,45 @@ void midiplayerV2Thread::run()
         else if(requestType == playing)
         {
             // We keep playing from the next item after playStartEvent and increment it until done
-            // Since we may scale things and don't want to screw with the saved data, copy the event
-            snd_seq_event_t ep;
-            ep = playStartEvent->second.snd_seq_event;
-            if(playStartEvent->second.containsTempo)
+            // Since the overhead of the loop (and queue checking) is high, send out a chunk of data
+            // at once.  The chunk size should be << queue size as no checking is done if the queue is filling
+            // intra-chunk, in particular MUSICALPI_ALSA_LOW_WATER > MUSICALPI_QUEUE_CHUNK_SIZE;
+            for(int chunks = 0; chunks <= MUSICALPI_QUEUE_CHUNK_SIZE; chunks++)
             {
-                qDebug() << "In Play thread, sending tempo event, value=" << (ep.data.queue.param.value * 100 / m_tempoScale);
-                ep.data.queue.param.value = ep.data.queue.param.value * 100 / m_tempoScale;
+                // Since we may scale things and don't want to screw with the saved data, copy the event
+                snd_seq_event_t ep;
+                ep = playStartEvent->second.snd_seq_event;
+                if(playStartEvent->second.containsTempo)
+                {
+                    qDebug() << "In Play thread, sending tempo event, value=" << (ep.data.queue.param.value * 100 / m_tempoScale);
+                    ep.data.queue.param.value = ep.data.queue.param.value * 100 / m_tempoScale;
+                }
+                if(playStartEvent->second.containsNoteOn)  ep.data.note.velocity = ep.data.note.velocity * m_volumeScale / 100;
+                ep.time.tick = ep.time.tick - startAtTick; // offset for where we started queue (queue is always 0 start)
+                #ifdef MUSICALPI_DEBUG_MIDI_SEND_DETAILS
+                qDebug() << "Sending tick (w/offset)=" << ep.time.tick + startAtTick << ", source client=" << ep.source.client << ", dest client=" << ep.dest.client << ", type=" << ep.type;
+                #endif
+                assert(snd_seq_event_output(handle,&ep)>=0);
+
+                playStartEvent++;
+                if (playStartEvent == mParent->events.end())
+                {
+                    requestType = none;
+                    break;  // Exit chunk loop immediately
+                }
+                lastTickProcessed = ep.time.tick;
             }
-            if(playStartEvent->second.containsNoteOn)  ep.data.note.velocity = ep.data.note.velocity * m_volumeScale / 100;
-            ep.time.tick = ep.time.tick - startAtTick; // offset for where we started queue (queue is always 0 start)
-            #ifdef MUSICALPI_DEBUG_MIDI_SEND_DETAILS
-            qDebug() << "Sending tick (w/offset)=" << ep.time.tick + startAtTick << ", source client=" << ep.source.client << ", dest client=" << ep.dest.client << ", type=" << ep.type;
-            #endif
-            checkALSAreturn(snd_seq_event_output(handle,&ep),"Send regular event from playables")
-            playStartEvent++;
-            drainQueue();
-            if (playStartEvent == mParent->events.end())
-            {
-                requestType = none;
-                drainQueue();
-                getQueueInfo();
-            }
-            lastTickProcessed = ep.time.tick;
+            drainQueue();  // After each chunk so the queue info is relevant
         }
 
         // If we are playing, but the queue is near full, put us into a voluntary wait state
 
-        if(requestType == playing     && outputSize * MUSICALPI_ALSA_LOW_WATER / 100 >= outputFree)
+        if(requestType == playing     &&  MUSICALPI_ALSA_LOW_WATER >= outputFree)
         {
             requestType = playWaiting;
-            qDebug() << "Waiting for queue to empty...";
+            qDebug() << "Waiting for queue to empty  (at or below low water mark)...";
         }
-        if(requestType == playWaiting && outputSize * MUSICALPI_ALSA_HIGH_WATER / 100  < outputFree)
+        if(requestType == playWaiting &&  MUSICALPI_ALSA_HIGH_WATER < outputFree)
         {
             requestType = playing;
             qDebug() << "Restarting as queue reached high water mark...";
@@ -323,4 +319,12 @@ void midiplayerV2Thread::drainQueue()  //  Call from main or worker thread but s
         ret = snd_seq_drain_output(handle);
         assert(ret>=0);
     } while(ret>0);
+}
+void midiplayerV2Thread::queueInfoDebugOutput() // Runs in arent thread but accesses only fixed location items so should be thread safe if not consistent
+{
+    if(handle)
+        qDebug() << "Measure=" << currentMeasure << ", events="
+                 << currentEvents << ", running=" << currentIsRunning
+                 << ", Queue Tick=" << currentTick << ", lastTick=" << lastTickProcessed
+                 << ", tempo=" << currentTempo;
 }

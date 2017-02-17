@@ -48,6 +48,7 @@ public:
     } playableEvent_t;
     std::map<int, playableEvent_t> events;  // sparese structure for only playable (at least sendable) items
     int overallTicksPerQuarter;  // from header
+    QString errorEncountered;  // Blank is no error, otherwise a fatal error
 
 
 private:
@@ -79,7 +80,6 @@ private:
     void startOrStopUpdateSliderTimer(bool start);
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
-    QString errorEncountered;  // Blank is no error, otherwise a fatal error
     QString guessSpelling(int note, int keySigNum);
 
     int keySig; // Last encountered key signature while scanning file (as coded in midi)

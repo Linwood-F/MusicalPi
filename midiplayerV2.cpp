@@ -49,30 +49,14 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
     runningMeasureStartTick = 0;
 
     MidiEvent *ptr;
-//    int onEvent[300]; // How big?
-//    for(int i = 0; i<=300; i++) onEvent[i] = -1;
-//    for (int thisEvent = 0; thisEvent < mfi.getEventCount(0); thisEvent++)  // link same notes
-//    {
-//        ptr = &(mfi[0][thisEvent]);    // Point to an event
-//        if(ptr->isNoteOn())
-//        {
-//            onEvent[ptr->getKeyNumber()] = thisEvent;
-//        }
-//        else if (ptr->isNoteOff())
-//        {
-//            if(onEvent[ptr->getKeyNumber()]>=0)
-//            {
-//                ptr->linkEvent((mfi[0][onEvent[ptr->getKeyNumber()]]));
-//            }
-//        }
-//    }
+
     for (int thisEvent = 0; thisEvent < mfi.getEventCount(0); thisEvent++)  // Always starting at zero, just don't send unless we need to
     {
         QString midiDataText;  // Cumulative debug output for this event
         ptr = &(mfi[0][thisEvent]);    // Point to an event
         snd_seq_event_t ep;  // Set up empty event
         snd_seq_ev_clear(&ep);
-        snd_seq_ev_schedule_tick(&ep, playThread->queue, 0, ptr->tick);  // 3rd parameter 0=absolute, <>0 = relative  ?? support for absolute files?
+        snd_seq_ev_schedule_tick(&ep, playThread->queue, 0, ptr->tick);  // 3rd parameter 0=absolute, <>0 = relative
         ep.source = playThread->sourceAddress;
         ep.dest = playThread->destAddress;
         // Note we don't touch the event[thisEvent] unless we need it as it's a sparse map, not all thisEvent values go into it

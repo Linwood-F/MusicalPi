@@ -54,6 +54,7 @@ signals:
 
 private slots:
     void gooseThread();
+    void queueInfoDebugOutput();
 
 private:
     QMutex mutex;
@@ -65,11 +66,9 @@ private:
     QString errorEncountered;  // Does this need to be somehow linked to parent?
     midiPlayerV2 * mParent;  // can't define as explicit pdfdocument due to header load sequences
     QTimer *workTimer;
+    QTimer *queueInfoDebug;
     unsigned int outBufferSize;
-    int queryQueueInterval;
     int lastTickProcessed;
-    unsigned int maxFree;
-    unsigned int minFree;
     void drainQueue();
 };
 
