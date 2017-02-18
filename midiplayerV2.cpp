@@ -13,9 +13,11 @@ midiPlayerV2::midiPlayerV2(QWidget *parent, QString _midiFile, QString _titleNam
     setWindowTitle("Midi Player - " + _titleName);
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again
     this->setWindowFlags(Qt::Window|Qt::Dialog);
+    qDebug() << "THe parent of this is " << this->parentWidget();
+    this->setParent(parent);  // ?? is this needed?
+    playThread = NULL;
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
-    canPlay = false;       // can't play yet - this keeps some things from updating
     midiFile = _midiFile;
     doPlayingLayout();     // prepare screen
     updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);  // Set initial values
@@ -76,10 +78,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         if(ptr->isAftertouch()) // i.e. polyphonic key pressure
         {
             midiDataText = "Aftertouch channel " + QString::number(ptr->getChannel()) + " note " + QString::number(ptr->getP1()) + " to value " + QString::number(ptr->getP2());
-            ep.type = SND_SEQ_EVENT_KEYPRESS;
-            ep.data.control.channel = ptr->getChannel();
-            ep.data.control.param = ptr->getP1(); // key
-            ep.data.control.value = ptr->getP2(); // velocity
+            snd_seq_ev_set_keypress(&ep, ptr->getChannel(), ptr->getP1(), ptr->getP2());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
@@ -90,9 +89,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isPressure()) // channel aftertouch
         {
             midiDataText = "Pressure channel "   + QString::number(ptr->getChannel()) + " to value " + QString::number(ptr->getP1());
-            ep.type = SND_SEQ_EVENT_CHANPRESS;
-            ep.data.control.channel = ptr->getChannel();
-            ep.data.control.value = ptr->getP1();
+            snd_seq_ev_set_chanpress(&ep, ptr->getChannel(), ptr->getP1());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
@@ -121,10 +118,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             midiDataText = ctrlr + " on channel " + QString::number(ptr->getChannel()) + " to value " + QString::number(ptr->getP2());
             if(sendFlag)  // Send these (mostly pedals)
             {
-                ep.type = SND_SEQ_EVENT_CONTROLLER;
-                ep.data.control.channel = ptr->getChannel();
-                ep.data.control.param = ptr->getP1();
-                ep.data.control.value = ptr->getP2();
+                snd_seq_ev_set_controller(&ep, ptr->getChannel(), ptr->getP1(), ptr->getP2());
                 events[thisEvent].measureNum = runningMeasureNumber;
                 events[thisEvent].containsTempo = false;
                 events[thisEvent].containsNoteOn = false;
@@ -137,10 +131,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isNoteOn())
         {
             midiDataText = "NoteOn " + guessSpelling(ptr->getKeyNumber(),keySig) + ", duration=" +  QString::number(ptr->getTickDuration());
-            ep.type = SND_SEQ_EVENT_NOTEON;
-            ep.data.note.channel = ptr->getChannel();
-            ep.data.note.note = ptr->getKeyNumber();
-            ep.data.note.velocity = ptr->getVelocity();
+            snd_seq_ev_set_noteon(&ep, ptr->getChannel(), ptr->getKeyNumber(), ptr->getVelocity());
             ep.data.note.duration = 0;  // we aren't linking notes so there's no calculated duration
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
@@ -152,11 +143,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isNoteOff())  // Note the underlying parse will set this with a noteon, velocity=0
         {
             midiDataText = "NoteOff " + guessSpelling(ptr->getKeyNumber(),keySig);
-            ep.type = SND_SEQ_EVENT_NOTEOFF;
-            ep.data.note.channel = ptr->getChannel();
-            ep.data.note.note = ptr->getKeyNumber();
-            ep.data.note.velocity = 0;
-            ep.data.note.duration = 0;
+            snd_seq_ev_set_noteoff(&ep, ptr->getChannel(), ptr->getKeyNumber(), 0);
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
@@ -167,9 +154,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isPatchChange())
         {
             midiDataText = "Patch Change channel " + QString::number(ptr->getChannel()) + " to " + QString::number(ptr->getP1());
-            ep.type = SND_SEQ_EVENT_PGMCHANGE;
-            ep.data.control.channel = ptr->getChannel();
-            ep.data.control.value = ptr->getP1();
+            snd_seq_ev_set_pgmchange(&ep, ptr->getChannel(), ptr->getP1());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
@@ -182,9 +167,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             int bend = ptr->getP2()<<7;
             bend = (bend << 7) | ptr->getP1();
             midiDataText = "Pitchbend adjust " + QString::number(bend);
-            ep.type = SND_SEQ_EVENT_PITCHBEND;
-            ep.data.control.channel = ptr->getChannel();
-            ep.data.control.value = bend;
+            snd_seq_ev_set_pitchbend(&ep, ptr->getChannel(), bend);
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
@@ -319,11 +302,11 @@ void midiPlayerV2::doPlayingLayout()
     measureMax = new QLabel(this);
     measureMax->setText("");
 
-    gridLayout->addWidget(measureGo,0,0,1,1);
+    gridLayout->addWidget(measureGo,     0,0,1,1);
     gridLayout->addWidget(measureInLabel,0,1,1,1);
-    gridLayout->addWidget(measureIn,0,2,1,1);
-    gridLayout->addWidget(measureNowAt,0,3,1,1);
-    gridLayout->addWidget(measureMax,0,4,1,1);
+    gridLayout->addWidget(measureIn,     0,2,1,1);
+    gridLayout->addWidget(measureNowAt,  0,3,1,1);
+    gridLayout->addWidget(measureMax,    0,4,1,1);
 
     helpLabel = new QLabel("Adjust tempo and volume only when stopped");
     gridLayout->addWidget(helpLabel,1,1,1,3);
@@ -335,8 +318,8 @@ void midiPlayerV2::doPlayingLayout()
     tempoSlider->setMinimum(30);   // Small enough
     connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
     tempoValueLabel = new QLabel("???",this);
-    gridLayout->addWidget(tempoLabel,2,1,1,1);
-    gridLayout->addWidget(tempoSlider,2,2,1,1);
+    gridLayout->addWidget(tempoLabel,     2,1,1,1);
+    gridLayout->addWidget(tempoSlider,    2,2,1,1);
     gridLayout->addWidget(tempoValueLabel,2,3,1,1);
 
     volumeLabel = new QLabel("Volume %", this);
@@ -347,18 +330,19 @@ void midiPlayerV2::doPlayingLayout()
     volumeSlider->setMaximum(150);
     volumeSlider->setMinimum(1);
     connect(volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(updateVolume(int)));
-    gridLayout->addWidget(volumeLabel,3,1,1,1);
-    gridLayout->addWidget(volumeSlider,3,2,1,1);
+    gridLayout->addWidget(volumeLabel,     3,1,1,1);
+    gridLayout->addWidget(volumeSlider,    3,2,1,1);
     gridLayout->addWidget(volumeValueLabel,3,3,1,1);
 
     errorLabel = new QLabel("",this);
     outLayout->addWidget(errorLabel);
 }
 
-bool midiPlayerV2::updateSliders()
+void midiPlayerV2::updateSliders()
 {
     volumeValueLabel->setText(QString::number(velocityScale));
     tempoValueLabel->setText(QString::number(tempoScale));
+    if(playThread==NULL) return;  // if we haven't gotten far enough to have worker don't try the below yet
     // Depend on playing thread to keep current* variables updated
     if(canPlay)
     {
@@ -389,12 +373,11 @@ bool midiPlayerV2::updateSliders()
         volumeSlider->setDisabled(true);
         measureGo->setDisabled(true);
         measureGo->setText("Error");
-
         // Highlight and show error
         errorLabel->setText(errorEncountered);
         errorLabel->setStyleSheet("color: red;");
     }
-    return true;
+    return;
 }
 
 void midiPlayerV2::updateVolume(int newVolume)
@@ -453,7 +436,7 @@ void midiPlayerV2::startOrStopUpdateSliderTimer(bool start)
     {
         if(!timer->isActive())
         {
-            timer->start(500);
+            timer->start(MUSICALPI_MIDIPLAY_SLIDER_UPDATE_RATE);
             qDebug() << "Starting update slider timer";
         }
     }

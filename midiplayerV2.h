@@ -35,8 +35,8 @@ class midiPlayerV2 : public QWidget
 public:
     midiPlayerV2(QWidget *parent, QString midiFile, QString titleName);
     ~midiPlayerV2();
-    unsigned int lastMeasure;
 
+    unsigned int lastMeasure;
     typedef struct
     {
         snd_seq_event_t snd_seq_event;
@@ -47,8 +47,8 @@ public:
         int uSecPerTick;
     } playableEvent_t;
     std::map<int, playableEvent_t> events;  // sparese structure for only playable (at least sendable) items
-    int overallTicksPerQuarter;  // from header
-    QString errorEncountered;  // Blank is no error, otherwise a fatal error
+    int overallTicksPerQuarter;  // from midi file header
+    QString errorEncountered;  // Blank is no error, otherwise a fatal error to appear on player
 
 
 private:
@@ -62,10 +62,13 @@ private:
     QPushButton *measureGo;
     QSlider     *tempoSlider;
     QSlider     *positionSlider;
-    QLabel      *tempoLabel, *tempoValueLabel;
-    QLabel      *positionLabel, *positionValueLabel;
+    QLabel      *tempoLabel;
+    QLabel      *tempoValueLabel;
+    QLabel      *positionLabel;
+    QLabel      *positionValueLabel;
     QSlider     *volumeSlider;
-    QLabel      *volumeLabel, *volumeValueLabel;
+    QLabel      *volumeLabel;
+    QLabel      *volumeValueLabel;
     QLabel      *songLabel;
     QLabel      *errorLabel;
 
@@ -76,11 +79,10 @@ private:
     bool go();
     void closeEvent(QCloseEvent*);
     bool parseFileForPlayables();
-    bool openSequencerInitialize();
     void startOrStopUpdateSliderTimer(bool start);
+    QString guessSpelling(int note, int keySigNum);
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
-    QString guessSpelling(int note, int keySigNum);
 
     int keySig; // Last encountered key signature while scanning file (as coded in midi)
     const int keySig_offset = 7; // Add to key signature to index our name array (-7 -> 0)
@@ -98,8 +100,8 @@ private:
     unsigned int runningTimeNumerator;
     unsigned int runningTimeDenominator;
     unsigned int runningMeasureStartTick;
-#define runningTicksPerMeasure (overallTicksPerQuarter * 4 * runningTimeNumerator / runningTimeDenominator)
-#define runninguSecPerTick ((1000000*60)/(overallTicksPerQuarter * runningTempoAsQPM))
+    #define runningTicksPerMeasure (overallTicksPerQuarter * 4 * runningTimeNumerator / runningTimeDenominator)
+    #define runninguSecPerTick ((1000000*60)/(overallTicksPerQuarter * runningTempoAsQPM))
 
     // Value of sliders -- ??? do these need to be realized as opposed to coming from slider?
     unsigned int tempoScale;      // integral percentage, 100 = as written, 50 = half speed, 150 = twice speed
@@ -108,7 +110,7 @@ private:
     midiplayerV2Thread* playThread;
 
 private slots:
-    bool updateSliders();
+    void updateSliders();
     void updateVolume(int);
     void updateTempo(int);
 

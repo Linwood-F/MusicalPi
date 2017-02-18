@@ -51,9 +51,9 @@
 //#define MUSICALPI_MIDI_PORT 20   // Need a better way
 #define MUSICALPI_MIDI_PORT 128    // Need a better way
 #define MUSICALPI_MAX_MEASURE 10000
-#define MUSICALPI_INITIAL_VELOCITY_SCALE 10
+#define MUSICALPI_INITIAL_VELOCITY_SCALE 20
 #define MUSICALPI_INITIAL_TIME_SCALE 100
-
+#define MUSICALPI_MIDIPLAY_SLIDER_UPDATE_RATE 500 // time in ms for updating measure, etc.
 // Debug output controls for some verbose stuff
 
 //#define MUSICALPI_DEBUG_MIDI_SEND_DETAILS

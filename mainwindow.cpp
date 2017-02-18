@@ -1,4 +1,4 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "mainwindow.h"
 
@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     qDebug() << "MainWindow::MainWindow() in constructor";
     setWindowTitle(tr("MusicalPi"));
     PDF = NULL;
+    mp = NULL;
     pagesNowDown = 0;
     pagesNowAcross = 0;
     overlay = NULL;
@@ -27,7 +28,6 @@ MainWindow::~MainWindow()
     deletePDF();
     delete libraryTable;
 }
-
 
 void MainWindow::setupCoreWidgets()
 {
@@ -271,7 +271,6 @@ void MainWindow::checkQueueVsCache()
     PDF->PDFMutex.unlock();
 }
 
-
 void MainWindow::playingNextPage()
 {
     // Principle: Going foward, we assume the eyes are on the last page and so we do any prior pages
@@ -364,10 +363,9 @@ void MainWindow::navigateTo(int nextPage)
     checkQueueVsCache();
 }
 
-
 void MainWindow::HideEverything()
 {
-    qDebug() << "Hiding most widgets so we can rest";
+    qDebug() << "Hiding most widgets so we can display what we specifically need";
     // Hide every outer widget (except outerLayoutWidget) and display panes and library/about/etc panes
     menuLayoutWidget->hide();
     mainMenuLayoutWidget->hide();
@@ -376,6 +374,7 @@ void MainWindow::HideEverything()
     libraryTable->hide();
     aboutLabel->hide();
     settingsLabel->hide();
+    if(mp != NULL) closeMidiPlayer();  // if it's open
     for(int row=0; row < MUSICALPI_MAXROWS; row++)
         for(int column=0; column < MUSICALPI_MAXCOLUMNS; column++)
         {
@@ -385,7 +384,6 @@ void MainWindow::HideEverything()
     overlay->hide();
     libraryTable->hideKeyboard();
 }
-
 
 void MainWindow::deletePDF()
 {
@@ -478,5 +476,6 @@ void MainWindow::closeMidiPlayer()
 {
     qDebug() << "Request to close midi";
     if(mp!=NULL) delete mp;
+    mp = NULL;
 }
 
