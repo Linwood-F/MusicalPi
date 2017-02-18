@@ -24,7 +24,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow();
     ~MainWindow();
     // Dynamic layouts and labels for visible pages, defined at max, but vary
     int pagesNowAcross;

@@ -17,12 +17,15 @@
 #include <QCloseEvent>
 
 #include "piconstants.h"
+#include "midiplayerv2thread.h"
 
+// These support the MidiFile library routine
 #include "MidiFile.h"
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiMessage.h"
-#include "midiplayerv2thread.h"
+
+// We use this for data structures here, actuall connections in the thread
 
 #include <alsa/asoundlib.h>
 #include <string>
@@ -30,21 +33,18 @@
 class midiplayerV2Thread;
 
 class midiPlayerV2 : public QWidget
-{
-    Q_OBJECT
+{    Q_OBJECT
 public:
     midiPlayerV2(QWidget *parent, QString midiFile, QString titleName);
     ~midiPlayerV2();
 
-    unsigned int lastMeasure;
+    unsigned int lastMeasure;  // Length of song, determined after parse, used to tell when we finish
     typedef struct
     {
         snd_seq_event_t snd_seq_event;
         int measureNum;
         bool containsTempo;   // implies we may need to scale velocity before sending
         bool containsNoteOn;  // implies we may need to scale tempbefore sending
-        int ticksPerMeasure;
-        int uSecPerTick;
     } playableEvent_t;
     std::map<int, playableEvent_t> events;  // sparese structure for only playable (at least sendable) items
     int overallTicksPerQuarter;  // from midi file header
@@ -52,6 +52,7 @@ public:
 
 
 private:
+    // Player screen structure
     QVBoxLayout *outLayout;
     QGridLayout *gridLayout;
     QLabel      *helpLabel;
@@ -72,11 +73,11 @@ private:
     QLabel      *songLabel;
     QLabel      *errorLabel;
 
-    QString     midiFile;     // Passed in file
 
+    // Our methods
     void doPlayingLayout();
     bool openAndLoadFile();
-    bool go();
+    void go();
     void closeEvent(QCloseEvent*);
     bool parseFileForPlayables();
     void startOrStopUpdateSliderTimer(bool start);
@@ -84,16 +85,18 @@ private:
 
     bool canPlay;   // Set to indicate if the song is loaded and playable
 
+    // Used in debug output
     int keySig; // Last encountered key signature while scanning file (as coded in midi)
     const int keySig_offset = 7; // Add to key signature to index our name array (-7 -> 0)
     bool keySigMajor; // Was last key signature minor or magor
     const QString keySigs[15] = {"Cb","Gb","Db","Ab","Eb","Bb","F","C","G","D","A","E","B","F#","C#"};
 
-    MidiFile mfi;  // Structure the library creates on read (we'll only do one at a time)
+    MidiFile* mfi;                   // Structure the library creates on read (we'll only do one at a time)
+    QString   midiFile;              // Passed in file
+    QTimer*   timer;                 // Used to keep sliders updated -- should this be dynamic instead now??
+    midiplayerV2Thread* playThread;  // Actual play is done in a QTread recall
 
-    QTimer* timer;  // Used to keep sliders updated -- should this be dynamic instead now??
-
-    // Used in the parse only -0 not used in play
+    // Used in the parse only - not used in play - keeps up with timing structure
     unsigned int runningMeasureNumber;
     unsigned int runningTempoAsuSec;
     unsigned int runningTempoAsQPM;
@@ -103,19 +106,14 @@ private:
     #define runningTicksPerMeasure (overallTicksPerQuarter * 4 * runningTimeNumerator / runningTimeDenominator)
     #define runninguSecPerTick ((1000000*60)/(overallTicksPerQuarter * runningTempoAsQPM))
 
-    // Value of sliders -- ??? do these need to be realized as opposed to coming from slider?
-    unsigned int tempoScale;      // integral percentage, 100 = as written, 50 = half speed, 150 = twice speed
-    unsigned int velocityScale;   // integral percentage (e.g. 50 = half, 150 = half-again volume as written)
-
-    midiplayerV2Thread* playThread;
 
 private slots:
-    void updateSliders();
-    void updateVolume(int);
-    void updateTempo(int);
+    void updatePlayStatus();      // Updates screen with measure and dis/enables buttons
+    void updateVolume();          // Updates slider value labels
+    void updateTempo();           // Updates slider value labels
 
 signals:
-    void requestToClose();
+    void requestToClose();        // We ask the caller to delete us via this
 };
 
 #endif // MIDIPLAYER2_H

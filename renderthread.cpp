@@ -41,14 +41,8 @@ void renderThread::render(QImage** image, int thePage, int maxWidth, int maxHeig
     mWidth = maxWidth;
     mHeight = maxHeight;
 
-    if(!isRunning())
-    {
-        start(LowPriority);
-    }
-    else
-    {
-        condition.wakeOne();
-    }
+    if(!isRunning()) start(LowPriority);
+    else condition.wakeOne();
     mutex.unlock();
     return;
 }

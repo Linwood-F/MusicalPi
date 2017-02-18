@@ -33,16 +33,18 @@ public:
     bool openSequencerInitialize();
 
     unsigned int startAtTick;     // What tick are we starting from (this is an offset so the queue starts at zero)
-    unsigned int currentTick;
-    unsigned int currentEvents;
-    unsigned int currentMeasure;
-    unsigned int currentTempo;  // as uSec per tick
-    unsigned int outputFree;
-    unsigned int outputRoom;
-    unsigned int outputSize;
-    unsigned int currentIsRunning;  // This is defined as "status bits" plural - haven't found definition
 
-    snd_seq_t* handle;  // shared between this and thread
+    // These come from the queue info call and are also visible to the update routine in the caller
+    unsigned int currentQueueTick;         // Queue clock tick
+    unsigned int currentQueueEventCount;   // Count of events in queue
+    unsigned int currentMeasure;           // Calculated from queue tick
+    unsigned int currentQueueTempo;        // as uSec per tick
+    unsigned int outputFree;               // Queue free event space
+    unsigned int outputSize;               // Queue Actual Size
+    unsigned int currentIsRunning;         // This is defined as "status bits" plural - haven't found definition
+
+    // ALSA connection/queue working data structures
+    snd_seq_t* handle;
     int queue;
     snd_seq_addr_t sourceAddress;
     snd_seq_addr_t destAddress;
@@ -57,20 +59,20 @@ private slots:
     void queueInfoDebugOutput();
 
 private:
-    QMutex mutex;
+    QMutex mutex;                  // Coordinate access to thread
     QWaitCondition condition;
+    enum {none, abort, startPlay, playing, playWaiting, stopPlay} requestType;
+    QString errorEncountered;  // Does this need to be somehow linked to parent?
+    midiPlayerV2 * mParent;    // can't define as explicit pdfdocument due to header load sequences
+    QTimer *workTimer;         // Periodic time interval when we don't have anything to do (but need to check frequently)
+    QTimer *queueInfoDebug;    // Only used if we are debugging queue info periodically
+    int lastTickProcessed;
+    void drainQueue();
+    void sendAllOff();
+    // Parameters from start play call
     int m_startAtMeasure;
     int m_volumeScale;
     int m_tempoScale;
-    enum {none, abort, startPlay, playing, playWaiting, stopPlay} requestType;
-    QString errorEncountered;  // Does this need to be somehow linked to parent?
-    midiPlayerV2 * mParent;  // can't define as explicit pdfdocument due to header load sequences
-    QTimer *workTimer;
-    QTimer *queueInfoDebug;
-    unsigned int outBufferSize;
-    int lastTickProcessed;
-    void drainQueue();
 };
-
 
 #endif // MIDIPLAYERV2THREAD_H

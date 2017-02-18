@@ -5,7 +5,7 @@
 // This routine handles reading the file (well, it calls a library) and UI during play, but
 // depends on an independent thread to actually do the playing and interact with ALSA.
 
-#define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; }
+#define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; X = NULL; }
 
 midiPlayerV2::midiPlayerV2(QWidget *parent, QString _midiFile, QString _titleName) : QWidget(parent)
 {
@@ -16,18 +16,20 @@ midiPlayerV2::midiPlayerV2(QWidget *parent, QString _midiFile, QString _titleNam
     qDebug() << "THe parent of this is " << this->parentWidget();
     this->setParent(parent);  // ?? is this needed?
     playThread = NULL;
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(updateSliders()));
+    mfi = new MidiFile();  // Store on the heap so we can delete it when done
     midiFile = _midiFile;
     doPlayingLayout();     // prepare screen
-    updateVolume(MUSICALPI_INITIAL_VELOCITY_SCALE);  // Set initial values
-    updateTempo(MUSICALPI_INITIAL_TIME_SCALE);
+    volumeSlider->setValue(MUSICALPI_INITIAL_VELOCITY_SCALE);  // Set initial values
+    tempoSlider->setValue(MUSICALPI_INITIAL_TIME_SCALE);
     canPlay = openAndLoadFile();
     if(canPlay) playThread = new midiplayerV2Thread(this);
     if(canPlay) canPlay = playThread->openSequencerInitialize();  //Initialize sequencer now (we'll use queue/port/etc in the parse as well as play)
     if(canPlay) canPlay = parseFileForPlayables();
-    updateSliders();   // This may display an error if we couldn't do the things above
-    startOrStopUpdateSliderTimer(true);
+    DELETE_LOG(mfi);
+    updatePlayStatus();   // This may display an error if we couldn't do the things above
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(updatePlayStatus()));
+    timer->start(MUSICALPI_MIDIPLAY_SLIDER_UPDATE_RATE);
     // User now starts play with button (or not).
 }
 
@@ -35,6 +37,7 @@ midiPlayerV2::~midiPlayerV2()
 {
     DELETE_LOG(playThread);
     DELETE_LOG(timer);
+    DELETE_LOG(mfi);
 }
 
 bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in this, only run once.
@@ -52,10 +55,10 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
 
     MidiEvent *ptr;
 
-    for (int thisEvent = 0; thisEvent < mfi.getEventCount(0); thisEvent++)  // Always starting at zero, just don't send unless we need to
+    for (int thisEvent = 0; thisEvent < mfi->getEventCount(0); thisEvent++)  // Always starting at zero, just don't send unless we need to
     {
         QString midiDataText;  // Cumulative debug output for this event
-        ptr = &(mfi[0][thisEvent]);    // Point to an event
+        ptr = &((*mfi)[0][thisEvent]);    // Point to an event
         snd_seq_event_t ep;  // Set up empty event
         snd_seq_ev_clear(&ep);
         snd_seq_ev_schedule_tick(&ep, playThread->queue, 0, ptr->tick);  // 3rd parameter 0=absolute, <>0 = relative
@@ -65,12 +68,11 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         // Advance running count to next measure
         while ((unsigned int)ptr->tick >= runningMeasureStartTick + runningTicksPerMeasure)
         {
-            #ifdef MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
-            qDebug() << "Finished measure " << runningMeasureNumber
-                     << ", start tick = " << runningMeasureStartTick
-                     << ", ticks per measure = " << runningTicksPerMeasure
-                     << ", uSec per tick = " << runninguSecPerTick;
-            #endif
+            if(MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS)
+                qDebug() << "Finished measure " << runningMeasureNumber
+                         << ", start tick = " << runningMeasureStartTick
+                         << ", ticks per measure = " << runningTicksPerMeasure
+                         << ", uSec per tick = " << runninguSecPerTick;
             runningMeasureNumber++;   // Step in whole measures and increments until we are inside a measure
             runningMeasureStartTick += runningTicksPerMeasure;
         }
@@ -82,8 +84,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isPressure()) // channel aftertouch
@@ -93,8 +93,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
        }
         else if(ptr->isController())
@@ -109,9 +107,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                 case  66: ctrlr = "Sustenuto"; break;
                 case  91: ctrlr = "Effects 1 Depth"; break;
                 case 121: ctrlr = "Reset all";
-                          #ifdef MUSICALPI_MIDI_QUASH_RESET_ALL
-                          sendFlag=false;
-                          #endif
+                          if(MUSICALPI_MIDI_QUASH_RESET_ALL) sendFlag=false;
                           break;
             }
 
@@ -122,8 +118,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                 events[thisEvent].measureNum = runningMeasureNumber;
                 events[thisEvent].containsTempo = false;
                 events[thisEvent].containsNoteOn = false;
-                events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-                events[thisEvent].uSecPerTick = runninguSecPerTick;
                 events[thisEvent].snd_seq_event = ep;
             }
         }
@@ -136,8 +130,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = true;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isNoteOff())  // Note the underlying parse will set this with a noteon, velocity=0
@@ -147,8 +139,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isPatchChange())
@@ -158,8 +148,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isPitchbend())
@@ -171,8 +159,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = false;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isTempo())
@@ -190,8 +176,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].containsTempo = true;
             events[thisEvent].containsNoteOn = false;
-            events[thisEvent].ticksPerMeasure = runningTicksPerMeasure;
-            events[thisEvent].uSecPerTick = runninguSecPerTick;
             events[thisEvent].snd_seq_event = ep;
         }
         else if(ptr->isTimeSignature())
@@ -245,17 +229,15 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
            if (j == 0) midiDataNumbers += "0x" + QString::number((int)(*ptr)[j],16) + " ";
            else midiDataNumbers += QString::number((int)(*ptr)[j],10) + " ";
         }
-        #ifdef MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS
-        qDebug() << "Event " << thisEvent << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
-                 << ", seconds = " << mfi.getTimeInSeconds(0,thisEvent) << ", " << midiDataText << ", " << midiDataNumbers;
-        #endif
+        if(MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS)
+            qDebug() << "Event " << thisEvent << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
+                     << ", seconds = " << mfi->getTimeInSeconds(0,thisEvent) << ", " << midiDataText << ", " << midiDataNumbers;
     }
-    #ifdef MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS
-    qDebug() << "Finished measure  " << runningMeasureNumber
-             << ", start tick = " << runningMeasureStartTick
-             << ", ticks per measure = " << runningTicksPerMeasure
-             << ", uSec per tick = " << runninguSecPerTick;
-    #endif
+    if(MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS)
+        qDebug() << "Finished measure  " << runningMeasureNumber
+                 << ", start tick = " << runningMeasureStartTick
+                 << ", ticks per measure = " << runningTicksPerMeasure
+                 << ", uSec per tick = " << runninguSecPerTick;
     lastMeasure = runningMeasureNumber;
     return true; // This will set canPlay
 }
@@ -265,19 +247,20 @@ bool midiPlayerV2::openAndLoadFile()
     try
     {
         qDebug() << "Reading file";
-        mfi.read(midiFile.toStdString());
-        overallTicksPerQuarter = mfi.getTicksPerQuarterNote();
-        qDebug() << "File read, tracks = " << mfi.getTrackCount() << ", TPQ=" << overallTicksPerQuarter
-                 << ", Time in quarters=" << mfi.getTotalTimeInQuarters() << ", Time in seconds=" << mfi.getTotalTimeInSeconds() << ", Time in ticks=" << mfi.getTotalTimeInTicks();
+        mfi->read(midiFile.toStdString());
+        overallTicksPerQuarter = mfi->getTicksPerQuarterNote();
+        qDebug() << "File read, tracks = " << mfi->getTrackCount() << ", TPQ=" << overallTicksPerQuarter
+                 << ", Time in quarters=" << mfi->getTotalTimeInQuarters() << ", Time in seconds=" << mfi->getTotalTimeInSeconds() << ", Time in ticks=" << mfi->getTotalTimeInTicks();
         // TPQ (Ticks per quarter) is supposed to remain constant
         // QPM (Quarter notes per minute) is tempo and is set in tempo signatures and stashed in the runningTempAsQPM and uSec variables
-        mfi.joinTracks();    // merge tracks to one timeline
+        mfi->joinTracks();    // merge tracks to one timeline
         qDebug() << "Joined tracks";
         return true;
     }
-    catch (exception e)
+    catch (exception &e)
     {
         qDebug() << "Failure reading file - aborting -- error = " << e.what();
+        errorEncountered = "Failure reading file - aborting -- error = " + QString(e.what());
         return false;
     }
 }
@@ -316,7 +299,7 @@ void midiPlayerV2::doPlayingLayout()
     tempoSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
     tempoSlider->setMaximum(200);  // Is this large enough?
     tempoSlider->setMinimum(30);   // Small enough
-    connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo(int)));
+    connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo()));
     tempoValueLabel = new QLabel("???",this);
     gridLayout->addWidget(tempoLabel,     2,1,1,1);
     gridLayout->addWidget(tempoSlider,    2,2,1,1);
@@ -325,11 +308,10 @@ void midiPlayerV2::doPlayingLayout()
     volumeLabel = new QLabel("Volume %", this);
     volumeSlider = new QSlider(Qt::Horizontal,this);
     volumeSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey); ");
-    volumeSlider->setValue(velocityScale);
     volumeValueLabel = new QLabel("???",this);
     volumeSlider->setMaximum(150);
     volumeSlider->setMinimum(1);
-    connect(volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(updateVolume(int)));
+    connect(volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(updateVolume()));
     gridLayout->addWidget(volumeLabel,     3,1,1,1);
     gridLayout->addWidget(volumeSlider,    3,2,1,1);
     gridLayout->addWidget(volumeValueLabel,3,3,1,1);
@@ -338,10 +320,8 @@ void midiPlayerV2::doPlayingLayout()
     outLayout->addWidget(errorLabel);
 }
 
-void midiPlayerV2::updateSliders()
+void midiPlayerV2::updatePlayStatus()
 {
-    volumeValueLabel->setText(QString::number(velocityScale));
-    tempoValueLabel->setText(QString::number(tempoScale));
     if(playThread==NULL) return;  // if we haven't gotten far enough to have worker don't try the below yet
     // Depend on playing thread to keep current* variables updated
     if(canPlay)
@@ -369,9 +349,9 @@ void midiPlayerV2::updateSliders()
     {
         qDebug() << "Updating sliders but can't play";
         // Disable controls
-        tempoSlider->setDisabled(true);
-        volumeSlider->setDisabled(true);
-        measureGo->setDisabled(true);
+        tempoSlider->setEnabled(false);
+        volumeSlider->setEnabled(false);
+        measureGo->setEnabled(false);
         measureGo->setText("Error");
         // Highlight and show error
         errorLabel->setText(errorEncountered);
@@ -380,25 +360,20 @@ void midiPlayerV2::updateSliders()
     return;
 }
 
-void midiPlayerV2::updateVolume(int newVolume)
+void midiPlayerV2::updateVolume()
 {
-    qDebug() << "Entered, triggered by " << (volumeSlider->value()== newVolume ? "called" : "Value changed" );
-    velocityScale = newVolume;  // Use this when sending notes
-    if(volumeSlider->value() != newVolume) volumeSlider->setValue(newVolume);  // This allows internal call to force position
-    updateSliders();  // hasten reflection of new info
+    volumeValueLabel->setText(QString::number(volumeSlider->value()));
 }
 
-void midiPlayerV2::updateTempo(int newTempo)
+void midiPlayerV2::updateTempo()
 {
-    qDebug() << "Entered, triggered by " << (tempoSlider->value()== newTempo ? "called" : "Value changed" );
-    tempoScale = newTempo;
-    if(tempoSlider->value() != newTempo) tempoSlider->setValue(newTempo);
-    updateSliders();  // hasten reflection of new info
+    tempoValueLabel->setText(QString::number(tempoSlider->value()));
 }
 
-bool midiPlayerV2::go()
+void midiPlayerV2::go()
 {
-    if(canPlay && !playThread->currentIsRunning)  // Hitting play from here uses measure or starts over if blank
+    if(!canPlay) return;
+    if(!playThread->currentIsRunning)  // Hitting play from here uses measure or starts over if blank
     {
         int measureToPlay = 1;
         if(measureIn->text() != "")
@@ -407,53 +382,27 @@ bool midiPlayerV2::go()
             measureToPlay = std::max((unsigned int)0,std::min(lastMeasure,newBar));
         }
         qDebug() << "Go: Not playing, Starting play=true, measure= " << measureToPlay;
-        playThread->play(measureToPlay, velocityScale, tempoScale);
+        playThread->play(measureToPlay, volumeSlider->value(), tempoSlider->value());
     }
-    else if (canPlay && playThread->currentIsRunning)
+    else
     {
         qDebug() << "Go: Playing, so changing to stopped, stopping queue ";
         playThread->stop();
         measureGo->setText("Play");
     }
-    else
-    {
-        qDebug() << "Can't play so doing nothing in go -- shouldn't be able to get here";
-        measureGo->setDisabled(true);  // Shouldn't get here but if we do we can't play
-    }
-    return true;
 }
 
-// Need to make mainwindow close player if we leave the play mode there ???? ?
 void midiPlayerV2::closeEvent(QCloseEvent *event) // We don't close, we ask our parent to
 {
     event->ignore();
     emit requestToClose();
 }
 
-void midiPlayerV2::startOrStopUpdateSliderTimer(bool start)
-{
-    if(start) // Start only if not started
-    {
-        if(!timer->isActive())
-        {
-            timer->start(MUSICALPI_MIDIPLAY_SLIDER_UPDATE_RATE);
-            qDebug() << "Starting update slider timer";
-        }
-    }
-    else // stopping timer only if not stopped already
-    {
-        if(timer!=NULL && timer->isActive())
-        {
-            timer->stop();
-            qDebug() << "Stopping update slider timer";
-        }
-    }
-}
-
 QString midiPlayerV2::guessSpelling(int note, int keySigNum)
 {
     // Get a reasonable spelling of the note based on key signature (e.g. give preference to flats if sig includes it, sharps if includes, etc.)
     // This is all just guesswork, so I did a lot of duplication in case it is desirable to fine tune any
+    // It's only used for debugging
     int noteMod = note % 12;  // C=0
     QString Octave = "-" + QString::number(note / 12 - 1);
     switch (keySigNum)
