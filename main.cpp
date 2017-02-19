@@ -24,9 +24,7 @@ int main(int argc, char *argv[])
             "max-width: 60px; "
             "text-align: center;"
             "} "
-        "QLineEdit {min-height: 30px; height:40px; }"
-        "[accessibleName=""settingsLabel""] {background-color:rgb(200,200,200);} "
-
+#ifdef MUSICALPI_DEBUG_WIDGET_BORDERS
         "[accessibleName=\"generalLayoutWidget\"]    {border:5px solid red;} "
         "[accessibleName=\"mainMenuLayoutWidget\"]   {border:5px solid green;} "
         "[accessibleName=\"menuLayoutWidget\"]       {border:5px solid blue;} "
@@ -37,6 +35,7 @@ int main(int argc, char *argv[])
         "[accessibleName=\"settingsLabel\"]          {border:5px solid magenta;} "
         "[accessibleName=\"playerMenuLayoutWidget\"] {border:5px solid yellow;} "
         "[accessibleName=\"logoLabel\"]              {border:5px solid darkCyan;} "
+#endif
        ));
     MainWindow w;
     w.show();

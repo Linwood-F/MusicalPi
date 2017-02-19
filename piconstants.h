@@ -22,6 +22,14 @@
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING "black"
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING_QT Qt::black
 
+#define MUSICALPI_SETTINGS_HEADING_FONT_SIZE 30
+#define MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE 20
+#define MUSICALPI_SETTINGS_TIPOVERLAY_FONT_SIZE 36
+#define MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE 16
+
+// Define this to get colored borders on key widgets (from stylesheet in main)
+#define MUSICALPI_DEBUG_WIDGET_BORDERS
+
 // SplashBackend seems to render better quality and only slightly slower.
 
 #define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend

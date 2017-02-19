@@ -69,7 +69,7 @@ void renderThread::run()
 
         { // Put in a block so it will remove the painter and not leave it attached to the passed-out QImage
             QPainter painter(theImage);
-            painter.setFont(QFont("Arial", 16, 1, false));
+            painter.setFont(QFont("Arial", MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE, 1, false));
             painter.setPen(QColor("green"));
             painter.drawText(QPoint(mParent->ourSettingsPtr->pageHighlightHeight + 10,mParent->ourSettingsPtr->pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }

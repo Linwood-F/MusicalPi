@@ -11,6 +11,9 @@
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QFormLayout>
+#include <QPushButton>
+#include <QIntValidator>
+#include <QVBoxLayout>
 
 class MainWindow;
 
@@ -23,33 +26,32 @@ public:
 private:
     MainWindow* mParent;
 
+    QVBoxLayout* outerLayout;
+
     QFormLayout* formLayout;
 
-//    QLabel* heading;
-//    QGridLayout* grid;
-//    QLabel* midiSubHeading;
+    QLabel* heading;
+    QLabel* midiSubHeading;
 
-    QLineEdit*  midiPortValue;
-
+    QLineEdit* midiPortValue;
     QLineEdit* ALSAlowWaterValue;
-
     QLineEdit* ALSAhighWaterValue;
-
     QLineEdit* ALSAmaxOutputBufferValue;
-
     QLineEdit* ALSAqueueChunkSizeValue;
-
     QLineEdit* ALSApacingIntervalValue;
-
     QCheckBox* ALSAMidiQuashResetAllValue;
 
-//    QLabel* calibreSubHeading;
+    QLabel* calibreSubHeading;
 
     QLineEdit* calibrePathValue;
-
     QLineEdit* calibreDatabaseValue;
-
     QLineEdit* calibreMusicTagValue;
+
+    QLabel* errorMessage;
+
+    QPushButton* saveButton;
+
+    void validateAll();
 };
 
 #endif // SETTINGSWIDGET_H

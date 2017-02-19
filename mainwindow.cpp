@@ -38,6 +38,7 @@ void MainWindow::setupCoreWidgets()
     qDebug()<< "Starting widget setup";
     outerLayoutWidget = new QWidget();
     outerLayoutWidget->setAccessibleName("outerLayoutWidget");
+    outerLayoutWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     outerLayout = new QVBoxLayout(outerLayoutWidget);
     this->setCentralWidget(outerLayoutWidget);
     outerLayout->setAlignment(Qt::AlignTop);
@@ -133,6 +134,7 @@ void MainWindow::setupCoreWidgets()
 
     generalLayoutWidget = new QWidget(outerLayoutWidget);
     generalLayoutWidget->setAccessibleDescription("generalLayoutWidget");
+    generalLayoutWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     outerLayout->addWidget(generalLayoutWidget);
 
     generalLayout = new QHBoxLayout(generalLayoutWidget);
