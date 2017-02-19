@@ -1,16 +1,18 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "renderthread.h"
-#include "pdfdocument.h"   // has to be here not header as it needs renderThread defined
+#include "pdfdocument.h"
+#include "mainwindow.h"
 
-renderThread::renderThread(QObject *parent, int which ): QThread(parent)
+renderThread::renderThread(QObject *parent, int which, MainWindow* mp ): QThread(parent)
 {
     // Modeled from http://doc.qt.io/qt-5/qtcore-threads-mandelbrot-example.html
     // Note constructor is in the parent thread
     qDebug() << "in constructor for thread " << which;
     abort = false;
     running = false;
-    mParent = parent; // the PDF object
+    ourParent = parent; // the PDF object
+    mParent = mp;    // MainWindow object
     mWhich = which;   // the number of the thread array this is attached to
     mWidth = 0;       // the target width we were asked to scale to (don't do anything with it zero)
     mHeight = 0;      // the target height we were asked to scale to (don't do anything with it zero)
@@ -53,14 +55,14 @@ void renderThread::run()
     {
         running = true;
         if(abort) return;
-        Poppler::Page* tmpPage = ((PDFDocument*)mParent)->document->page(mPage - 1);  // Document starts at page 0, we use 1
+        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);  // Document starts at page 0, we use 1
         assert(tmpPage!=NULL);
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
         float scaleX = mWidth / (thisPageSize.width() / 72.0);
         float scaleY = mHeight / (thisPageSize.height() / 72.0);
         float desiredScale = std::min(scaleX, scaleY);
         qDebug() << "Starting render on thread " << mWhich << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
-        ((PDFDocument*)mParent)->document->setRenderHint(Poppler::Document::Antialiasing);
+        ((PDFDocument*)ourParent)->document->setRenderHint(Poppler::Document::Antialiasing);
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
         qDebug() << "Page " << mPage << " was rendered on thread " << mWhich << " produced size " << theImage->width() << "x" << theImage->height();
@@ -69,14 +71,14 @@ void renderThread::run()
             QPainter painter(theImage);
             painter.setFont(QFont("Arial", 16, 1, false));
             painter.setPen(QColor("green"));
-            painter.drawText(QPoint(MUSICALPI_PAGE_HIGHLIGHT_HEIGHT + 10,MUSICALPI_PAGE_HIGHLIGHT_HEIGHT + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
+            painter.drawText(QPoint(mParent->ourSettingsPtr->pageHighlightHeight + 10,mParent->ourSettingsPtr->pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }
         mutex.lock();  // Avoid race conditions in the parent thread in the render() that controls this loop
         running = false;
-        ((PDFDocument*)mParent)->PDFMutex.lock();
+        ((PDFDocument*)ourParent)->PDFMutex.lock();
         *targetImagePtr = theImage;
         emit renderedImage( mWhich, mPage, mWidth, mHeight);
-        ((PDFDocument*)mParent)->PDFMutex.unlock();
+        ((PDFDocument*)ourParent)->PDFMutex.unlock();
         if(abort) return;
         condition.wait(&mutex);
         mutex.unlock();  // If the above waits, how do we ever get here if the awake above is also inside a mutex lock???

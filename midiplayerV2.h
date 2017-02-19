@@ -31,11 +31,12 @@
 #include <string>
 
 class midiplayerV2Thread;
+class MainWindow;
 
 class midiPlayerV2 : public QWidget
 {    Q_OBJECT
 public:
-    midiPlayerV2(QWidget *parent, QString midiFile, QString titleName);
+    midiPlayerV2(MainWindow* parent, QString midiFile, QString titleName);
     ~midiPlayerV2();
 
     unsigned int lastMeasure;  // Length of song, determined after parse, used to tell when we finish
@@ -49,7 +50,7 @@ public:
     std::map<int, playableEvent_t> events;  // sparese structure for only playable (at least sendable) items
     int overallTicksPerQuarter;  // from midi file header
     QString errorEncountered;  // Blank is no error, otherwise a fatal error to appear on player
-
+    MainWindow* mParent;
 
 private:
     // Player screen structure

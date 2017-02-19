@@ -26,12 +26,14 @@
 #include <string>
 #include <poppler/qt5/poppler-qt5.h>
 
+class MainWindow;
+
 class PDFDocument : public QObject
 {
     Q_OBJECT
 
 public:
-    PDFDocument(QString filepath, QString _titleName);
+    PDFDocument(MainWindow* parent, QString filepath, QString _titleName);
     ~PDFDocument();
     void getOnePage(docPageLabel * where, int pageToGet, docPageLabel::docTransition); // Starting page 1
     QString filepath;
@@ -47,6 +49,7 @@ public:
     void checkCaching();
     void adjustCache(int leftmostPage);
     QMutex PDFMutex;
+    MainWindow* mParent;
 
 private:
 

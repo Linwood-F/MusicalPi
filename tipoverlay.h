@@ -16,6 +16,8 @@
 
 #include "piconstants.h"
 
+class MainWindow;
+
 class TipOverlay : public QLabel
 {
     Q_OBJECT
@@ -23,10 +25,11 @@ class TipOverlay : public QLabel
 private:
     QPropertyAnimation* overlayAnimation;
     QGraphicsOpacityEffect* overlayFade;
-    QWidget* p; // parent;
+    QWidget* ourParent; // parent;
+    MainWindow* mParent;
 
 public:
-    TipOverlay(QWidget* parent);  // Call with the widget over which to overlay
+    TipOverlay(QWidget* p, MainWindow* mparent);  // Call with the widget over which to overlay
     ~TipOverlay();
     void showEvent(QShowEvent* event);
 };

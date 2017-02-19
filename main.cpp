@@ -4,7 +4,6 @@
 #include <debugmessages.h>
 #include "mainwindow.h"
 
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -24,7 +23,20 @@ int main(int argc, char *argv[])
             "min-width: 60px; "
             "max-width: 60px; "
             "text-align: center;"
-            "}"
+            "} "
+        "QLineEdit {min-height: 30px; height:40px; }"
+        "[accessibleName=""settingsLabel""] {background-color:rgb(200,200,200);} "
+
+        "[accessibleName=\"generalLayoutWidget\"]    {border:5px solid red;} "
+        "[accessibleName=\"mainMenuLayoutWidget\"]   {border:5px solid green;} "
+        "[accessibleName=\"menuLayoutWidget\"]       {border:5px solid blue;} "
+        "[accessibleName=\"outerLayoutWidget\"]      {border:5px solid darkRed;} "
+        "[accessibleName=\"menuLayoutWidget\"]       {border:5px solid darkGreen;} "
+        "[accessibleName=\"playerMenuLayoutWidget\"] {border:5px solid darkBlue;} "
+        "[accessibleName=\"libraryTable\"]           {border:5px solid cyan;} "
+        "[accessibleName=\"settingsLabel\"]          {border:5px solid magenta;} "
+        "[accessibleName=\"playerMenuLayoutWidget\"] {border:5px solid yellow;} "
+        "[accessibleName=\"logoLabel\"]              {border:5px solid darkCyan;} "
        ));
     MainWindow w;
     w.show();

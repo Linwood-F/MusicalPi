@@ -1,30 +1,34 @@
 // Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "tipoverlay.h"
+#include "mainwindow.h"
 
-TipOverlay::TipOverlay(QWidget* parent) : QLabel(parent)
+
+TipOverlay::TipOverlay(QWidget* p, MainWindow * mp) : QLabel(p)
 {
     qDebug() << "created";
-    assert(parent);
-    p = parent;
+    assert(p);
+    assert(mp);
+    mParent = mp;
+    ourParent = p;
     overlayFade = new QGraphicsOpacityEffect(this);
     this->setGraphicsEffect(overlayFade);
     overlayAnimation = new QPropertyAnimation(overlayFade,"opacity");
     overlayAnimation->setEasingCurve(QEasingCurve::Linear);
-    overlayAnimation->setDuration(MUSICALPI_OVERLAY_DURATION / 3);  // Must be <= first timer below
+    overlayAnimation->setDuration(mParent->ourSettingsPtr->overlayDuration / 3);  // Must be <= first timer below
 
 }
 void TipOverlay::showEvent(QShowEvent* event)
 {
-    int overlayFullWidth = p->size().width();
-    int overlayTopHeight = MUSICALPI_OVERLAY_TOP_PORTION * p->size().height();
-    int overlayPanelWidth = MUSICALPI_OVERLAY_SIDE_PORTION * overlayFullWidth;
+    int overlayFullWidth = ourParent->size().width();
+    int overlayTopHeight = mParent->ourSettingsPtr->overlayTopPortion * ourParent->size().height();
+    int overlayPanelWidth = mParent->ourSettingsPtr->overlaySidePortion * overlayFullWidth;
     QRect endPlayRect(0,0,overlayFullWidth,overlayTopHeight);
-    QRect backPlayRect(0,overlayTopHeight,overlayPanelWidth,p->size().height() - overlayTopHeight);
-    QRect forwardPlayRect(overlayFullWidth - overlayPanelWidth,overlayTopHeight,overlayPanelWidth,p->size().height() - overlayTopHeight);
-    this->setGeometry(QRect(0,0,p->geometry().width(),p->geometry().height()));
+    QRect backPlayRect(0,overlayTopHeight,overlayPanelWidth,ourParent->size().height() - overlayTopHeight);
+    QRect forwardPlayRect(overlayFullWidth - overlayPanelWidth,overlayTopHeight,overlayPanelWidth,ourParent->size().height() - overlayTopHeight);
+    this->setGeometry(QRect(0,0,ourParent->geometry().width(),ourParent->geometry().height()));
     this->setAttribute(Qt::WA_TranslucentBackground);
-    QPixmap tmpPix = QPixmap(p->size());
+    QPixmap tmpPix = QPixmap(ourParent->size());
     tmpPix.fill(Qt::transparent);
     QPainter painter(&tmpPix);
     painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -53,7 +57,7 @@ void TipOverlay::showEvent(QShowEvent* event)
     overlayAnimation->setStartValue(0.0);
     overlayAnimation->setEndValue(1.0);
     overlayAnimation->start();
-    QTimer::singleShot(MUSICALPI_OVERLAY_DURATION / 2,this,  // Must be >= duration above
+    QTimer::singleShot(mParent->ourSettingsPtr->overlayDuration / 2,this,  // Must be >= duration above
        [=]
         {
             qDebug() << "TipOverlay:: in animation after first event";
@@ -62,7 +66,7 @@ void TipOverlay::showEvent(QShowEvent* event)
             overlayAnimation->start();
         }
     );
-    QTimer::singleShot(MUSICALPI_OVERLAY_DURATION,this,  // Must be >= 2* duration above
+    QTimer::singleShot(mParent->ourSettingsPtr->overlayDuration,this,  // Must be >= 2* duration above
        [=]
         {
             qDebug() << "TipOverlay:: in animation after second event";

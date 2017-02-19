@@ -1,35 +1,34 @@
 #include "midiplayerV2.h"
+#include "mainwindow.h"
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 // This routine handles reading the file (well, it calls a library) and UI during play, but
 // depends on an independent thread to actually do the playing and interact with ALSA.
 
-#define DELETE_LOG(X) if(X != NULL) { qDebug() << "Freeing " #X; delete X; X = NULL; }
 
-midiPlayerV2::midiPlayerV2(QWidget *parent, QString _midiFile, QString _titleName) : QWidget(parent)
+midiPlayerV2::midiPlayerV2(MainWindow *parent, QString _midiFile, QString _titleName) : QWidget((QWidget*)parent)
 {
     qDebug() << "Entered";
     setWindowTitle("Midi Player - " + _titleName);
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again
     this->setWindowFlags(Qt::Window|Qt::Dialog);
-    qDebug() << "THe parent of this is " << this->parentWidget();
-    this->setParent(parent);  // ?? is this needed?
+    mParent = parent;
     playThread = NULL;
     mfi = new MidiFile();  // Store on the heap so we can delete it when done
     midiFile = _midiFile;
     doPlayingLayout();     // prepare screen
-    volumeSlider->setValue(MUSICALPI_INITIAL_VELOCITY_SCALE);  // Set initial values
-    tempoSlider->setValue(MUSICALPI_INITIAL_TIME_SCALE);
+    volumeSlider->setValue(mParent->ourSettingsPtr->midiInitialVelocityScale);  // Set initial values
+    tempoSlider->setValue(mParent->ourSettingsPtr->midiInitialTempoScale);
     canPlay = openAndLoadFile();
-    if(canPlay) playThread = new midiplayerV2Thread(this);
+    if(canPlay) playThread = new midiplayerV2Thread(this,mParent);
     if(canPlay) canPlay = playThread->openSequencerInitialize();  //Initialize sequencer now (we'll use queue/port/etc in the parse as well as play)
     if(canPlay) canPlay = parseFileForPlayables();
-    DELETE_LOG(mfi);
+    DELETE_LOG(mfi);   // Free up some resources
     updatePlayStatus();   // This may display an error if we couldn't do the things above
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePlayStatus()));
-    timer->start(MUSICALPI_MIDIPLAY_SLIDER_UPDATE_RATE);
+    timer->start(mParent->ourSettingsPtr->statusUpdateRate);
     // User now starts play with button (or not).
 }
 
@@ -68,7 +67,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         // Advance running count to next measure
         while ((unsigned int)ptr->tick >= runningMeasureStartTick + runningTicksPerMeasure)
         {
-            if(MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS)
+            if(mParent->ourSettingsPtr->debugMidiMeasureDetails)
                 qDebug() << "Finished measure " << runningMeasureNumber
                          << ", start tick = " << runningMeasureStartTick
                          << ", ticks per measure = " << runningTicksPerMeasure
@@ -107,7 +106,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                 case  66: ctrlr = "Sustenuto"; break;
                 case  91: ctrlr = "Effects 1 Depth"; break;
                 case 121: ctrlr = "Reset all";
-                          if(MUSICALPI_MIDI_QUASH_RESET_ALL) sendFlag=false;
+                          if(mParent->ourSettingsPtr->ALSAMidiQuashResetAll) sendFlag=false;
                           break;
             }
 
@@ -229,11 +228,11 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
            if (j == 0) midiDataNumbers += "0x" + QString::number((int)(*ptr)[j],16) + " ";
            else midiDataNumbers += QString::number((int)(*ptr)[j],10) + " ";
         }
-        if(MUSICALPI_DEBUG_MIDI_FILE_PARSE_DETAILS)
+        if(mParent->ourSettingsPtr->debugMidiFileParseDetails)
             qDebug() << "Event " << thisEvent << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
                      << ", seconds = " << mfi->getTimeInSeconds(0,thisEvent) << ", " << midiDataText << ", " << midiDataNumbers;
     }
-    if(MUSICALPI_DEBUG_MIDI_MEASURE_DETAILS)
+    if(mParent->ourSettingsPtr->debugMidiMeasureDetails)
         qDebug() << "Finished measure  " << runningMeasureNumber
                  << ", start tick = " << runningMeasureStartTick
                  << ", ticks per measure = " << runningTicksPerMeasure

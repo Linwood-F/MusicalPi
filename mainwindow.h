@@ -18,6 +18,13 @@
 #include "aboutwidget.h"
 #include "settingswidget.h"
 #include "midiplayerV2.h"
+#include "oursettings.h"
+
+class midiPlayerV2;
+class PDFDocument;
+class TipOverlay;
+class ourSettings;
+class docPageLabel;
 
 class MainWindow : public QMainWindow
 {
@@ -29,6 +36,7 @@ public:
     // Dynamic layouts and labels for visible pages, defined at max, but vary
     int pagesNowAcross;
     int pagesNowDown;
+    ourSettings* ourSettingsPtr;
 
 private:
     PDFDocument* PDF;

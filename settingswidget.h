@@ -7,12 +7,49 @@
 #include <QObject>
 #include <QLabel>
 #include <QFont>
+#include <QGridLayout>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QFormLayout>
+
+class MainWindow;
 
 class settingsWidget : public QLabel
 {
     Q_OBJECT
 public:
-    settingsWidget(QWidget *parent = 0);
+    settingsWidget(QWidget*, MainWindow*);
+
+private:
+    MainWindow* mParent;
+
+    QFormLayout* formLayout;
+
+//    QLabel* heading;
+//    QGridLayout* grid;
+//    QLabel* midiSubHeading;
+
+    QLineEdit*  midiPortValue;
+
+    QLineEdit* ALSAlowWaterValue;
+
+    QLineEdit* ALSAhighWaterValue;
+
+    QLineEdit* ALSAmaxOutputBufferValue;
+
+    QLineEdit* ALSAqueueChunkSizeValue;
+
+    QLineEdit* ALSApacingIntervalValue;
+
+    QCheckBox* ALSAMidiQuashResetAllValue;
+
+//    QLabel* calibreSubHeading;
+
+    QLineEdit* calibrePathValue;
+
+    QLineEdit* calibreDatabaseValue;
+
+    QLineEdit* calibreMusicTagValue;
 };
 
 #endif // SETTINGSWIDGET_H

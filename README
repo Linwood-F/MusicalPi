@@ -18,7 +18,8 @@ MusicalPi - Sheet music display
                    midiplayerV2.  The V2 versions use ALSA directly instead of using
                    TSE3 for a sequencer, and use MidiFile (a github project
                    under "craigsapp", but you can use my version
-                   https://github.com/Linwood-F/midifile.git branch addKeyTimeSignatures.
+                   https://github.com/Linwood-F/midifile.git branch addKeyTimeSignatures
+                   and you can use the distro ALSA library.
 
 This project is a Calibre-integrated, music display designed for a touch screen
 on a Raspberry Pi (only tested on 3B version).

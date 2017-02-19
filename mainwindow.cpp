@@ -6,6 +6,7 @@ MainWindow::MainWindow() : QMainWindow()
 {
     qDebug() << "MainWindow::MainWindow() in constructor";
     setWindowTitle(tr("MusicalPi"));
+    ourSettingsPtr = new ourSettings(this);  // Get all our defaults
     PDF = NULL;
     mp = NULL;
     pagesNowDown = 0;
@@ -36,6 +37,7 @@ void MainWindow::setupCoreWidgets()
 
     qDebug()<< "Starting widget setup";
     outerLayoutWidget = new QWidget();
+    outerLayoutWidget->setAccessibleName("outerLayoutWidget");
     outerLayout = new QVBoxLayout(outerLayoutWidget);
     this->setCentralWidget(outerLayoutWidget);
     outerLayout->setAlignment(Qt::AlignTop);
@@ -43,6 +45,7 @@ void MainWindow::setupCoreWidgets()
     outerLayout->setContentsMargins(0,0,0,0);
 
     menuLayoutWidget = new QWidget();
+    menuLayoutWidget->setAccessibleName("menuLayoutWidget");
     menuLayout = new QHBoxLayout(menuLayoutWidget);
     outerLayout->addWidget(menuLayoutWidget);
     menuLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -51,6 +54,7 @@ void MainWindow::setupCoreWidgets()
     menuLayoutWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
     mainMenuLayoutWidget = new QWidget();
+    mainMenuLayoutWidget->setAccessibleName("mainMenuLayoutWidget");
     mainMenuLayout = new QHBoxLayout(mainMenuLayoutWidget);
     menuLayout->addWidget(mainMenuLayoutWidget);
     mainMenuLayout->setSpacing(10);
@@ -124,27 +128,32 @@ void MainWindow::setupCoreWidgets()
     // ALl details of this get filled in during use in play section; not all may be use, this is max.
     for (int i=0; i < (MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS); i++)
     {
-        visiblePages[i] = new docPageLabel(outerLayoutWidget);
+        visiblePages[i] = new docPageLabel(outerLayoutWidget, this);
     }
 
     generalLayoutWidget = new QWidget(outerLayoutWidget);
+    generalLayoutWidget->setAccessibleDescription("generalLayoutWidget");
     outerLayout->addWidget(generalLayoutWidget);
 
     generalLayout = new QHBoxLayout(generalLayoutWidget);
     logoLabel = new QLabel("logo goes here");
+    logoLabel->setAccessibleName("logoLabel");
     generalLayout->addWidget(logoLabel);
     sizeLogo();
 
-    libraryTable = new musicLibrary(generalLayoutWidget);
+    libraryTable = new musicLibrary(generalLayoutWidget,this);
+    libraryTable->setAccessibleName("libraryTable");
     generalLayout->addWidget(libraryTable);
 
     aboutLabel = new aboutWidget(generalLayoutWidget);
+    aboutLabel->setAccessibleName("aboutLabel");
     generalLayout->addWidget(aboutLabel);
 
-    settingsLabel = new settingsWidget(generalLayoutWidget);
+    settingsLabel = new settingsWidget(generalLayoutWidget, this);
+    settingsLabel->setAccessibleName("settingsLabel");
     generalLayout->addWidget(settingsLabel);
 
-    overlay = new TipOverlay(outerLayoutWidget);
+    overlay = new TipOverlay(outerLayoutWidget, this);
     connect(libraryTable, SIGNAL(songSelected(QString,QString)), this, SLOT(startPlayMode(QString,QString)));
 }
 
@@ -190,7 +199,7 @@ void MainWindow::startPlayMode(QString path, QString _titlePlaying)
     if(PDF==NULL || PDF->filepath != path)
     {
         deletePDF();
-        PDF = new PDFDocument(path, _titlePlaying);
+        PDF = new PDFDocument(this, path, _titlePlaying);
         leftmostPage = 1;   // Always start new document from zero
         connect(PDF,&PDFDocument::newImageReady,this, [this]{this->checkQueueVsCache();});
         //Hide or show button if midi there
@@ -222,17 +231,16 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     qDebug() << "menuLayoutWidgetSize->size(" << menuLayoutWidgetSize.width() << "," << menuLayoutWidgetSize.height() << ")";
 
     // These are packed as tight as they can go, except between rows and between columns put in a small border
-    int borderPixels = MUSICALPI_BORDERS;
     int roomForMenu = playing ? 0 : menuLayoutWidgetSize.height();
-    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - borderPixels * (pagesToShowAcross - 1)) / pagesToShowAcross);
-    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - borderPixels * (pagesToShowDown - 1)) / pagesToShowDown);
+    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - ourSettingsPtr->pageBorderWidth * (pagesToShowAcross - 1)) / pagesToShowAcross);
+    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - ourSettingsPtr->pageBorderWidth * (pagesToShowDown - 1)) / pagesToShowDown);
     PDF->checkResetImageSize(maxPageWidth, maxPageHeight + roomForMenu);  // add menu back in so we get larger image in cache so we don't re-cache for playing mode
     for (int r=0; r<pagesToShowDown; r++)
     {
         for (int c=0; c<pagesToShowAcross; c++)
         {
             int indx = r * pagesToShowAcross + c;
-            visiblePages[indx]->setGeometry(c * (borderPixels + maxPageWidth), roomForMenu + r * (borderPixels + maxPageHeight), maxPageWidth, maxPageHeight );
+            visiblePages[indx]->setGeometry(c * (ourSettingsPtr->pageBorderWidth + maxPageWidth), roomForMenu + r * (ourSettingsPtr->pageBorderWidth + maxPageHeight), maxPageWidth, maxPageHeight );
             loadPagePendingNumber[indx] = leftmostPage + indx; // This is a request to display
             loadPagePendingTransition[indx] = docPageLabel::noTransition;
             visiblePages[indx]->setAttribute(Qt::WA_TransparentForMouseEvents, playing);  // if we are playing, pass mouse events through to main window
@@ -404,17 +412,17 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
             qDebug() << "We still have an overlay - hide it";
             overlay->hide();
         }
-        if(event->y()<MUSICALPI_OVERLAY_TOP_PORTION * this->height())  // How will I know where with it a class ???
+        if(event->y()< ourSettingsPtr->overlayTopPortion * this->height())  // How will I know where with it a class ???
         {
             qDebug() << "MainWindow::mouseReleaseEvent ending play mode";
             setPlayMode(false,pagesNowAcross,pagesNowDown);
         }
-        else if (event->x() < MUSICALPI_OVERLAY_SIDE_PORTION * this->width())
+        else if (event->x() < ourSettingsPtr->overlaySidePortion * this->width())
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing previous page";
             playingPrevPage();
         }
-        else if (event->x() > this->width() - MUSICALPI_OVERLAY_SIDE_PORTION * this->width())
+        else if (event->x() > this->width() - ourSettingsPtr->overlaySidePortion * this->width())
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing next page";
             playingNextPage();
@@ -445,7 +453,7 @@ void MainWindow::sizeLogo()
     qDebug() << "Sizing logo";
     QPixmap pm;
     pm.load("/home/ferguson/MusicalPi/MusicalPi.gif");
-    logoLabel->setPixmap(pm.scaledToWidth(outerLayoutWidget->width()*MUSICALPI_LOGO_PCT)); // ?? move to resize
+    logoLabel->setPixmap(pm.scaledToWidth(outerLayoutWidget->width() * ourSettingsPtr->logoPct)); // ?? move to resize
     logoLabel->setScaledContents(false);
     logoLabel->setAlignment(Qt::AlignTop);
     logoLabel->setContentsMargins(20,20,20,20);

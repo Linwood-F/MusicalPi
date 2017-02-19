@@ -1,8 +1,9 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "pdfdocument.h"
+#include "mainwindow.h"
 
-//  PDFDOcument - responsible for manaing the document iself
+//  PDFDOcument - responsible for managing the document iself
 //
 //  This also manages the image buffers needed for display, deciding which
 //  to pro-actively fetch and cache, which to remove if memory is short
@@ -13,9 +14,10 @@
 
 double degree2radian(int d) { return (double)d * 3.1415926535 / 180.0 ;}
 
-PDFDocument::PDFDocument(QString _filePath, QString _titleName)
+PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleName) : QObject(parent)
 {
     qDebug() << "initializing with " << _filePath;
+    mParent = parent;
     filepath = _filePath;
     titleName = _titleName;
     imageWidth = 0;
@@ -26,7 +28,7 @@ PDFDocument::PDFDocument(QString _filePath, QString _titleName)
     }
     for(int i=0; i<MUSICALPI_THREADS; i++)
     {
-        pageThreads[i] = new renderThread(this, i);
+        pageThreads[i] = new renderThread(this, i, mParent);
         connect(pageThreads[i], SIGNAL(renderedImage(int, int, int, int)),
                 this,               SLOT(updateImage(int, int, int, int)));
         pageThreadActive[i]=false;
@@ -46,9 +48,9 @@ PDFDocument::PDFDocument(QString _filePath, QString _titleName)
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
 
-    assert(numPages <= MUSICALPI_MAXPAGES);
+    assert(numPages <= mParent->ourSettingsPtr->maxCache);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
-    cacheRangeEnd = MUSICALPI_MAX_CACHE;
+    cacheRangeEnd = mParent->ourSettingsPtr->maxCache;
 
 
 //        Poppler::Page *p = document->page(3);
@@ -177,9 +179,9 @@ void PDFDocument::adjustCache(int leftmostPage)
     // This seems to do the same calculation twice, but we want to extend anything outside of the normal range
     // to the other side if we hit one end.
 
-    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * (MUSICALPI_MAX_CACHE))));
-    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + (MUSICALPI_MAX_CACHE) - 1));
-    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - (MUSICALPI_MAX_CACHE) + 1));
+    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * (mParent->ourSettingsPtr->maxCache))));
+    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + (mParent->ourSettingsPtr->maxCache) - 1));
+    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - (mParent->ourSettingsPtr->maxCache) + 1));
     if(nominalStart != cacheRangeStart || nominalEnd != cacheRangeEnd)
     {
         qDebug() << "With leftmostpage as " << leftmostPage << " cache changed from [" << cacheRangeStart << "," << cacheRangeEnd << "] to ["<< nominalStart << "," << nominalEnd << "]";

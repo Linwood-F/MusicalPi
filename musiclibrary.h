@@ -28,11 +28,13 @@
 
 // This is a container widget that holds both a label, a search text box, and a table widget
 
+class MainWindow;
+
 class musicLibrary : public QWidget
 {
     Q_OBJECT
 public:
-    musicLibrary(QWidget *parent = 0);
+    musicLibrary(QWidget *parent, MainWindow* mp);
     ~musicLibrary();
     void loadData();
     void showKeyboard();
@@ -40,7 +42,8 @@ public:
 
 private:
     QSqlDatabase m_db;
-    QWidget* mParent;
+    QWidget* ourParent;
+    MainWindow* mParent;
     int columnForPath;
     int columnForID;
     int columnForTitle;

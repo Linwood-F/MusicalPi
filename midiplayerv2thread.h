@@ -19,13 +19,14 @@
 
 
 class midiPlayerV2;
+class MainWindow;
 
 class midiplayerV2Thread : public QThread
 {
     Q_OBJECT
 
 public:
-    midiplayerV2Thread(midiPlayerV2 *parent=0);
+    midiplayerV2Thread(midiPlayerV2 *parent, MainWindow* mp);
     ~midiplayerV2Thread();
     void play(int startAtMeasure, int volumeScale, int tempoScale);
     void stop();
@@ -63,7 +64,8 @@ private:
     QWaitCondition condition;
     enum {none, abort, startPlay, playing, playWaiting, stopPlay} requestType;
     QString errorEncountered;  // Does this need to be somehow linked to parent?
-    midiPlayerV2 * mParent;    // can't define as explicit pdfdocument due to header load sequences
+    midiPlayerV2 * ourParent;    // can't define as explicit pdfdocument due to header load sequences
+    MainWindow* mParent;
     QTimer *workTimer;         // Periodic time interval when we don't have anything to do (but need to check frequently)
     QTimer *queueInfoDebug;    // Only used if we are debugging queue info periodically
     int lastTickProcessed;

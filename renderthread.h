@@ -13,12 +13,13 @@
 #include "piconstants.h"
 #include "poppler/qt5/poppler-qt5.h"
 
+class MainWindow;
 class renderThread : public QThread
 {
     Q_OBJECT
 
 public:
-    renderThread(QObject *parent=0, int which = -1);   // which is index of thread so we can find it on return
+    renderThread(QObject *parent=0, int which = -1, MainWindow* mp = 0);   // which is index of thread so we can find it on return
     ~renderThread();
     void render(QImage** image, int thisPage, int maxWidth, int maxHeight);
 
@@ -36,7 +37,8 @@ private:
     QImage** targetImagePtr;
 
     float theScale;
-    QObject* mParent;  // can't define as explicit pdfdocument due to header load sequences
+    QObject* ourParent;  // Pointer to PDF document
+    MainWindow* mParent; // Pointer to main window
     int mWhich;   // which containing thread called us (so on slot we can suitably adjust
     int mPage;
     int mWidth;

@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     aboutwidget.cpp \
     settingswidget.cpp \
     midiplayerV2.cpp \
-    midiplayerv2thread.cpp
+    midiplayerv2thread.cpp \
+    oursettings.cpp
 
 HEADERS  += mainwindow.h \
     pdfdocument.h \
@@ -40,7 +41,8 @@ HEADERS  += mainwindow.h \
     aboutwidget.h \
     settingswidget.h \
     midiplayerV2.h \
-    midiplayerv2thread.h
+    midiplayerv2thread.h \
+    oursettings.h
 
 DISTFILES += \
     MusicalPi.gif \
