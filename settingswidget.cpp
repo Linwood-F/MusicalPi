@@ -1,107 +1,143 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "settingswidget.h"
 #include "mainwindow.h"
+#include "focuswatcher.h"
+#include <QFileInfo>
 
-settingsWidget::settingsWidget(QWidget* p, MainWindow* mp) : QLabel(p)
+#define COMMA ,
+#define createItem(type,name,prompt,lenPx,verb,modifier,validator,param) \
+    { \
+        name##Value = new type(this); \
+        name##Value->verb(modifier(mParent->ourSettingsPtr->name));   \
+        name##Value->setObjectName(#name); \
+        name##Msg = new QLabel(this); \
+        name##Label = new QLabel(this); \
+        name##Label->setText(prompt); \
+        grid->addWidget(name##Label,gridRow,0,1,1,Qt::AlignRight); \
+        QHBoxLayout* hb = new QHBoxLayout;  \
+        grid->addLayout(hb,gridRow,1,1,1,Qt::AlignLeft); \
+        hb->addWidget(name##Value); \
+        hb->addWidget(name##Msg); \
+        gridRow++;  \
+        if(lenPx > 0) { name##Value->setMinimumWidth(lenPx); name##Value->setMaximumWidth(lenPx); } \
+        name##Msg->setMinimumWidth(MUSICALPI_SETTINGS_MSG_MIN_WIDTH); \
+        name##Label->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE * 0.8) + "px;"); \
+        name##Value->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; font-style: bold;"); \
+        name##Msg->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; color: darkRed;"); \
+        connect(new FocusWatcher(name##Value), &FocusWatcher::focusChanged, this, [this](){validator(name##Value,param name##Msg);}); \
+    }
+
+#define subHeading(name, prompt) \
+    name##SubHeading = new QLabel(this); \
+    name##SubHeading->setText(prompt); \
+    name##SubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic;"); \
+    grid->addWidget(name##SubHeading,gridRow++,0,1,3,Qt::AlignLeft) \
+
+settingsWidget::settingsWidget(QWidget* p, MainWindow* mp) : QWidget(p)
 {
-
     mParent = mp;
-    this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
-
-    outerLayout = new QVBoxLayout(this);
-
-    formLayout = new QFormLayout;
-    formLayout->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
-    formLayout->setFormAlignment(Qt::AlignLeft);
-    formLayout->setLabelAlignment(Qt::AlignRight);
-
+    int gridRow = 0;
+    grid = new QGridLayout(this);
     heading = new QLabel(this);
     heading->setText("MusicalPi Settings");
     heading->setAlignment(Qt::AlignCenter);
     heading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: bold;");
-    formLayout->addRow(heading);
+    grid->addWidget(heading,gridRow++,0,1,3,Qt::AlignCenter);
 
-    midiSubHeading = new QLabel(this);
-    midiSubHeading->setText("Midi Player");
-    midiSubHeading->setStyleSheet("font-size:" +QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic;");
-    formLayout->addRow(midiSubHeading);
+    subHeading(midi,"Midi Player");
 
-    midiPortValue = new QLineEdit(this);
-    midiPortValue->setText(QString::number(mParent->ourSettingsPtr->midiPort));
-    midiPortValue->setValidator(new QIntValidator(1,512));
-    formLayout->addRow("Midi Port:",midiPortValue);
+    createItem(QLineEdit, midiPort,    "Port:",MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,0 COMMA 255 COMMA);
+    createItem(QLineEdit, ALSAlowWater,"Queue Low Water Mark:",MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,10 COMMA 9999 COMMA);
+    createItem(QLineEdit, ALSAhighWater,"QUeue High Water Mark:",MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,100  COMMA 9999 COMMA);
+    createItem(QLineEdit, ALSAmaxOutputBuffer,"Queue Size (in events):",MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,512  COMMA 99999 COMMA);
+    createItem(QLineEdit, ALSAqueueChunkSize,"Event processing unit of work (events):",MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,1  COMMA 500 COMMA);
+    createItem(QLineEdit, ALSApacingInterval,"Event processing idle delay (ms):", MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH,setText,QString::number,validateInt,1  COMMA 200 COMMA);
+    createItem(QCheckBox, ALSAMidiQuashResetAll,"Prevent sending Reset-All:",0,setChecked,,validateBool,);
 
-    ALSAlowWaterValue = new QLineEdit(this);
-    ALSAlowWaterValue->setText(QString::number(mParent->ourSettingsPtr->ALSAlowWater));
-    ALSAlowWaterValue->setValidator(new QIntValidator(10,9999));  // cross-field validate???
-    formLayout->addRow("ALSA Queue low water mark:",ALSAlowWaterValue);
+    subHeading(calibre,"Music Library");
 
-    ALSAhighWaterValue = new QLineEdit(this);
-    ALSAhighWaterValue->setText(QString::number(mParent->ourSettingsPtr->ALSAhighWater));
-    ALSAhighWaterValue->setValidator(new QIntValidator(10,9999));  // cross-field validate???
-    formLayout->addRow("ALSA Queue high water mark:",ALSAhighWaterValue);
+    createItem(QLineEdit, calibrePath,"Path to calibre library folder:",MUSICALPI_SETTINGS_PATH_WIDTH,setText,,validateText,);
+    createItem(QLineEdit, calibreDatabase,"Database file name (only):", MUSICALPI_SETTINGS_STRING_LEN,setText,,validateText,);
+    createItem(QLineEdit, calibreMusicTag,"Calibre tag for music items:",MUSICALPI_SETTINGS_STRING_LEN,setText,,validateText,);
 
-    ALSAmaxOutputBufferValue = new QLineEdit(this);
-    ALSAmaxOutputBufferValue->setText(QString::number(mParent->ourSettingsPtr->ALSAmaxOutputBuffer));
-    ALSAmaxOutputBufferValue->setValidator(new QIntValidator(512,16384));
-    formLayout->addRow("ALSA Queue size max:",ALSAmaxOutputBufferValue);
-
-    ALSAqueueChunkSizeValue = new QLineEdit(this);
-    ALSAqueueChunkSizeValue->setText(QString::number(mParent->ourSettingsPtr->ALSAqueueChunkSize));
-    ALSAqueueChunkSizeValue->setValidator(new QIntValidator(1,50));
-    formLayout->addRow("ALSA Queue Chunk Size:",ALSAqueueChunkSizeValue);
-
-    ALSApacingIntervalValue = new QLineEdit(this);
-    ALSApacingIntervalValue->setText(QString::number(mParent->ourSettingsPtr->ALSApacingInterval));
-    ALSApacingIntervalValue->setValidator(new QIntValidator(1,100));
-    formLayout->addRow("ALSA pacing Interval (ms):",ALSApacingIntervalValue);
-
-    ALSAMidiQuashResetAllValue = new QCheckBox(this);
-    ALSAMidiQuashResetAllValue->setChecked(mParent->ourSettingsPtr->ALSAMidiQuashResetAll);
-    formLayout->addRow("ALSA Quash Reset-All:",ALSAMidiQuashResetAllValue);
-
-    calibreSubHeading = new QLabel(this);
-    calibreSubHeading->setText("Music Library");
-    calibreSubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic;");
-    formLayout->addRow(calibreSubHeading);
-
-    calibrePathValue = new QLineEdit(this);
-    calibrePathValue->setText(mParent->ourSettingsPtr->calibrePath);
-    calibrePathValue->setMinimumWidth(800);
-    formLayout->addRow("Calibre Path:",calibrePathValue);
-
-    calibreDatabaseValue = new QLineEdit(this);
-    calibreDatabaseValue->setText(mParent->ourSettingsPtr->calibreDatabase);
-    calibreDatabaseValue->setMinimumWidth(350);
-    formLayout->addRow("Calibre Database:",calibreDatabaseValue);
-
-    calibreMusicTagValue = new QLineEdit(this);
-    calibreMusicTagValue->setText(mParent->ourSettingsPtr->calibreMusicTag);
-    formLayout->addRow("Calibre Music Tag Value:",calibreMusicTagValue);
-
-    errorMessage = new QLabel(this);
-    errorMessage->setText("");
-    errorMessage->setMinimumWidth(800);
-    formLayout->addRow(errorMessage);
-
-    QList<QLineEdit*> list = this->findChildren<QLineEdit*>();
-    foreach(QLineEdit* w, list)
-    {
-        w->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
-    }
-
-    outerLayout->addLayout(formLayout);
+    subHeading(error,"");
+    errorSubHeading->setStyleSheet("color:darkRed;");
 
     saveButton = new QPushButton(this);
     saveButton->setText("Save");
-    outerLayout->addWidget(saveButton);
+    grid->addWidget(saveButton,gridRow++,2,1,1,Qt::AlignRight);
     connect(saveButton,&QPushButton::clicked, this, &settingsWidget::validateAll);
-    setLayout(formLayout);
-
+}
+bool settingsWidget::validateAll()
+{
+    if(ALSAlowWaterValue->text().toInt() < ALSAqueueChunkSizeValue->text().toInt())
+    {
+        errorSubHeading->setText("The low water size must exceed the chunk size");
+        ALSAlowWaterValue->setFocus();
+        return false;
+    }
+    if(ALSAhighWaterValue->text().toInt() - ALSAlowWaterValue->text().toInt() < 2 * ALSAqueueChunkSizeValue->text().toInt())
+    {
+        errorSubHeading->setText("The difference in high and low water mark must be more than twice the chunk size");
+        ALSAlowWaterValue->setFocus();
+        return false;
+    }
+    if(ALSAhighWaterValue->text().toInt() >= ALSAmaxOutputBufferValue->text().toInt())
+    {
+        errorSubHeading->setText("The high water mark should be much less than the queue size");
+        ALSAhighWaterValue->setFocus();
+        return false;
+    }
+    if(ALSAqueueChunkSizeValue->text().toInt() > ALSAmaxOutputBufferValue->text().toInt() / 4)
+    {
+        errorSubHeading->setText("The chunk size should be much less than the queue size");
+        ALSAqueueChunkSizeValue->setFocus();
+        return false;
+    }
+    QFileInfo checkFile(calibrePathValue->text() + "/" + calibreDatabaseValue->text());
+    if(!checkFile.exists() || !checkFile.isFile())
+    {
+        errorSubHeading->setText("The calibre database path + file name does not find a file - check OS setup");
+        calibrePathValue->setFocus();
+        return false;
+    }
+    errorSubHeading->setText("");
+    return true;
+}
+bool settingsWidget::validateInt(QLineEdit* l, int bottom, int top, QLabel* m)
+{
+    // Validate int field that it is an int, and is in range [bottom,top], giving message in label if not (clearing if so)
+    bool ok;
+    int newVal = l->text().toInt(&ok);
+    if(!ok)
+    {
+        m->setText("Invalid number format");
+        l->setFocus();
+        return false;
+    }
+    if(newVal < bottom || newVal > top)
+    {
+        m->setText("Value must be between " + QString::number(bottom) + " and " + QString::number(top));
+        l->setFocus();
+        return false;
+    }
+    m->setText("");
+    return true;
+}
+bool settingsWidget::validateBool(QCheckBox* l, QLabel* m) // Just present so macro works
+{
+    return true;
+}
+bool settingsWidget::validateText(QLineEdit* l, QLabel* m) // just present so macro works
+{
+    return true;
 }
 
-void settingsWidget::validateAll()
+void settingsWidget::paintEvent(QPaintEvent *)  // This is here so we can use styles
 {
-    errorMessage->setText("Something Bad");
+    QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }

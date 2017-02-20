@@ -32,8 +32,8 @@ public:
         // fullPageNow  - display immediately but highlight whole page briefly
     docPageLabel(QWidget *parent, MainWindow* mp);
     ~docPageLabel();
-    void placeImage(docTransition thisTransition, QColor color);
-    void placeImage(docTransition thisTransition, QImage *newImageBuffer, QColor color);
+    void placeImage(docTransition thisTransition, QString color);
+    void placeImage(docTransition thisTransition, QImage *newImageBuffer, QString color);
     void HideAnyInProgressTransitions();
     QTimer ourOverlayTimer;
     QTimer ourHighlightShowTimer;  // for full page or first half of half page

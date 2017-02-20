@@ -106,7 +106,7 @@ private:
     unsigned int runningMeasureStartTick;
     #define runningTicksPerMeasure (overallTicksPerQuarter * 4 * runningTimeNumerator / runningTimeDenominator)
     #define runninguSecPerTick ((1000000*60)/(overallTicksPerQuarter * runningTempoAsQPM))
-
+    void paintEvent(QPaintEvent *);
 
 private slots:
     void updatePlayStatus();      // Updates screen with measure and dis/enables buttons

@@ -72,7 +72,7 @@ private:
             QLabel* logoLabel;
             musicLibrary* libraryTable;
             aboutWidget* aboutLabel;
-            settingsWidget* settingsLabel;
+            settingsWidget* settingsUI;
        docPageLabel* visiblePages[MUSICALPI_MAXROWS * MUSICALPI_MAXCOLUMNS];  // used for play mode panes; layout is ignored for these and explicitly positioned
        TipOverlay* overlay;                                                   // fits (briefly) over the whole window when play-playing mode starts.
 

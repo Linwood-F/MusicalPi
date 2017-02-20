@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QFont>
 #include <QDebug>
+#include "piconstants.h"
 
 class aboutWidget : public QLabel
 {

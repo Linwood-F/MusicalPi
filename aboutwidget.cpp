@@ -25,7 +25,9 @@ aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
     this->setAlignment(Qt::AlignTop);
     this->setWordWrap(true);
     this->setContentsMargins(10,10,10,10);
+#ifndef MUSICALPI_DEBUG_WIDGET_BORDERS
     this->setStyleSheet("background-color: rgb(240,240,200);");
+#endif
     this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
     this->setFont(QFont("Arial",14));
 }

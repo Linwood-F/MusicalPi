@@ -439,3 +439,11 @@ QString midiPlayerV2::guessSpelling(int note, int keySigNum)
         default: return "Bad";
     }
 }
+
+void midiPlayerV2::paintEvent(QPaintEvent *)
+{
+    QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}

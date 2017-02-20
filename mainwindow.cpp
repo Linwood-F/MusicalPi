@@ -37,7 +37,7 @@ void MainWindow::setupCoreWidgets()
 
     qDebug()<< "Starting widget setup";
     outerLayoutWidget = new QWidget();
-    outerLayoutWidget->setAccessibleName("outerLayoutWidget");
+    outerLayoutWidget->setObjectName("outerLayoutWidget");
     outerLayoutWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     outerLayout = new QVBoxLayout(outerLayoutWidget);
     this->setCentralWidget(outerLayoutWidget);
@@ -46,7 +46,7 @@ void MainWindow::setupCoreWidgets()
     outerLayout->setContentsMargins(0,0,0,0);
 
     menuLayoutWidget = new QWidget();
-    menuLayoutWidget->setAccessibleName("menuLayoutWidget");
+    menuLayoutWidget->setObjectName("menuLayoutWidget");
     menuLayout = new QHBoxLayout(menuLayoutWidget);
     outerLayout->addWidget(menuLayoutWidget);
     menuLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
@@ -55,7 +55,7 @@ void MainWindow::setupCoreWidgets()
     menuLayoutWidget->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
 
     mainMenuLayoutWidget = new QWidget();
-    mainMenuLayoutWidget->setAccessibleName("mainMenuLayoutWidget");
+    mainMenuLayoutWidget->setObjectName("mainMenuLayoutWidget");
     mainMenuLayout = new QHBoxLayout(mainMenuLayoutWidget);
     menuLayout->addWidget(mainMenuLayoutWidget);
     mainMenuLayout->setSpacing(10);
@@ -138,22 +138,26 @@ void MainWindow::setupCoreWidgets()
     outerLayout->addWidget(generalLayoutWidget);
 
     generalLayout = new QHBoxLayout(generalLayoutWidget);
+
     logoLabel = new QLabel("logo goes here");
-    logoLabel->setAccessibleName("logoLabel");
+    logoLabel->setObjectName("logoLabel");
     generalLayout->addWidget(logoLabel);
     sizeLogo();
 
     libraryTable = new musicLibrary(generalLayoutWidget,this);
-    libraryTable->setAccessibleName("libraryTable");
+    libraryTable->setObjectName("libraryTable");
     generalLayout->addWidget(libraryTable);
+    generalLayout->setAlignment(generalLayout,Qt::AlignTop | Qt::AlignLeft);
 
     aboutLabel = new aboutWidget(generalLayoutWidget);
-    aboutLabel->setAccessibleName("aboutLabel");
+    aboutLabel->setObjectName("aboutLabel");
     generalLayout->addWidget(aboutLabel);
+    generalLayout->setAlignment(aboutLabel,Qt::AlignTop | Qt::AlignLeft);
 
-    settingsLabel = new settingsWidget(generalLayoutWidget, this);
-    settingsLabel->setAccessibleName("settingsLabel");
-    generalLayout->addWidget(settingsLabel);
+    settingsUI = new settingsWidget(generalLayoutWidget, this);
+    settingsUI->setObjectName("settingsUI");
+    generalLayout->addWidget(settingsUI);
+    generalLayout->setAlignment(settingsUI,Qt::AlignTop | Qt::AlignLeft);
 
     overlay = new TipOverlay(outerLayoutWidget, this);
     connect(libraryTable, SIGNAL(songSelected(QString,QString)), this, SLOT(startPlayMode(QString,QString)));
@@ -193,7 +197,10 @@ void MainWindow::setSettingsMode()
     menuLayoutWidget->show();
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
-    settingsLabel->show();
+    settingsUI->show();
+    qDebug() << "SettingsUI object name = " << settingsUI->objectName();
+    qDebug() << "Stylesheet of SettingsUI = " << settingsUI->styleSheet();
+    qDebug() << "Background color " << settingsUI->palette();
 }
 
 void MainWindow::startPlayMode(QString path, QString _titlePlaying)
@@ -224,8 +231,10 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     }
     pagesNowAcross = pagesToShowAcross;
     pagesNowDown = pagesToShowDown;
-    // Change all widget backgrouns to the playing color, or normal color, as appropriate
+    // Change all widget backgrounds to the playing color, or normal color, as appropriate
+#ifndef MUSICALPI_DEBUG_WIDGET_BORDERS
     this->setStyleSheet(QString("QWidget { background-color: ") + (playing ?  QString(MUSICALPI_BACKGROUND_COLOR_PLAYING) : QString(MUSICALPI_BACKGROUND_COLOR_NORMAL)) + "}  QPushButton { background-color: grey }");
+#endif
     // These are placed in outerLayoutWidget reduced in height but the size of menuLayoutWidget if not playing
     QSize outerLayoutWidgetSize = outerLayoutWidget->size();
     QSize menuLayoutWidgetSize = menuLayoutWidget->size();
@@ -266,12 +275,12 @@ void MainWindow::checkQueueVsCache()
         if(loadPagePendingNumber[i] > PDF->numPages)
         {
             // We are out of the range of the book and need to clear the widget
-            visiblePages[i]->placeImage(loadPagePendingTransition[i], playing ? MUSICALPI_BACKGROUND_COLOR_PLAYING_QT : MUSICALPI_BACKGROUND_COLOR_NORMAL_QT );  // special call which asks for empty page (but allows transitions)
+            visiblePages[i]->placeImage(loadPagePendingTransition[i], playing ? MUSICALPI_BACKGROUND_COLOR_PLAYING : MUSICALPI_BACKGROUND_COLOR_NORMAL );  // special call which asks for empty page (but allows transitions)
         }
         else if(loadPagePendingNumber[i] && PDF->pageImagesAvailable[loadPagePendingNumber[i]-1])  // If it's needed and present
         {
             qDebug() << "Found we should display page " << loadPagePendingNumber[i] << " for position " << i;
-            visiblePages[i]->placeImage(loadPagePendingTransition[i], PDF->pageImages[loadPagePendingNumber[i]-1], playing ? MUSICALPI_BACKGROUND_COLOR_PLAYING_QT : MUSICALPI_BACKGROUND_COLOR_NORMAL_QT);
+            visiblePages[i]->placeImage(loadPagePendingTransition[i], PDF->pageImages[loadPagePendingNumber[i]-1], playing ? MUSICALPI_BACKGROUND_COLOR_PLAYING : MUSICALPI_BACKGROUND_COLOR_NORMAL);
             loadPagePendingNumber[i]=0;
         }
         else if(loadPagePendingNumber[i]) skipped++;
@@ -383,7 +392,7 @@ void MainWindow::HideEverything()
     generalLayoutWidget->hide();
     libraryTable->hide();
     aboutLabel->hide();
-    settingsLabel->hide();
+    settingsUI->hide();
     if(mp != NULL) closeMidiPlayer();  // if it's open
     for(int row=0; row < MUSICALPI_MAXROWS; row++)
         for(int column=0; column < MUSICALPI_MAXCOLUMNS; column++)

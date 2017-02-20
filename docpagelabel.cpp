@@ -72,7 +72,7 @@ docPageLabel::~docPageLabel()
    // clean up????
 }
 
-void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QColor color)
+void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QString color)
 {
     QImage* blankImage = new QImage(this->width(), this->height(), QImage::Format_RGB32);
     blankImage->fill(color);
@@ -81,7 +81,7 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QColor
     placeImage(thisTransition, blankImage, color);
 }
 
-void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage* newImageBuffer, QColor color)
+void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage* newImageBuffer, QString color)
 {
     // This handles (some) transitions by putting an overlay with the OLD image
     // on top, where it can be left for a period of time, but the NEW is the
@@ -106,7 +106,7 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     // We form an image here of what we need to display with suitable background and centered, the image in pageImages
     // does not have these borders.  The new image is formed first so we can copy it into the overlay if needed
     QImage newImage(this->width(), this->height(),QImage::Format_ARGB32_Premultiplied);
-    newImage.fill(color);   // We have to paint this not transparent since pages are different sizes
+    newImage.fill(QColor(color));   // We have to paint this not transparent since pages are different sizes
     // We should only be scaling down never up(pdfDocument takes care of that),
     // We do need need to recalculate scale with possibility we are scalling down
     float scale = std::min((float)(this->width())  / (float)(newImageBuffer->width()),

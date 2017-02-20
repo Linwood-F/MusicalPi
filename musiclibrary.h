@@ -55,6 +55,7 @@ private:
     QLineEdit searchBox;
     QTimer keepKeyboardUp;
     bool eventFilter(QObject *object, QEvent *event);
+    void paintEvent(QPaintEvent *);
 
 
 signals:

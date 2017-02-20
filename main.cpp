@@ -25,16 +25,15 @@ int main(int argc, char *argv[])
             "text-align: center;"
             "} "
 #ifdef MUSICALPI_DEBUG_WIDGET_BORDERS
-        "[accessibleName=\"generalLayoutWidget\"]    {border:5px solid red;} "
-        "[accessibleName=\"mainMenuLayoutWidget\"]   {border:5px solid green;} "
-        "[accessibleName=\"menuLayoutWidget\"]       {border:5px solid blue;} "
-        "[accessibleName=\"outerLayoutWidget\"]      {border:5px solid darkRed;} "
-        "[accessibleName=\"menuLayoutWidget\"]       {border:5px solid darkGreen;} "
-        "[accessibleName=\"playerMenuLayoutWidget\"] {border:5px solid darkBlue;} "
-        "[accessibleName=\"libraryTable\"]           {border:5px solid cyan;} "
-        "[accessibleName=\"settingsLabel\"]          {border:5px solid magenta;} "
-        "[accessibleName=\"playerMenuLayoutWidget\"] {border:5px solid yellow;} "
-        "[accessibleName=\"logoLabel\"]              {border:5px solid darkCyan;} "
+        "#settingsUI             {background-color: magenta; } "
+        "#generalLayoutWidget    {background-color: red; } "
+        "#mainMenuLayoutWidget   {background-color: green; } "
+        "#menuLayoutWidget       {background-color: blue; } "
+        "#outerLayoutWidget      {background-color: darkRed; } "
+        "#menuLayoutWidget       {background-color: darkGreen; } "
+        "#playerMenuLayoutWidget {background-color: darkBlue; } "
+        "#libraryTable           {background-color: cyan; } "
+        "#logoLabel              {background-color: darkCyan; } "
 #endif
        ));
     MainWindow w;
