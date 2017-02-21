@@ -1,6 +1,17 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
+#include <QColor>
+#include <QApplication>
+
 #include "mainwindow.h"
+#include "tipoverlay.h"
+#include "pdfdocument.h"
+#include "musiclibrary.h"
+#include "aboutwidget.h"
+#include "settingswidget.h"
+#include "midiplayerV2.h"
+#include "oursettings.h"
+
 
 MainWindow::MainWindow() : QMainWindow()
 {
@@ -178,7 +189,7 @@ void MainWindow::setLibraryMode()
 
 void MainWindow::setAboutMode()
 {
-    qDebug() << "About mode -- needs stuff ????";
+    qDebug() << "Entered";
     nowMode = aboutMode;
     HideEverything();
     deletePDF(); // we'll create a new one if needed
@@ -190,17 +201,15 @@ void MainWindow::setAboutMode()
 
 void MainWindow::setSettingsMode()
 {
-    qDebug() << "Settings mode -- need stuff ?????";
+    qDebug() << "Entered";
     nowMode = settingsMode;
     HideEverything();
     deletePDF(); // we'll create a new one if needed
     menuLayoutWidget->show();
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
+    settingsUI->loadData();
     settingsUI->show();
-    qDebug() << "SettingsUI object name = " << settingsUI->objectName();
-    qDebug() << "Stylesheet of SettingsUI = " << settingsUI->styleSheet();
-    qDebug() << "Background color " << settingsUI->palette();
 }
 
 void MainWindow::startPlayMode(QString path, QString _titlePlaying)
@@ -243,15 +252,15 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
 
     // These are packed as tight as they can go, except between rows and between columns put in a small border
     int roomForMenu = playing ? 0 : menuLayoutWidgetSize.height();
-    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - ourSettingsPtr->pageBorderWidth * (pagesToShowAcross - 1)) / pagesToShowAcross);
-    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - ourSettingsPtr->pageBorderWidth * (pagesToShowDown - 1)) / pagesToShowDown);
+    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - ourSettingsPtr->getSetting("pageBorderWidth").toInt() * (pagesToShowAcross - 1)) / pagesToShowAcross);
+    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - ourSettingsPtr->getSetting("pageBorderWidth").toInt() * (pagesToShowDown - 1)) / pagesToShowDown);
     PDF->checkResetImageSize(maxPageWidth, maxPageHeight + roomForMenu);  // add menu back in so we get larger image in cache so we don't re-cache for playing mode
     for (int r=0; r<pagesToShowDown; r++)
     {
         for (int c=0; c<pagesToShowAcross; c++)
         {
             int indx = r * pagesToShowAcross + c;
-            visiblePages[indx]->setGeometry(c * (ourSettingsPtr->pageBorderWidth + maxPageWidth), roomForMenu + r * (ourSettingsPtr->pageBorderWidth + maxPageHeight), maxPageWidth, maxPageHeight );
+            visiblePages[indx]->setGeometry(c * (ourSettingsPtr->getSetting("pageBorderWidth").toInt() + maxPageWidth), roomForMenu + r * (ourSettingsPtr->getSetting("pageBorderWidth").toInt() + maxPageHeight), maxPageWidth, maxPageHeight );
             loadPagePendingNumber[indx] = leftmostPage + indx; // This is a request to display
             loadPagePendingTransition[indx] = docPageLabel::noTransition;
             visiblePages[indx]->setAttribute(Qt::WA_TransparentForMouseEvents, playing);  // if we are playing, pass mouse events through to main window
@@ -357,7 +366,7 @@ void MainWindow::navigateTo(int nextPage)
     assert(!playing);   // We shouldn't get here while actually playing, that's different
     // This program has the responsibility to make the parameter sane
     // Start with forcing the next page to be within the document
-    nextPage = std::min(PDF->numPages,std::max(1,nextPage));
+    nextPage = std::min(PDF->numPages,std::max((int)1,nextPage));
     if(nextPage == leftmostPage)
     {
         qDebug() << "corrected request=" << nextPage << " and exiting as we are already there.";
@@ -423,17 +432,17 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
             qDebug() << "We still have an overlay - hide it";
             overlay->hide();
         }
-        if(event->y()< ourSettingsPtr->overlayTopPortion * this->height())  // How will I know where with it a class ???
+        if(event->y()< ourSettingsPtr->getSetting("overlayTopPortion").toInt() * this->height() / 100)  // How will I know where with it a class ???
         {
             qDebug() << "MainWindow::mouseReleaseEvent ending play mode";
             setPlayMode(false,pagesNowAcross,pagesNowDown);
         }
-        else if (event->x() < ourSettingsPtr->overlaySidePortion * this->width())
+        else if (event->x() < ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing previous page";
             playingPrevPage();
         }
-        else if (event->x() > this->width() - ourSettingsPtr->overlaySidePortion * this->width())
+        else if (event->x() > this->width() - ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing next page";
             playingNextPage();
@@ -464,7 +473,7 @@ void MainWindow::sizeLogo()
     qDebug() << "Sizing logo";
     QPixmap pm;
     pm.load("/home/ferguson/MusicalPi/MusicalPi.gif");
-    logoLabel->setPixmap(pm.scaledToWidth(outerLayoutWidget->width() * ourSettingsPtr->logoPct)); // ?? move to resize
+    logoLabel->setPixmap(pm.scaledToWidth(outerLayoutWidget->width() * ourSettingsPtr->getSetting("logoPct").toInt() / 100)); // ?? move to resize
     logoLabel->setScaledContents(false);
     logoLabel->setAlignment(Qt::AlignTop);
     logoLabel->setContentsMargins(20,20,20,20);

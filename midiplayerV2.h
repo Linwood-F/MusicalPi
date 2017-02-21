@@ -6,7 +6,6 @@
 
 #include <QObject>
 #include <QWidget>
-#include <QDebug>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
@@ -14,16 +13,6 @@
 #include <QSlider>
 #include <QPushButton>
 #include <QTimer>
-#include <QCloseEvent>
-
-#include "piconstants.h"
-#include "midiplayerv2thread.h"
-
-// These support the MidiFile library routine
-#include "MidiFile.h"
-#include "MidiEvent.h"
-#include "MidiEventList.h"
-#include "MidiMessage.h"
 
 // We use this for data structures here, actuall connections in the thread
 
@@ -32,6 +21,7 @@
 
 class midiplayerV2Thread;
 class MainWindow;
+class MidiFile;
 
 class midiPlayerV2 : public QWidget
 {    Q_OBJECT
@@ -74,8 +64,7 @@ private:
     QLabel      *songLabel;
     QLabel      *errorLabel;
 
-
-    // Our methods
+     // Our methods
     void doPlayingLayout();
     bool openAndLoadFile();
     void go();

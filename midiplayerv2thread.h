@@ -6,16 +6,9 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
-#include <QDebug>
-#include <QCoreApplication>
-
-#include <cassert>
-#include "piconstants.h"
-#include "midiplayerV2.h"
+#include <QTimer>
 
 #include <alsa/asoundlib.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
 
 
 class midiPlayerV2;

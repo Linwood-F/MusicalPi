@@ -3,12 +3,9 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
+#include <QLabel>
 #include <QWidget>
 #include <QObject>
-#include <QLabel>
-#include <QFont>
-#include <QDebug>
-#include "piconstants.h"
 
 class aboutWidget : public QLabel
 {

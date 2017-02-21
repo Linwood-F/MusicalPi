@@ -1,8 +1,17 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
+#include <QTimer>
+#include <QDebug>
+#include <QPainter>
+#include <QStyleOption>
+
+#include <cassert>
+
+#include "piconstants.h"
 
 #include "tipoverlay.h"
 #include "mainwindow.h"
-
+#include "oursettings.h"
 
 TipOverlay::TipOverlay(QWidget* p, MainWindow * mp) : QLabel(p)
 {
@@ -15,14 +24,14 @@ TipOverlay::TipOverlay(QWidget* p, MainWindow * mp) : QLabel(p)
     this->setGraphicsEffect(overlayFade);
     overlayAnimation = new QPropertyAnimation(overlayFade,"opacity");
     overlayAnimation->setEasingCurve(QEasingCurve::Linear);
-    overlayAnimation->setDuration(mParent->ourSettingsPtr->overlayDuration / 3);  // Must be <= first timer below
+    overlayAnimation->setDuration(mParent->ourSettingsPtr->getSetting("overlayDuration").toInt() / 3);  // Must be <= first timer below
 
 }
 void TipOverlay::showEvent(QShowEvent* event)
 {
     int overlayFullWidth = ourParent->size().width();
-    int overlayTopHeight = mParent->ourSettingsPtr->overlayTopPortion * ourParent->size().height();
-    int overlayPanelWidth = mParent->ourSettingsPtr->overlaySidePortion * overlayFullWidth;
+    int overlayTopHeight = mParent->ourSettingsPtr->getSetting("overlayTopPortion").toInt() * ourParent->size().height() / 100;
+    int overlayPanelWidth = mParent->ourSettingsPtr->getSetting("overlaySidePortion").toInt() * overlayFullWidth / 100;
     QRect endPlayRect(0,0,overlayFullWidth,overlayTopHeight);
     QRect backPlayRect(0,overlayTopHeight,overlayPanelWidth,ourParent->size().height() - overlayTopHeight);
     QRect forwardPlayRect(overlayFullWidth - overlayPanelWidth,overlayTopHeight,overlayPanelWidth,ourParent->size().height() - overlayTopHeight);
@@ -57,7 +66,7 @@ void TipOverlay::showEvent(QShowEvent* event)
     overlayAnimation->setStartValue(0.0);
     overlayAnimation->setEndValue(1.0);
     overlayAnimation->start();
-    QTimer::singleShot(mParent->ourSettingsPtr->overlayDuration / 2,this,  // Must be >= duration above
+    QTimer::singleShot(mParent->ourSettingsPtr->getSetting("overlayDuration").toInt() / 2,this,  // Must be >= duration above
        [=]
         {
             qDebug() << "TipOverlay:: in animation after first event";
@@ -66,7 +75,7 @@ void TipOverlay::showEvent(QShowEvent* event)
             overlayAnimation->start();
         }
     );
-    QTimer::singleShot(mParent->ourSettingsPtr->overlayDuration,this,  // Must be >= 2* duration above
+    QTimer::singleShot(mParent->ourSettingsPtr->getSetting("overlayDuration").toInt(),this,  // Must be >= 2* duration above
        [=]
         {
             qDebug() << "TipOverlay:: in animation after second event";

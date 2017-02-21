@@ -1,8 +1,16 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
+#include <QPainter>
+#include <QDebug>
+
 #include "renderthread.h"
 #include "pdfdocument.h"
 #include "mainwindow.h"
+#include "oursettings.h"
+
+#include <cassert>
+#include "piconstants.h"
+#include "poppler/qt5/poppler-qt5.h"
 
 renderThread::renderThread(QObject *parent, int which, MainWindow* mp ): QThread(parent)
 {
@@ -71,7 +79,7 @@ void renderThread::run()
             QPainter painter(theImage);
             painter.setFont(QFont("Arial", MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE, 1, false));
             painter.setPen(QColor("green"));
-            painter.drawText(QPoint(mParent->ourSettingsPtr->pageHighlightHeight + 10,mParent->ourSettingsPtr->pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
+            painter.drawText(QPoint(mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt() + 10,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt() + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }
         mutex.lock();  // Avoid race conditions in the parent thread in the render() that controls this loop
         running = false;

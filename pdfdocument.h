@@ -6,27 +6,17 @@
 
 #include <QImage>
 #include <QLabel>
-#include <QThread>
-#include <QFuture>
-#include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrent>
 #include <cassert>
 #include <QtDebug>
-#include <QPainter>
-#include <QBitmap>
-#include <stdio.h>
-#include <QColor>
-#include <QMutex>
-#include <QFileInfo>
+
+#include "docpagelabel.h"
 
 #include "piconstants.h"
-#include "docpagelabel.h"
-#include "renderthread.h"
-
-#include <string>
 #include <poppler/qt5/poppler-qt5.h>
 
 class MainWindow;
+class renderThread;
 
 class PDFDocument : public QObject
 {

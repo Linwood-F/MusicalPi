@@ -4,21 +4,13 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QWidget>
-#include <QObject>
 #include <QLabel>
-#include <QFont>
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QPushButton>
-#include <QIntValidator>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-
-#define declareItem(type,name) \
-    type* name##Value;  \
-    QLabel* name##Label; \
-    QLabel* name##Msg \
+#include <QMap>
+#include <QString>
 
 class MainWindow;
 
@@ -27,28 +19,13 @@ class settingsWidget : public QWidget
     Q_OBJECT
 public:
     settingsWidget(QWidget*, MainWindow*);
+    void loadData();
 
 private:
     MainWindow* mParent;
 
+    QWidget* containingWidget;
     QGridLayout* grid;
-
-    QLabel* heading;
-    QLabel* midiSubHeading;
-
-    declareItem(QLineEdit, midiPort);
-    declareItem(QLineEdit, ALSAlowWater);
-    declareItem(QLineEdit, ALSAhighWater);
-    declareItem(QLineEdit, ALSAmaxOutputBuffer);
-    declareItem(QLineEdit, ALSAqueueChunkSize);
-    declareItem(QLineEdit, ALSApacingInterval);
-    declareItem(QCheckBox, ALSAMidiQuashResetAll);
-
-    QLabel* calibreSubHeading;
-
-    declareItem(QLineEdit, calibrePath);
-    declareItem(QLineEdit, calibreDatabase);
-    declareItem(QLineEdit, calibreMusicTag);
 
     QLabel* errorSubHeading;
 
@@ -56,10 +33,13 @@ private:
 
     bool validateAll();
     void paintEvent(QPaintEvent *);
-    bool validateInt(QLineEdit* l, int bottom, int top, QLabel* m);
-    bool validateBool(QCheckBox* l, QLabel* m);
-    bool validateText(QLineEdit* l, QLabel* m);
+    bool validateInt(int row, int bottom, int top);
+    int gridRow;
 
+    struct widgets_t {int row; QString type;};
+
+    typedef  std::map<QString,widgets_t> rowMap_t;  // value key and row in table
+    rowMap_t values;
 };
 
 #endif // SETTINGSWIDGET_H

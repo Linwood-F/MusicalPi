@@ -5,26 +5,12 @@
 
 #include <QtSql/qtsqlglobal.h>
 #include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlRecord>
-#include <QSqlField>
-#include <QSqlError>
-#include <QTableWidget>
-#include <QTableWidgetItem>
-#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QTimer>
-#include <Qt>
-#include <QScroller>
-#include <QtDBus/QDBusConnection>
-#include <QtDBus/QDBusMessage>
+#include <QTableWidget>
 
-
-#include "debugmessages.h"
-#include "piconstants.h"
-#include <cassert>
 
 // This is a container widget that holds both a label, a search text box, and a table widget
 

@@ -3,20 +3,11 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QObject>
 #include <QWidget>
-#include <QLabel>
-#include <QImage>
-#include <QThread>
 #include <QTimer>
 #include <QtDebug>
-#include <QPainter>
-#include <QBitmap>
-#include <QColor>
+#include <QLabel>
 
-#include <cassert>
-
-#include "piconstants.h"
 
 class MainWindow;
 

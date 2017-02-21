@@ -1,5 +1,19 @@
+#include <QStyleOption>
+#include <QPainter>
+#include <QDebug>
+#include <QCloseEvent>
+
 #include "midiplayerV2.h"
 #include "mainwindow.h"
+#include "oursettings.h"
+#include "piconstants.h"
+#include "midiplayerv2thread.h"
+
+// These support the MidiFile library routine
+#include "MidiFile.h"
+#include "MidiEvent.h"
+#include "MidiEventList.h"
+#include "MidiMessage.h"
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
@@ -18,8 +32,8 @@ midiPlayerV2::midiPlayerV2(MainWindow *parent, QString _midiFile, QString _title
     mfi = new MidiFile();  // Store on the heap so we can delete it when done
     midiFile = _midiFile;
     doPlayingLayout();     // prepare screen
-    volumeSlider->setValue(mParent->ourSettingsPtr->midiInitialVelocityScale);  // Set initial values
-    tempoSlider->setValue(mParent->ourSettingsPtr->midiInitialTempoScale);
+    volumeSlider->setValue(mParent->ourSettingsPtr->getSetting("midiInitialVelocityScale").toInt());  // Set initial values
+    tempoSlider->setValue(mParent->ourSettingsPtr->getSetting("midiInitialTempoScale").toInt());
     canPlay = openAndLoadFile();
     if(canPlay) playThread = new midiplayerV2Thread(this,mParent);
     if(canPlay) canPlay = playThread->openSequencerInitialize();  //Initialize sequencer now (we'll use queue/port/etc in the parse as well as play)
@@ -28,7 +42,7 @@ midiPlayerV2::midiPlayerV2(MainWindow *parent, QString _midiFile, QString _title
     updatePlayStatus();   // This may display an error if we couldn't do the things above
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updatePlayStatus()));
-    timer->start(mParent->ourSettingsPtr->statusUpdateRate);
+    timer->start(MUSICALPI_MIDIPLAYER_STATUSUPDATERATE);
     // User now starts play with button (or not).
 }
 
@@ -67,7 +81,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         // Advance running count to next measure
         while ((unsigned int)ptr->tick >= runningMeasureStartTick + runningTicksPerMeasure)
         {
-            if(mParent->ourSettingsPtr->debugMidiMeasureDetails)
+            if(mParent->ourSettingsPtr->getSetting("debugMidiMeasureDetails").toBool())
                 qDebug() << "Finished measure " << runningMeasureNumber
                          << ", start tick = " << runningMeasureStartTick
                          << ", ticks per measure = " << runningTicksPerMeasure
@@ -106,7 +120,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                 case  66: ctrlr = "Sustenuto"; break;
                 case  91: ctrlr = "Effects 1 Depth"; break;
                 case 121: ctrlr = "Reset all";
-                          if(mParent->ourSettingsPtr->ALSAMidiQuashResetAll) sendFlag=false;
+                          if(mParent->ourSettingsPtr->getSetting("ALSAMidiQuashResetAll").toBool()) sendFlag=false;
                           break;
             }
 
@@ -228,11 +242,11 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
            if (j == 0) midiDataNumbers += "0x" + QString::number((int)(*ptr)[j],16) + " ";
            else midiDataNumbers += QString::number((int)(*ptr)[j],10) + " ";
         }
-        if(mParent->ourSettingsPtr->debugMidiFileParseDetails)
+        if(mParent->ourSettingsPtr->getSetting("debugMidiFileParseDetails").toBool())
             qDebug() << "Event " << thisEvent << " at ticks " << ptr->tick << ", on track " << ptr->track << ", measure " << runningMeasureNumber
                      << ", seconds = " << mfi->getTimeInSeconds(0,thisEvent) << ", " << midiDataText << ", " << midiDataNumbers;
     }
-    if(mParent->ourSettingsPtr->debugMidiMeasureDetails)
+    if(mParent->ourSettingsPtr->getSetting("debugMidiMeasureDetails").toBool())
         qDebug() << "Finished measure  " << runningMeasureNumber
                  << ", start tick = " << runningMeasureStartTick
                  << ", ticks per measure = " << runningTicksPerMeasure

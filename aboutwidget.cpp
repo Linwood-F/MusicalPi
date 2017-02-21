@@ -2,6 +2,9 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "aboutwidget.h"
+#include <QFont>
+#include <QDebug>
+#include "piconstants.h"
 
 aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
 {
@@ -18,6 +21,12 @@ aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
            "to hold your library and there is no reason to re-invent. In my case Calibre is "
            "running on a different computer, but it could also reside on the computer at the "
            "piano.</p>"
+        "<p>An embedded midi player was included as our piano had a player system, and so "
+           "I can embed a .mid file in calibre with the .pdf, and the piano will actually "
+           "play it, allowing one to hear the proper timing (and slow it down if desired)."
+           "As of this writing I have not tried to hook (e.g. via JACK) a synthesizer to the "
+           "embedded midi player, but it quite likely would work as under the covers it uses "
+           "ALSA.  It has been tested with qmidinet."
         "<p>This software is provided under the Apache 2.0 license, and is Copyright(C) 2017 by "
         "LE Ferguson, LLC and all rights are reserved except as provided therein.</p>"
       );

@@ -1,20 +1,13 @@
 #ifndef TIPOVERLAY_H
 #define TIPOVERLAY_H
 
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QObject>
+//#include <QObject>
 #include <QLabel>
-#include <QTimer>
 #include <QWidget>
-#include <QDebug>
-#include <QPainter>
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
-
-#include <cassert>
-
-#include "piconstants.h"
 
 class MainWindow;
 

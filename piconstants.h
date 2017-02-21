@@ -38,6 +38,14 @@
 #define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
 //#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
 
+// Midi Player queue and debug control information
+
+#define MUSICALPI_ALSALOWWATER 70
+#define MUSICALPI_ALSAHIGHWATER 170
+#define MUSICALPI_ALSAMAXOUTPUTBUFFER 512
+#define MUSICALPI_ALSAQUEUECHUNKSIZE 50
+#define MUSICALPI_ALSAPACINGINTERVAL 10
+#define MUSICALPI_MIDIPLAYER_STATUSUPDATERATE 500
 
 // Utility macro for managing pointers and logging
 

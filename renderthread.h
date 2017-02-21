@@ -7,11 +7,7 @@
 #include <QMutex>
 #include <QImage>
 #include <QWaitCondition>
-#include <QDebug>
 
-#include <cassert>
-#include "piconstants.h"
-#include "poppler/qt5/poppler-qt5.h"
 
 class MainWindow;
 class renderThread : public QThread

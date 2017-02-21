@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
         "#playerMenuLayoutWidget {background-color: darkBlue; } "
         "#libraryTable           {background-color: cyan; } "
         "#logoLabel              {background-color: darkCyan; } "
+        "#containingWidget       {background-color: darkMagenta; } "
 #endif
        ));
     MainWindow w;

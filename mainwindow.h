@@ -9,21 +9,19 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QMouseEvent>
-#include <QColor>
 
-#include "tipoverlay.h"
 #include "docpagelabel.h"
-#include "pdfdocument.h"
-#include "musiclibrary.h"
-#include "aboutwidget.h"
-#include "settingswidget.h"
-#include "midiplayerV2.h"
-#include "oursettings.h"
+
+#include "piconstants.h"
 
 class midiPlayerV2;
 class PDFDocument;
 class TipOverlay;
 class ourSettings;
+class docPageLabel;
+class musicLibrary;
+class aboutWidget;
+class settingsWidget;
 class docPageLabel;
 
 class MainWindow : public QMainWindow

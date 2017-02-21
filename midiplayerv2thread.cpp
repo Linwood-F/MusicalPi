@@ -1,5 +1,15 @@
+#include <QDebug>
+#include <QCoreApplication>
+
 #include "midiplayerv2thread.h"
 #include "mainwindow.h"
+#include "piconstants.h"
+#include "midiplayerV2.h"
+#include "oursettings.h"
+
+#include <cassert>
+#include <sys/types.h>
+#include <sys/syscall.h>
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
@@ -26,14 +36,14 @@ midiplayerV2Thread::midiplayerV2Thread(midiPlayerV2 *parent, MainWindow* mp): QT
     // For example, when the queue is too full, the worker puts itself to sleep (indefinitely) and this is a wakeup to check if more room is available
     workTimer = new QTimer();
     connect(workTimer, SIGNAL(timeout()), this, SLOT(gooseThread()));
-    workTimer->start(mParent->ourSettingsPtr->ALSApacingInterval);
+    workTimer->start(MUSICALPI_ALSAPACINGINTERVAL);
 
     // Debug output (or not)
-    if(mParent->ourSettingsPtr->debugQueueInfoInterval > 0)
+    if(mParent->ourSettingsPtr->getSetting("debugQueueInfoInterval").toUInt() > 0)
     {
         queueInfoDebug = new QTimer();
         connect(queueInfoDebug,SIGNAL(timeout()), this, SLOT(queueInfoDebugOutput()));
-        queueInfoDebug->start(mParent->ourSettingsPtr->debugQueueInfoInterval);
+        queueInfoDebug->start(mParent->ourSettingsPtr->getSetting("debugQueueInfoInterval").toInt());
     }
     start();  // This actually starts the thread running
 }
@@ -94,7 +104,7 @@ bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent t
     int ret = snd_seq_create_simple_port(handle,NULL,SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,  SND_SEQ_PORT_TYPE_MIDI_GENERIC);
     checkALSAreturn(ret,"Failed to create ALSA port")
     sourceAddress.port = ret;
-    destAddress.client = mParent->ourSettingsPtr->midiPort;// yeah, alsa calls this the client not port, port is zero for our use
+    destAddress.client = (unsigned char)mParent->ourSettingsPtr->getSetting("midiPort").toUInt();// yeah, alsa calls this the client not port, port is zero for our use
     destAddress.port = 0;
     checkALSAreturn(snd_seq_connect_to(handle, sourceAddress.port, destAddress.client, destAddress.port),"Failed to connect to MIDI port (" + QString::number(destAddress.client) + ")");
 
@@ -114,7 +124,7 @@ bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent t
     checkALSAreturn(snd_seq_set_client_pool_output_room(handle,0),"Setting client pool room size to zero")
     // By trial and error try increasing buffer - start
     unsigned int outBufferSize=0;
-    for(unsigned int testSize = 64; testSize < mParent->ourSettingsPtr->ALSAmaxOutputBuffer; testSize += 16)
+    for(unsigned int testSize = 64; testSize < MUSICALPI_ALSAMAXOUTPUTBUFFER; testSize += 16)
     {
         ret = snd_seq_set_client_pool_output(handle,testSize);
         if(ret==0) outBufferSize = testSize;
@@ -124,7 +134,7 @@ bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent t
     getQueueInfo();
     // Safety checks:
     assert(outBufferSize == outputSize);  // Let's make sure we actually got what we think we did
-    assert(mParent->ourSettingsPtr->ALSAqueueChunkSize < mParent->ourSettingsPtr->ALSAlowWater); // Make sure someone didn't screw up sizing
+    assert(MUSICALPI_ALSAQUEUECHUNKSIZE < MUSICALPI_ALSALOWWATER); // Make sure someone didn't screw up sizing
     return true; // will set canPlay true
 }
 
@@ -228,7 +238,7 @@ void midiplayerV2Thread::run()
                         qDebug() << "In Play thread, sending preliminary tempo event, value=" << (prelimTempoEvent.data.queue.param.value * 100 / m_tempoScale);
                         prelimTempoEvent.time.tick = 0;
                         prelimTempoEvent.data.queue.param.value = prelimTempoEvent.data.queue.param.value * 100 / m_tempoScale;  // Scale tempo if needed
-                        if(mParent->ourSettingsPtr->debugMidiSendDetails)
+                        if(mParent->ourSettingsPtr->getSetting("debugMidiSendDetails").toBool())
                             qDebug() << "Sending prelim tempo to queue=" << prelimTempoEvent.queue
                                      << ", tick (incl offset)=" << prelimTempoEvent.time.tick
                                      << ", tempo(usec) = " << prelimTempoEvent.data.queue.param.value;
@@ -249,7 +259,7 @@ void midiplayerV2Thread::run()
             // Since the overhead of the loop (and queue checking) is high, send out a chunk of data
             // at once.  The chunk size should be << queue size as no checking is done if the queue is filling
             // intra-chunk, in particular low water > chunk size
-            for(unsigned int chunks = 0; chunks <= mParent->ourSettingsPtr->ALSAqueueChunkSize; chunks++)
+            for(unsigned int chunks = 0; chunks <= MUSICALPI_ALSAQUEUECHUNKSIZE; chunks++)
             {
                 // Since we may scale things and don't want to screw with the saved data, copy the event
                 snd_seq_event_t ep;
@@ -261,7 +271,7 @@ void midiplayerV2Thread::run()
                 }
                 if(playStartEvent->second.containsNoteOn)  ep.data.note.velocity = ep.data.note.velocity * m_volumeScale / 100;
                 ep.time.tick = ep.time.tick - startAtTick; // offset for where we started queue (queue is always 0 start)
-                if(mParent->ourSettingsPtr->debugMidiSendDetails)
+                if(mParent->ourSettingsPtr->getSetting("debugMidiSendDetails").toBool())
                     qDebug() << "Sending tick (w/offset)=" << ep.time.tick + startAtTick << ", source client=" << ep.source.client << ", dest client=" << ep.dest.client << ", type=" << ep.type;
                 assert(snd_seq_event_output(handle,&ep)>=0);
 
@@ -278,12 +288,12 @@ void midiplayerV2Thread::run()
 
         // If we are playing, but the queue is near full, put us into a voluntary wait state
 
-        if(requestType == playing     &&  mParent->ourSettingsPtr->ALSAlowWater >= outputFree)
+        if(requestType == playing     &&  MUSICALPI_ALSALOWWATER >= outputFree)
         {
             requestType = playWaiting;
             qDebug() << "Waiting for queue to empty  (at or below low water mark)...";
         }
-        if(requestType == playWaiting &&  mParent->ourSettingsPtr->ALSAhighWater < outputFree)
+        if(requestType == playWaiting &&  MUSICALPI_ALSAHIGHWATER < outputFree)
         {
             requestType = playing;
             qDebug() << "Restarting as queue reached high water mark...";

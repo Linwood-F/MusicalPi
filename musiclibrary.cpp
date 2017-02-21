@@ -1,7 +1,23 @@
 // Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
 
+#include <QPainter>
+#include <QSqlQuery>
+#include <QSqlRecord>
+#include <QSqlField>
+#include <QSqlError>
+#include <QTableWidgetItem>
+#include <QHeaderView>
+#include <QScroller>
+#include <QtDBus/QDBusConnection>
+#include <QtDBus/QDBusMessage>
+
 #include "musiclibrary.h"
 #include "mainwindow.h"
+#include "oursettings.h"
+
+#include "debugmessages.h"
+#include "piconstants.h"
+#include <cassert>
 
 // Isolate specific librarydetails in this class so we could switch to different
 // calling process, also isolate formatting and population of the widget here.
@@ -11,7 +27,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 {
     ourParent = parent;
     mParent = mp;
-    qDebug() << "in constructor with path " << mParent->ourSettingsPtr->calibrePath << " and file " << mParent->ourSettingsPtr->calibreDatabase;
+    qDebug() << "in constructor with path " << mParent->ourSettingsPtr->getSetting("calibrePath").toString() << " and file " << mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
 
     // Arrange the widgets
 
@@ -32,7 +48,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 
     // Get the database ready
     m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName(mParent->ourSettingsPtr->calibrePath + "/" + mParent->ourSettingsPtr->calibreDatabase);
+    m_db.setDatabaseName(mParent->ourSettingsPtr->getSetting("calibrePath").toString() + "/" + mParent->ourSettingsPtr->getSetting("calibreDatabase").toString());
     if(m_db.open())
     {
         qDebug() << "Successfully opened database, lasterror=" << m_db.lastError();
@@ -62,7 +78,7 @@ void musicLibrary::loadData()
         "inner join data d on d.book = b.id and d.format = 'PDF' "
         "left join books_series_link bsl on bsl.book = b.id "
         "left join series s on s.id=bsl.series "
-        "where t.name = '" + mParent->ourSettingsPtr->calibreMusicTag + "' "
+        "where t.name = '" + mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString() + "' "
         "group  by b.id, b.sort, b.author_sort, b.path, d.name "
         "order by b.sort;";
     qDebug() << "Preparing main query " << sql ;
@@ -107,7 +123,7 @@ void musicLibrary::loadData()
              "from books b "
              "inner join books_tags_link btl on btl.book = b.id "
              "inner join tags t on t.id = btl.tag "
-             "where b.id=%1 and t.name <> '%2' ").arg(queryBooks.record().field(rec.indexOf("BookID")).value().toString()).arg(mParent->ourSettingsPtr->calibreMusicTag)
+             "where b.id=%1 and t.name <> '%2' ").arg(queryBooks.record().field(rec.indexOf("BookID")).value().toString()).arg(mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString())
             );
         if(queryTags.lastError().databaseText()!="" || queryTags.lastError().driverText()!="")
         {
@@ -142,8 +158,8 @@ void musicLibrary::loadData()
 }
 void musicLibrary::onChosen(int row, int column)
 {
-    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << mParent->ourSettingsPtr->calibrePath <<  "/" << libTable.item(row, columnForPath)->text();
-    emit songSelected(tr("%1/%2").arg(mParent->ourSettingsPtr->calibrePath).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
+    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << mParent->ourSettingsPtr->getSetting("calibrePath").toString() <<  "/" << libTable.item(row, columnForPath)->text();
+    emit songSelected(tr("%1/%2").arg(mParent->ourSettingsPtr->getSetting("calibrePath").toString()).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
 }
 
 void musicLibrary::filterTable(QString filter)

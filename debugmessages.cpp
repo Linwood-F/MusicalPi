@@ -1,9 +1,12 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "debugmessages.h"
 #include <QTime>
 #include <QMutex>
 #include <QRegularExpression>
+#include <stdio.h>
+#include <stdlib.h>
+#include <exception>
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {

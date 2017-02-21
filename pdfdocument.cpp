@@ -1,7 +1,19 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
+#include <QPainter>
+#include <QBitmap>
+#include <QColor>
+#include <QFileInfo>
+
 #include "pdfdocument.h"
 #include "mainwindow.h"
+#include "docpagelabel.h"
+#include "renderthread.h"
+#include "mainwindow.h"
+#include "oursettings.h"
+
+#include <string>
+#include <stdio.h>
 
 //  PDFDOcument - responsible for managing the document iself
 //
@@ -48,9 +60,9 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
 
-    assert(numPages <= mParent->ourSettingsPtr->maxCache);
+    assert(numPages <= mParent->ourSettingsPtr->getSetting("maxCache").toInt());
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
-    cacheRangeEnd = mParent->ourSettingsPtr->maxCache;
+    cacheRangeEnd = mParent->ourSettingsPtr->getSetting("maxCache").toInt();
 
 
 //        Poppler::Page *p = document->page(3);
@@ -179,9 +191,9 @@ void PDFDocument::adjustCache(int leftmostPage)
     // This seems to do the same calculation twice, but we want to extend anything outside of the normal range
     // to the other side if we hit one end.
 
-    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * (mParent->ourSettingsPtr->maxCache))));
-    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + (mParent->ourSettingsPtr->maxCache) - 1));
-    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - (mParent->ourSettingsPtr->maxCache) + 1));
+    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * (mParent->ourSettingsPtr->getSetting("maxCache").toInt()))));
+    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + (mParent->ourSettingsPtr->getSetting("maxCache").toInt()) - 1));
+    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - (mParent->ourSettingsPtr->getSetting("maxCache").toInt()) + 1));
     if(nominalStart != cacheRangeStart || nominalEnd != cacheRangeEnd)
     {
         qDebug() << "With leftmostpage as " << leftmostPage << " cache changed from [" << cacheRangeStart << "," << cacheRangeEnd << "] to ["<< nominalStart << "," << nominalEnd << "]";
