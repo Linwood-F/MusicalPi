@@ -12,6 +12,8 @@
 #include <QMap>
 #include <QString>
 
+#include "settingsitem.h"
+
 class MainWindow;
 
 class settingsWidget : public QWidget
@@ -20,13 +22,15 @@ class settingsWidget : public QWidget
 public:
     settingsWidget(QWidget*, MainWindow*);
     void loadData();
+    MainWindow* mParent;
+    typedef  std::map<QString,settingsItem*> rowMap_t;  // value key and row in table
+    rowMap_t values;
+    QVBoxLayout* innerLayout;
 
 private:
-    MainWindow* mParent;
 
-    QWidget* containingWidget;
-    QGridLayout* grid;
 
+    QWidget* containingWidget; // Just so we can delete enmass easily
     QLabel* errorSubHeading;
 
     QPushButton* saveButton;
@@ -34,12 +38,7 @@ private:
     bool validateAll();
     void paintEvent(QPaintEvent *);
     bool validateInt(int row, int bottom, int top);
-    int gridRow;
 
-    struct widgets_t {int row; QString type;};
-
-    typedef  std::map<QString,widgets_t> rowMap_t;  // value key and row in table
-    rowMap_t values;
 };
 
 #endif // SETTINGSWIDGET_H

@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
         "#playerMenuLayoutWidget {background-color: darkBlue; } "
         "#libraryTable           {background-color: cyan; } "
         "#logoLabel              {background-color: darkCyan; } "
-        "#containingWidget       {background-color: darkMagenta; } "
+        "#containingWidget       {background-color: red; } "
+        "#midiPort               {background-color: yellow; } "  // example for item on settings page, done by name
 #endif
        ));
     MainWindow w;

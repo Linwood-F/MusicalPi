@@ -4,11 +4,13 @@
 #include <QHBoxLayout>
 #include <QStyleOption>
 #include <QPainter>
+#include <QFrame>
 
 #include "settingswidget.h"
 #include "mainwindow.h"
 #include "focuswatcher.h"
 #include "oursettings.h"
+#include "settingsitem.h"
 
 // These macros are ugly but save a lot of typing when setting up items.
 // Note that a QForm wasn't used because I wanted the error messages immediately to the right
@@ -16,71 +18,33 @@
 // into a widget that itself created the entry/message widget and be cleaner but I was
 // tired of typing after I did this.
 
-#define createItem(name,prompt,lenPx) \
-        values[#name].row=gridRow; \
-        v->setObjectName(#name); \
-        QLabel* m = new QLabel(containingWidget); \
+//        innerLayout->addWidget(si);
+//        values[name]=si;
+
+#define Heading(prompt) \
+    { \
         QLabel* l = new QLabel(containingWidget); \
         l->setText(prompt); \
-        grid->addWidget(l,gridRow,0,1,1,Qt::AlignRight); \
-        QHBoxLayout* hb = new QHBoxLayout;  \
-        grid->addLayout(hb,gridRow,1,1,1,Qt::AlignLeft); \
-        hb->addWidget(v); \
-        hb->addWidget(m); \
-        gridRow++;  \
-        if(lenPx > 0) { v->setMinimumWidth(lenPx); v->setMaximumWidth(lenPx); } \
-        m->setMinimumWidth(MUSICALPI_SETTINGS_MSG_MIN_WIDTH); \
-        l->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE * 0.8) + "px;"); \
-        v->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; font-style: bold;"); \
-        m->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; color: darkRed;") \
+        l->setAlignment(Qt::AlignCenter);  \
+        l->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: Bold; color: Green;"); \
+        innerLayout->addWidget(l); \
+    }
 
-#define createUInt(name,prompt,from,to) \
+#define subHeading(prompt) \
     { \
-        QLineEdit* v = new QLineEdit(containingWidget); \
-        v->setText(QString::number(mParent->ourSettingsPtr->getSetting(#name).toUInt())); \
-        createItem(name,prompt,MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);  \
-        values[#name].type="QLineEdit"; \
-        qDebug() << "Connecting for " #name " at gridRow-1 = " << gridRow-1; \
-        int thisRow = gridRow - 1; \
-        connect(new FocusWatcher(v), &FocusWatcher::focusChanged, this, [this,thisRow](){validateInt(thisRow,from,to);});\
-    }
-#define createInt(name,prompt,from,to) \
-    { \
-        QLineEdit* v = new QLineEdit(containingWidget); \
-        v->setText(QString::number(mParent->ourSettingsPtr->getSetting(#name).toInt())); \
-        createItem(name,prompt,MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH); \
-        values[#name].type="QLineEdit"; \
-        qDebug() << "Connecting for " #name " at gridRow-1 = " << gridRow-1; \
-        int thisRow = gridRow - 1; \
-        connect(new FocusWatcher(v), &FocusWatcher::focusChanged, this, [this,thisRow](){validateInt(thisRow,from,to);}); \
-    }
-#define createBool(name,prompt) \
-    { \
-        QCheckBox* v = new QCheckBox(containingWidget); \
-        v->setChecked(mParent->ourSettingsPtr->getSetting(#name).toBool()); \
-        createItem(name,prompt,0);  \
-        values[#name].type="QCheckBox"; \
-    }
-#define createString(name,prompt,lenPx) \
-    { \
-        QLineEdit *v = new QLineEdit(containingWidget); \
-        v->setText(mParent->ourSettingsPtr->getSetting(#name).toString()); \
-        createItem(name,prompt,lenPx);  \
-        values[#name].type="QLineEdit"; \
-    }
-#define subHeading(name, prompt) \
-    { \
-        QLabel* name##SubHeading = new QLabel(containingWidget); \
-        name##SubHeading->setText(prompt); \
-        name##SubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic;"); \
-        grid->addWidget(name##SubHeading,gridRow++,0,1,3,Qt::AlignLeft); \
+        QLabel* l = new QLabel(containingWidget); \
+        l->setText(prompt); \
+        l->setAlignment(Qt::AlignLeft);  \
+        l->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic; color: Blue;"); \
+        innerLayout->addWidget(l); \
     }
 
 settingsWidget::settingsWidget(QWidget* p, MainWindow* mp) : QWidget(p)
 {
     mParent = mp;
     containingWidget = NULL;
-    this->setLayout(new QHBoxLayout());
+    this->setLayout(new QHBoxLayout()); // Always need some layout on ourselves
+    this->layout()->setContentsMargins(0,0,0,0);
 
     // When we create the widget we leave it empty, and only load data on a separate method call
     // so that changes get reflected (otherwise only on first (only) instantiation are they loaded)
@@ -89,129 +53,95 @@ settingsWidget::settingsWidget(QWidget* p, MainWindow* mp) : QWidget(p)
 void settingsWidget::loadData()
 {
     qDebug() << "Entered";
-    DELETE_LOG(containingWidget);  // In case we are recalling - this deletes all children as well
-    values.clear();
 
+    // Clear anything from last time
+
+    DELETE_LOG(containingWidget);  // In case we are recalling - this deletes all children as well
     containingWidget = new QWidget(this);
     containingWidget->setObjectName("containingWidget");
-    this->layout()->addWidget(containingWidget);
+    this->layout()->addWidget(containingWidget); // Containing widget is inside our (settingsWidget) self's layout
 
-    gridRow = 0;
-    grid = new QGridLayout(containingWidget);
-    QLabel* heading = new QLabel(containingWidget);
-    heading->setText("MusicalPi Settings");
-    heading->setAlignment(Qt::AlignCenter);
-    heading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: bold;");
-    grid->addWidget(heading,gridRow++,0,1,3,Qt::AlignCenter);
+    innerLayout = new QVBoxLayout(containingWidget);  // the containing widget lays out vertically
+    innerLayout->setContentsMargins(0,0,0,0);         // and has no spaces between them.
+    innerLayout->setSpacing(2);
+
+    Heading("MusicalPi Settings");
 
     // You can rearrange these as needed for cosmetics, but if you create any new
     // ones you need to update the defaults defined in ourSettings.cpp
 
-    subHeading(calibre,"Calibre Music Library Integration");
+    subHeading("Calibre Music Library Integration");
 
-    createString(calibrePath,"Path to calibre library folder:",MUSICALPI_SETTINGS_PATH_WIDTH);
-    createString(calibreDatabase,"Database file name (only):", MUSICALPI_SETTINGS_STRING_LEN);
-    createString(calibreMusicTag,"Calibre tag for music items:",MUSICALPI_SETTINGS_STRING_LEN);
+    new settingsItem(this, containingWidget, "calibrePath","Path to calibre library folder:",MUSICALPI_SETTINGS_PATH_WIDTH);
 
-    subHeading(midi,"Embedded Midi Player (only shows if files of type '.mid' accompany PDF's");
+    new settingsItem(this, containingWidget, "calibreDatabase","Database file name (only):", MUSICALPI_SETTINGS_STRING_LEN);
+    new settingsItem(this, containingWidget, "calibreMusicTag","Calibre tag for music items:",MUSICALPI_SETTINGS_STRING_LEN);
 
-    createUInt(midiPort,"Port:",0,255);
-    createBool(ALSAMidiQuashResetAll,"Prevent sending Reset-All:");
-    createUInt(midiInitialVelocityScale,"Midi Player default volume %:",10,200);
-    createUInt(midiInitialTempoScale,"Midi Player default tempo %:",10,200);
+    subHeading("Embedded Midi Player (only shows if files of type '.mid' accompany PDF's");
 
-    subHeading(Playing,"Display and Page Turn Controls");
+    new settingsItem(this, containingWidget, "midiPort","Port:",0,255);
+    new settingsItem(this, containingWidget, "ALSAMidiQuashResetAll","Prevent sending Reset-All:");
+    new settingsItem(this, containingWidget, "midiInitialVelocityScale","Midi Player default volume %:",10,200);
+    new settingsItem(this, containingWidget, "midiInitialTempoScale","Midi Player default tempo %:",10,200);
 
-    createInt(logoPct,"Screen % width of logo:",10,50);
-    createInt(overlayTopPortion,"Screen % height of top area in play:",5,50);
-    createInt(overlaySidePortion,"Screen % height of top area in play:",5,50);
-    createInt(pageBorderWidth,"Width of page border (between):",0,100);
-    createInt(maxCache,"Cache: Max number of pages kept:",5,100);
-    createInt(overlayDuration,"Duration of help overlay during play (ms):",0,5000);
-    createInt(pageTurnDelay,"Page turn, time to overwrite current page (ms):",0,5000);
-    createInt(pageHighlightDelay,"Page turn, time new page highlights:",0,5000);
-    createInt(pageHighlightHeight,"Page turn, highlight border width:",0,5000);
+    subHeading("Display and Page Turn Controls");
 
-    subHeading(debug,"Debug output controls");
+    new settingsItem(this, containingWidget, "logoPct","Screen % width of logo:",10,50);
+    new settingsItem(this, containingWidget, "overlayTopPortion","Screen % height of top area in play:",5,50);
+    new settingsItem(this, containingWidget, "overlaySidePortion","Screen % height of top area in play:",5,50);
+    new settingsItem(this, containingWidget, "pageBorderWidth","Width of page border (between):",0,100);
+    new settingsItem(this, containingWidget, "maxCache","Cache: Max number of pages kept:",5,100);
+    new settingsItem(this, containingWidget, "overlayDuration","Duration of help overlay during play (ms):",0,5000);
+    new settingsItem(this, containingWidget, "pageTurnDelay","Page turn, time to overwrite current page (ms):",0,5000);
+    new settingsItem(this, containingWidget, "pageHighlightDelay","Page turn, time new page highlights:",0,5000);
+    new settingsItem(this, containingWidget, "pageHighlightHeight","Page turn, highlight border width:",0,5000);
 
-    createBool(debugMidiSendDetails,"Debug output for each midi note sent:");
-    createBool(debugMidiFileParseDetails,"Debug output as file is parsed:");
-    createBool(debugMidiMeasureDetails,"Debug output for each midi measure parsed:");
-    createUInt(debugQueueInfoInterval,"Debug output rate (ms) for queue info:",10,20000);
+    subHeading("Debug output controls");
+
+    new settingsItem(this, containingWidget, "debugMidiSendDetails","Debug output for each midi note sent:");
+    new settingsItem(this, containingWidget, "debugMidiFileParseDetails","Debug output as file is parsed:");
+    new settingsItem(this, containingWidget, "debugMidiMeasureDetails","Debug output for each midi measure parsed:");
+    new settingsItem(this, containingWidget, "debugQueueInfoInterval","Debug output rate (ms) for queue info:",10,20000);
 
     errorSubHeading = new QLabel(containingWidget);
-    errorSubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic;");
-    grid->addWidget(errorSubHeading,gridRow++,0,1,3,Qt::AlignLeft);
-    errorSubHeading->setStyleSheet("color:darkRed;");
+    errorSubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: Italic; color:darkRed;");
+    innerLayout->addWidget(errorSubHeading);
 
     saveButton = new QPushButton(containingWidget);
     saveButton->setText("Save");
-    grid->addWidget(saveButton,gridRow++,2,1,1,Qt::AlignRight);
+    innerLayout->addWidget(saveButton);
     connect(saveButton,&QPushButton::clicked, this, &settingsWidget::validateAll);
+
+    // Find maximum prompt width in pixels
+    int maxWidth = 0;
+    for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
+        maxWidth = std::max(maxWidth,it->second->getPromptWidth());
+    // Then go through and set them all to the same so the columns line up
+    for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
+        it->second->setPromptWidth(maxWidth);
 }
 
-// In using values we get them by name under their position inside the structure created in the second (index 1) column
-// Value is always in position 0 in the layout of that column
-
-#define getWidget(name)  ((QLineEdit*)(grid->itemAtPosition(values[#name].row,1)->layout()->itemAt(0)->widget()))
 
 bool settingsWidget::validateAll()
 {
-
-    QFileInfo checkFile(getWidget(calibrePath)->text() + "/" + getWidget(calibreDatabase)->text());
+    QFileInfo checkFile(values["calibrePath"]->toString() + "/" + values["calibreDatabase"]->toString());
     if(!checkFile.exists() || !checkFile.isFile())
     {
         errorSubHeading->setText("The calibre database path + file name does not find a file - check OS setup");
-        getWidget(calibrePath)->setFocus();
+        values["calibrePath"]->setFocus();
         return false;
     }
-    errorSubHeading->setText("");
+    //   MORE TESTS NEEDED HERE ???
 
-    // Step through each and update if needed/changed
+    errorSubHeading->setText("");  // Clear any errors shown
+
+    // Step through each and update if needed/changed; since we force all to have a valid string, we can just do text compares
 
     for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
-    {
-        if(it->second.type == "QLineEdit")  // For updates all we really care about is the text representation
-        {
-            QLineEdit* v = (QLineEdit*)(grid->itemAtPosition(it->second.row,1)->layout()->itemAt(0)->widget());
-            qDebug() << "Comparison '" << mParent->ourSettingsPtr->getSetting(it->first).toString() << "' vs '"<< v->text() <<  "'";
-            if(mParent->ourSettingsPtr->getSetting(it->first).toString() != v->text())
-                mParent->ourSettingsPtr->setSetting(it->first,v->text());
-        }
-        else if(it->second.type == "QCheckBox")
-        {
-            QCheckBox* v = (QCheckBox*)(grid->itemAtPosition(it->second.row,1)->layout()->itemAt(0)->widget());
-            if(mParent->ourSettingsPtr->getSetting(it->first).toBool() != v->isChecked())
-                mParent->ourSettingsPtr->setSetting(it->first,v->isChecked());
-        }
-    }
+        if(mParent->ourSettingsPtr->getSetting(it->first).toString() != it->second->toString())
+            mParent->ourSettingsPtr->setSetting(it->first,it->second->toString());
 
     return true;
-}
-
-bool settingsWidget::validateInt(int row, int bottom, int top)
-{
-    qDebug() << "row=" << row << ", bottom=" << bottom << ", top=" << top;
-    QLabel* m = (QLabel*)(grid->itemAtPosition(row,1)->layout()->itemAt(1)->widget());
-    QLineEdit* l = (QLineEdit*)(grid->itemAtPosition(row,1)->layout()->itemAt(0)->widget());
-
-    // Validate int (or uint) field, that it is a number and is in range [bottom,top], giving message in label if not (clearing if so)
-    bool ok;
-    int newVal = l->text().toInt(&ok);
-    if(!ok)
-    {
-        m->setText("Invalid integer number format");
-        l->setFocus();
-        return false;
-    }
-    if(newVal < bottom || newVal > top)
-    {
-        m->setText("Value must be between " + QString::number(bottom) + " and " + QString::number(top));
-        l->setFocus();
-        return false;
-    }
-    m->setText("");
-    return true; // Note on success we aren't affecting focus
 }
 
 void settingsWidget::paintEvent(QPaintEvent *)  // This is here so we can use stylesheet styling if needed
