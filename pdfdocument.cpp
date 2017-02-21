@@ -60,7 +60,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
 
-    assert(numPages <= mParent->ourSettingsPtr->getSetting("maxCache").toInt());
+    assert(numPages <= MUSICALPI_MAXPAGES);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
     cacheRangeEnd = mParent->ourSettingsPtr->getSetting("maxCache").toInt();
 

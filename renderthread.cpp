@@ -24,6 +24,7 @@ renderThread::renderThread(QObject *parent, int which, MainWindow* mp ): QThread
     mWhich = which;   // the number of the thread array this is attached to
     mWidth = 0;       // the target width we were asked to scale to (don't do anything with it zero)
     mHeight = 0;      // the target height we were asked to scale to (don't do anything with it zero)
+    pageHighlightHeight = mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt();
 }
 
 renderThread::~renderThread()
@@ -79,7 +80,7 @@ void renderThread::run()
             QPainter painter(theImage);
             painter.setFont(QFont("Arial", MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE, 1, false));
             painter.setPen(QColor("green"));
-            painter.drawText(QPoint(mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt() + 10,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt() + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
+            painter.drawText(QPoint(pageHighlightHeight + 10,pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }
         mutex.lock();  // Avoid race conditions in the parent thread in the render() that controls this loop
         running = false;

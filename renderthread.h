@@ -39,6 +39,7 @@ private:
     int mPage;
     int mWidth;
     int mHeight;
+    int pageHighlightHeight;
 
 };
 

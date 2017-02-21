@@ -65,7 +65,11 @@ ourSettings::~ourSettings()
 
 QVariant ourSettings::getSetting(QString key)
 {
-    return setPtr->value(key);
+    qDebug() << "Starting for " << key;
+    QVariant v;
+    v = setPtr->value(key);
+    qDebug() << "Returning for " << key;
+    return v;
 }
 
 QVariant ourSettings::setSetting(QString key, QVariant value)
