@@ -53,6 +53,7 @@ private:
     int cacheRangeStart;  // Beginning page (ref 1)
     int cacheRangeEnd;    // End page (ref 1)
     int maxCache;
+    int totalPagesRendered; // Used as a slight optimization, we only use "up" pages until we have rendered that many so the first "up" come up fast.
 
 signals:
     void newImageReady();

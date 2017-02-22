@@ -30,7 +30,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     calibreMusicTag =  mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString();
     calibrePath     =  mParent->ourSettingsPtr->getSetting("calibrePath").toString();
     calibreDatabase =  mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
-    qDebug() << "in constructor with path " << calibrePath << " and file " << mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
+    qDebug() << "in constructor with path " << calibrePath << " and file " << calibreDatabase;
 
     // Arrange the widgets
 
@@ -126,7 +126,7 @@ void musicLibrary::loadData()
              "from books b "
              "inner join books_tags_link btl on btl.book = b.id "
              "inner join tags t on t.id = btl.tag "
-             "where b.id=%1 and t.name <> '%2' ").arg(queryBooks.record().field(rec.indexOf("BookID")).value().toString()).arg(mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString())
+             "where b.id=%1 and t.name <> '%2' ").arg(queryBooks.record().field(rec.indexOf("BookID")).value().toString()).arg(calibreMusicTag)
             );
         if(queryTags.lastError().databaseText()!="" || queryTags.lastError().driverText()!="")
         {
@@ -161,8 +161,8 @@ void musicLibrary::loadData()
 }
 void musicLibrary::onChosen(int row, int column)
 {
-    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << mParent->ourSettingsPtr->getSetting("calibrePath").toString() <<  "/" << libTable.item(row, columnForPath)->text();
-    emit songSelected(tr("%1/%2").arg(mParent->ourSettingsPtr->getSetting("calibrePath").toString()).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
+    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << calibrePath <<  "/" << libTable.item(row, columnForPath)->text();
+    emit songSelected(tr("%1/%2").arg(calibrePath).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
 }
 
 void musicLibrary::filterTable(QString filter)

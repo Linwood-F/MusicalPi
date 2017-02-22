@@ -34,6 +34,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     titleName = _titleName;
     imageWidth = 0;
     imageHeight = 0;
+    totalPagesRendered = 0;
     for(int i=0; i<MUSICALPI_MAXPAGES; i++)
     {
         pageImagesAvailable[i] = false;  // pages will start at 1 but stored at index 0, so using null (0) for page number means empty
@@ -115,6 +116,7 @@ void PDFDocument::updateImage(int which, int page, int maxWidthUsed, int maxHeig
     // This thread is available
     pageThreadActive[which] = false;
     pageThreadPageLoading[which] = 0;
+    totalPagesRendered++;
     checkCaching();
     emit newImageReady();  // ask parent to display anything we got (it checks everything so it should be OK even if we rejected this one)
 }
@@ -135,7 +137,7 @@ void PDFDocument::checkCaching()
     // In theory we ought to start in a biased (forward) middle working out for any given time
     // later but the most important pages are the first few.  From then on we just assume we will
     // keep up.
-
+    int maxThreadsToUse = std::max(1,std::min(MUSICALPI_THREADS, mParent->pagesNowAcross * mParent->pagesNowDown));
     PDFMutex.lock();  // We don't want to delete something half delivered so lock out thread; this is a bit broad but this sectino is pretty fast.
     for(int i=0; i<numPages; i++)
     {
@@ -154,7 +156,7 @@ void PDFDocument::checkCaching()
             {
                 bool found=false;
                 int availableThread = -1;
-                for(int t=0; t < MUSICALPI_THREADS; t++)
+                for(int t=0; t < maxThreadsToUse; t++)
                 {
                     if (pageThreadPageLoading[t] == i+1) // Already doing this page
                     {
