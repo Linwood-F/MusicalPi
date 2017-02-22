@@ -34,7 +34,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     titleName = _titleName;
     imageWidth = 0;
     imageHeight = 0;
-    totalPagesRendered = 0;
+    totalPagesRequested = totalPagesRendered = 0;
     for(int i=0; i<MUSICALPI_MAXPAGES; i++)
     {
         pageImagesAvailable[i] = false;  // pages will start at 1 but stored at index 0, so using null (0) for page number means empty
@@ -137,8 +137,8 @@ void PDFDocument::checkCaching()
     // In theory we ought to start in a biased (forward) middle working out for any given time
     // later but the most important pages are the first few.  From then on we just assume we will
     // keep up.
-    int maxThreadsToUse = std::max(1,std::min(MUSICALPI_THREADS, mParent->pagesNowAcross * mParent->pagesNowDown));
-    PDFMutex.lock();  // We don't want to delete something half delivered so lock out thread; this is a bit broad but this sectino is pretty fast.
+
+    PDFMutex.lock();  // We don't want to delete something half delivered so lock out thread; this is a bit broad but this section is pretty fast.
     for(int i=0; i<numPages; i++)
     {
         if(i+1 < cacheRangeStart || i+1 > cacheRangeEnd)  // outside of caching range
@@ -156,7 +156,7 @@ void PDFDocument::checkCaching()
             {
                 bool found=false;
                 int availableThread = -1;
-                for(int t=0; t < maxThreadsToUse; t++)
+                for(int t=0; t < MUSICALPI_THREADS; t++)
                 {
                     if (pageThreadPageLoading[t] == i+1) // Already doing this page
                     {
@@ -166,8 +166,14 @@ void PDFDocument::checkCaching()
                 }
                 if(!found) // page is needed and not found so try to run with it
                 {
-                    if(availableThread != -1)  // We have room
+                    // The second half of this convoluted check is only to affect the very first "up"
+                    // pages, so we request no more than "up" until we get at least "up", so the user does not
+                    // wait as long; from then on we just do as many as threads available
+                    if(availableThread != -1 && (totalPagesRequested >  mParent->pagesNowAcross * mParent->pagesNowDown ||
+                                                 totalPagesRequested <  mParent->pagesNowAcross * mParent->pagesNowDown ||
+                                                 totalPagesRendered  >= mParent->pagesNowAcross * mParent->pagesNowDown) ) // We have room and aren't waiting on first "up"
                     {
+                        totalPagesRequested++;
                         pageThreadPageLoading[availableThread]=i+1;
                         pageThreadActive[availableThread]=true;
                         pageThreads[availableThread]->render(&pageImages[i],i+1,imageWidth,imageHeight);

@@ -12,7 +12,7 @@
 #include "piconstants.h"
 #include "poppler/qt5/poppler-qt5.h"
 
-renderThread::renderThread(QObject *parent, int which, MainWindow* mp ): QThread(parent)
+renderThread::renderThread(PDFDocument *parent, int which, MainWindow* mp ): QThread(parent)
 {
     // Modeled from http://doc.qt.io/qt-5/qtcore-threads-mandelbrot-example.html
     // Note constructor is in the parent thread
@@ -71,7 +71,15 @@ void renderThread::run()
         float scaleY = mHeight / (thisPageSize.height() / 72.0);
         float desiredScale = std::min(scaleX, scaleY);
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
-        ((PDFDocument*)ourParent)->document->setRenderHint(Poppler::Document::Antialiasing);
+#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
+        qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
+        document = Poppler::Document::load(ourParent->filepath);
+        document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
+        assert(document && !document->isLocked());
+        document->setRenderHint(Poppler::Document::Antialiasing);
+#else
+        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
+#endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
         qDebug() << "Page " << mPage << " was rendered on thread " << mWhich << " produced size " << theImage->width() << "x" << theImage->height();
