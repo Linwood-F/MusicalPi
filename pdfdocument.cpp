@@ -62,7 +62,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
 
     assert(numPages <= MUSICALPI_MAXPAGES);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
-    cacheRangeEnd = mParent->ourSettingsPtr->getSetting("maxCache").toInt();
+    maxCache = cacheRangeEnd = mParent->ourSettingsPtr->getSetting("maxCache").toInt();
 
 
 //        Poppler::Page *p = document->page(3);
@@ -105,11 +105,10 @@ PDFDocument::~PDFDocument()
 void PDFDocument::updateImage(int which, int page, int maxWidthUsed, int maxHeightUsed)
 {
     // This just records the returned image it doesn't display it itself
-    qDebug() << "slot for updateImage from thread " << which << " is returning page " << page;
     pageImagesAvailable[page - 1] = true;
     if(maxWidthUsed < imageWidth || maxHeightUsed < imageHeight)
     {
-        qDebug() << "Received image is too smallm discarding, [" << maxWidthUsed << "," << maxHeightUsed << "] vs [" << imageWidth << "," << imageHeight << "]";
+        qDebug() << "Received image is too small, discarding, [" << maxWidthUsed << "," << maxHeightUsed << "] vs [" << imageWidth << "," << imageHeight << "]";
         delete pageImages[page - 1];
         pageImagesAvailable[page - 1] = false;
     }
@@ -117,7 +116,6 @@ void PDFDocument::updateImage(int which, int page, int maxWidthUsed, int maxHeig
     pageThreadActive[which] = false;
     pageThreadPageLoading[which] = 0;
     checkCaching();
-    qDebug() << "emitting newImageReady signal";
     emit newImageReady();  // ask parent to display anything we got (it checks everything so it should be OK even if we rejected this one)
 }
 
@@ -160,7 +158,6 @@ void PDFDocument::checkCaching()
                 {
                     if (pageThreadPageLoading[t] == i+1) // Already doing this page
                     {
-                        qDebug() << "Skipping page " << i+1 << " as it shows already in progress on thread " << t;
                         found = true;  // but don't "continue" as we are also looking for available threads
                     }
                     if(!pageThreadActive[t]) availableThread = t;
@@ -169,14 +166,12 @@ void PDFDocument::checkCaching()
                 {
                     if(availableThread != -1)  // We have room
                     {
-                        qDebug() << "Starting render on thread " << availableThread << " for page " << i+1 << " at size " << imageWidth << "x" << imageHeight;
                         pageThreadPageLoading[availableThread]=i+1;
                         pageThreadActive[availableThread]=true;
                         pageThreads[availableThread]->render(&pageImages[i],i+1,imageWidth,imageHeight);
                     }
-                    else // we don't have room (and because !found we looked the whole way)
+                    else // we don't have available threads (and because !found we looked the whole way)
                     {
-                        qDebug() << "No threads available so just exiting without asking for more";
                         break;  // this will break the scan of pages (i)
                     }
                 } // we found it so just keep looking for another in outer loop
@@ -191,9 +186,9 @@ void PDFDocument::adjustCache(int leftmostPage)
     // This seems to do the same calculation twice, but we want to extend anything outside of the normal range
     // to the other side if we hit one end.
 
-    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * (mParent->ourSettingsPtr->getSetting("maxCache").toInt()))));
-    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + (mParent->ourSettingsPtr->getSetting("maxCache").toInt()) - 1));
-    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - (mParent->ourSettingsPtr->getSetting("maxCache").toInt()) + 1));
+    int nominalStart = std::max(1,std::min(numPages, leftmostPage - (int)(0.33 * maxCache)));
+    int nominalEnd    = std::max(1,std::min(numPages, nominalStart + maxCache - 1));
+    nominalStart  = std::max(1,std::min(numPages, nominalEnd  - maxCache + 1));
     if(nominalStart != cacheRangeStart || nominalEnd != cacheRangeEnd)
     {
         qDebug() << "With leftmostpage as " << leftmostPage << " cache changed from [" << cacheRangeStart << "," << cacheRangeEnd << "] to ["<< nominalStart << "," << nominalEnd << "]";

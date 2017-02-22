@@ -131,7 +131,6 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     QPainter pNew(&newImage);
     pNew.setRenderHint(QPainter::SmoothPixmapTransform);
     pNew.drawImage( QRectF (newX, newY, newW, newH), *newImageBuffer);  // This implicitly draws the whole from image, scaling if needed
-    qDebug() << "After drawing new image centered on new QImage";
 
     // While we have all the new image info, go ahead and build the highlight overlay(s)
     // according to the transition type.  This is just the highlight overlay, not the
@@ -145,7 +144,6 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
         hp.setPen(Qt::NoPen);
         if(thisTransition == fullPageNow || thisTransition == fullPage)
         {
-            qDebug() << "Drawing full page highlight at [" << newX << "," << newY << "] that is " << newW << "x" << newH;
             hp.drawRect(newX,newY,newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
             hp.drawRect(newX,newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH);
             hp.drawRect(newX,newY + newH-mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
@@ -168,7 +166,6 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
         else if (thisTransition == halfPage)
         {
             // First draw top half which appears immediately
-            qDebug() << "Drawing first half-page highlight at [" << newX << "," << newY << "] that is " << newW << "x" << newH;
             hp.drawRect(newX,newY,newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());   // top left across
             hp.drawRect(newX,newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH/2); // top left down
             hp.drawRect(newX,newY + newH/2 -mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());  // bottom left across
@@ -179,7 +176,6 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
             ourHighlightOverlay.setPixmap(QPixmap::fromImage(frameImage));
 
             // now bottom half which appears later
-            qDebug() << "Drawing 2nd half-page highlight at [" << newX << "," << (newY + newH/2) << "] that is " << newW << "x" << (newH / 2);
             QImage frame2ndImage(QImage(this->width(), this->height(), QImage::Format_ARGB32));
             frame2ndImage.fill(Qt::transparent);
             QPainter hp2(&frame2ndImage);
@@ -212,15 +208,11 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
         if(thisTransition == halfPage)  // we have to replace the top half
         {
             // For overlay just divide it in half do not rescale, and paint new over old
-            qDebug() << "Doing half page transition";
             QPainter pOld(&tmpPixmap);
             QRectF sameFromTo(0,0,tmpPixmap.width(), tmpPixmap.height()/2);
             pOld.drawImage(sameFromTo,newImage,sameFromTo);
         }
-        else // thisTransition == fullPage (but not fullPageNow)
-        {
-            qDebug() << "Doing full page transition";
-        }
+        //else thisTransition == fullPage (but not fullPageNow)
         ourOverlay.setPixmap(tmpPixmap);
         ourOverlay.show();
         qDebug() << "Starting timer to hide overlay";
@@ -243,5 +235,4 @@ void docPageLabel::HideAnyInProgressTransitions()
     ourHighlightHideTimer.stop();
     our2ndHighlightShowTimer.stop();
     our2ndHighlightHideTimer.stop();
-
 }

@@ -52,6 +52,7 @@ private:
     // Target range for cache (it's a moving target so may or may not actually be present)
     int cacheRangeStart;  // Beginning page (ref 1)
     int cacheRangeEnd;    // End page (ref 1)
+    int maxCache;
 
 signals:
     void newImageReady();

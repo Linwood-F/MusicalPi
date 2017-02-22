@@ -27,7 +27,10 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 {
     ourParent = parent;
     mParent = mp;
-    qDebug() << "in constructor with path " << mParent->ourSettingsPtr->getSetting("calibrePath").toString() << " and file " << mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
+    calibreMusicTag =  mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString();
+    calibrePath     =  mParent->ourSettingsPtr->getSetting("calibrePath").toString();
+    calibreDatabase =  mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
+    qDebug() << "in constructor with path " << calibrePath << " and file " << mParent->ourSettingsPtr->getSetting("calibreDatabase").toString();
 
     // Arrange the widgets
 
@@ -48,7 +51,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 
     // Get the database ready
     m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName(mParent->ourSettingsPtr->getSetting("calibrePath").toString() + "/" + mParent->ourSettingsPtr->getSetting("calibreDatabase").toString());
+    m_db.setDatabaseName(calibrePath + "/" + calibreDatabase);
     if(m_db.open())
     {
         qDebug() << "Successfully opened database, lasterror=" << m_db.lastError();
@@ -78,7 +81,7 @@ void musicLibrary::loadData()
         "inner join data d on d.book = b.id and d.format = 'PDF' "
         "left join books_series_link bsl on bsl.book = b.id "
         "left join series s on s.id=bsl.series "
-        "where t.name = '" + mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString() + "' "
+        "where t.name = '" + calibreMusicTag + "' "
         "group  by b.id, b.sort, b.author_sort, b.path, d.name "
         "order by b.sort;";
     qDebug() << "Preparing main query " << sql ;

@@ -70,7 +70,7 @@ void renderThread::run()
         float scaleX = mWidth / (thisPageSize.width() / 72.0);
         float scaleY = mHeight / (thisPageSize.height() / 72.0);
         float desiredScale = std::min(scaleX, scaleY);
-        qDebug() << "Starting render on thread " << mWhich << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
+        qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
         ((PDFDocument*)ourParent)->document->setRenderHint(Poppler::Document::Antialiasing);
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);

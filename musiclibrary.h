@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QTableWidget>
+#include <QString>
 
 
 // This is a container widget that holds both a label, a search text box, and a table widget
@@ -42,7 +43,9 @@ private:
     QTimer keepKeyboardUp;
     bool eventFilter(QObject *object, QEvent *event);
     void paintEvent(QPaintEvent *);
-
+    QString calibreMusicTag;
+    QString calibrePath;
+    QString calibreDatabase;
 
 signals:
     void songSelected(QString, QString);

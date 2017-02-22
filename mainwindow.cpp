@@ -232,6 +232,7 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     nowMode=playMode;
     HideEverything();  // This gets called with play already there when changing modes
     playing = _playing;
+    pageBorderWidth = ourSettingsPtr->getSetting("pageBorderWidth").toInt();
     if(!playing) // if we are in player review, not playing mode
     {
         menuLayoutWidget->show();
@@ -247,20 +248,17 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     // These are placed in outerLayoutWidget reduced in height but the size of menuLayoutWidget if not playing
     QSize outerLayoutWidgetSize = outerLayoutWidget->size();
     QSize menuLayoutWidgetSize = menuLayoutWidget->size();
-    qDebug() << "outerLayoutWidget->size(" << outerLayoutWidgetSize.width() << "," << outerLayoutWidgetSize.height() << ")";
-    qDebug() << "menuLayoutWidgetSize->size(" << menuLayoutWidgetSize.width() << "," << menuLayoutWidgetSize.height() << ")";
-
     // These are packed as tight as they can go, except between rows and between columns put in a small border
     int roomForMenu = playing ? 0 : menuLayoutWidgetSize.height();
-    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - ourSettingsPtr->getSetting("pageBorderWidth").toInt() * (pagesToShowAcross - 1)) / pagesToShowAcross);
-    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - ourSettingsPtr->getSetting("pageBorderWidth").toInt() * (pagesToShowDown - 1)) / pagesToShowDown);
+    int maxPageWidth = std::floor((outerLayoutWidgetSize.width() - pageBorderWidth * (pagesToShowAcross - 1)) / pagesToShowAcross);
+    int maxPageHeight = std::floor((outerLayoutWidgetSize.height() - roomForMenu - pageBorderWidth * (pagesToShowDown - 1)) / pagesToShowDown);
     PDF->checkResetImageSize(maxPageWidth, maxPageHeight + roomForMenu);  // add menu back in so we get larger image in cache so we don't re-cache for playing mode
     for (int r=0; r<pagesToShowDown; r++)
     {
         for (int c=0; c<pagesToShowAcross; c++)
         {
             int indx = r * pagesToShowAcross + c;
-            visiblePages[indx]->setGeometry(c * (ourSettingsPtr->getSetting("pageBorderWidth").toInt() + maxPageWidth), roomForMenu + r * (ourSettingsPtr->getSetting("pageBorderWidth").toInt() + maxPageHeight), maxPageWidth, maxPageHeight );
+            visiblePages[indx]->setGeometry(c * (pageBorderWidth + maxPageWidth), roomForMenu + r * (pageBorderWidth + maxPageHeight), maxPageWidth, maxPageHeight );
             loadPagePendingNumber[indx] = leftmostPage + indx; // This is a request to display
             loadPagePendingTransition[indx] = docPageLabel::noTransition;
             visiblePages[indx]->setAttribute(Qt::WA_TransparentForMouseEvents, playing);  // if we are playing, pass mouse events through to main window
@@ -276,7 +274,6 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
 void MainWindow::checkQueueVsCache()
 {
     PDF->adjustCache(leftmostPage);
-    qDebug() << "Checking for anything to display";
     PDF->PDFMutex.lock(); // Shouldn't need this but just make sure the ones we find are fully formed - this may be too broad, and we might want to put this just around the inner loop so it releases each time
     int skipped = 0;
     for(int i = 0; i < MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS ; i++)
@@ -295,7 +292,6 @@ void MainWindow::checkQueueVsCache()
         else if(loadPagePendingNumber[i]) skipped++;
         // else we just don't need it (yet)
     }
-    if(skipped) qDebug() << "Leaving the check with "<< skipped << "pages not displayed because not (yet) available.";
     PDF->PDFMutex.unlock();
 }
 

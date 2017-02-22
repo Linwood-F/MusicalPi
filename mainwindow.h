@@ -79,6 +79,8 @@ private:
     int loadPagePendingNumber[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS]; // 0 indicates none pending
     docPageLabel::docTransition loadPagePendingTransition[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS];
 
+    int pageBorderWidth;
+
     void setLibraryMode();
     void setPlayMode(bool playing, int pagesToShowAcross, int pagesToShowDown);
     void navigateTo(int leftPage);
