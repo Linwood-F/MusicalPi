@@ -46,6 +46,7 @@ private:
     QString calibreMusicTag;
     QString calibrePath;
     QString calibreDatabase;
+    int lastRowSelected;       // Used to prevent mouse-bounce from doing a select twice while processing (reported by Stevend on raspberrypi.org 2/5/17 - thanks)
 
 signals:
     void songSelected(QString, QString);

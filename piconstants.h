@@ -47,7 +47,7 @@
 #define MUSICALPI_ALSAPACINGINTERVAL 10
 #define MUSICALPI_MIDIPLAYER_STATUSUPDATERATE 500
 
-#define MUSICALPI_OPEN_DOC_IN_THREAD
+//#define MUSICALPI_OPEN_DOC_IN_THREAD
 
 // Utility macro for managing pointers and logging
 

@@ -60,6 +60,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     {
         qDebug() << "Failed to open database (where is error ??? )";
     }
+    lastRowSelected=-1; // None selected (yet)
 }
 
 musicLibrary::~musicLibrary()
@@ -161,8 +162,17 @@ void musicLibrary::loadData()
 }
 void musicLibrary::onChosen(int row, int column)
 {
-    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << calibrePath <<  "/" << libTable.item(row, columnForPath)->text();
-    emit songSelected(tr("%1/%2").arg(calibrePath).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
+    if(lastRowSelected == row)
+    {
+        qDebug() << "doubleclicked on row " << row <<  " which looks like a duplicate so ignoring.";
+        return;
+    }
+    else
+    {
+        qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << calibrePath <<  "/" << libTable.item(row, columnForPath)->text();
+        lastRowSelected = row;
+        emit songSelected(tr("%1/%2").arg(calibrePath).arg(libTable.item(row,columnForPath)->text()),libTable.item(row,columnForTitle)->text());
+    }
 }
 
 void musicLibrary::filterTable(QString filter)

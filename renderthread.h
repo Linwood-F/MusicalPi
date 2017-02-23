@@ -36,8 +36,8 @@ signals:
 private:
     bool abort;
     bool running;
-    QMutex mutex;
-    QWaitCondition condition;
+    QMutex mutex;             // Used only for wait condition and restart below, not used for critical sections
+    QWaitCondition condition; // Associated with the above to control queue wait/run state
     QImage** targetImagePtr;
 
     float theScale;
