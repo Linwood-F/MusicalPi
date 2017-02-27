@@ -72,6 +72,7 @@ musicLibrary::~musicLibrary()
 void musicLibrary::loadData()
 {
     qDebug()<<"Starting to load data";
+    lastRowSelected = -1;
     searchBox.setText("");  // Start fresh search with new library
     QSqlQuery queryBooks;
     QString sql =

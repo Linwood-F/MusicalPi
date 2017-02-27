@@ -11,6 +11,7 @@
 #include "renderthread.h"
 #include "mainwindow.h"
 #include "oursettings.h"
+#include "piconstants.h"
 
 #include <string>
 #include <stdio.h>
@@ -37,7 +38,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     totalPagesRequested = totalPagesRendered = 0;
     for(int i=0; i<MUSICALPI_MAXPAGES; i++)
     {
-        pageImagesAvailable[i] = false;  // pages will start at 1 but stored at index 0, so using null (0) for page number means empty
+        pageImagesAvailable[i] = false;  // pages will start at 1 but stored at index 0, so using 0 for page number means empty
     }
     for(int i=0; i<MUSICALPI_THREADS; i++)
     {
@@ -89,17 +90,21 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
 PDFDocument::~PDFDocument()
 {
     qDebug() << "In destructor ";
+    for(int i=0; i<MUSICALPI_THREADS; i++)
+    {
+        DELETE_LOG(pageThreads[i]);
+    }
     for (int i = 0; i<MUSICALPI_MAXPAGES; i++)
     {
         PDFMutex.lock();
         if (pageImagesAvailable[i])
         {
-            delete pageImages[i];
+            DELETE_LOG(pageImages[i]);
             pageImagesAvailable[i]=false;
         }
         PDFMutex.unlock();
     }
-    if(document) delete document;
+    if(document) DELETE_LOG(document);
 }
 
 // Slot
