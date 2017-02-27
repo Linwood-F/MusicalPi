@@ -25,7 +25,6 @@ public:
     TipOverlay(QWidget* p, MainWindow* mparent);  // Call with the widget over which to overlay
     ~TipOverlay();
     void showEvent(QShowEvent* event);
-    void paintEvent(QPaintEvent *);
 };
 
 #endif // TIPOVERLAY_H

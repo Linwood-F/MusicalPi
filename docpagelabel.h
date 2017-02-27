@@ -40,6 +40,10 @@ private:
     QLabel our2ndHighlightOverlay;
     bool oldImageIsBlank;
     bool newImageIsBlank;
+    int pageTurnDelay;
+    int pageHighlightDelay;
+    int pageHighlightHeight;
+
 };
 
 #endif // DOCPAGELABEL_H

@@ -22,8 +22,14 @@
 docPageLabel::docPageLabel(QWidget *parent,MainWindow* mp) : QLabel(parent)
 {
     qDebug() << " in constructor";
+
     ourParent = parent;
     mParent = mp;
+
+    pageHighlightHeight=mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt();
+    pageHighlightDelay=mParent->ourSettingsPtr->getSetting("pageHighlightDelay").toInt();
+    pageTurnDelay=mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt();
+
     ourOverlay.setParent(this);
     ourOverlay.hide();
     ourHighlightOverlay.setParent(this);
@@ -32,7 +38,7 @@ docPageLabel::docPageLabel(QWidget *parent,MainWindow* mp) : QLabel(parent)
     our2ndHighlightOverlay.setParent(this);
     our2ndHighlightOverlay.hide();
     our2ndHighlightOverlay.setAttribute(Qt::WA_TranslucentBackground);
-    ourOverlayTimer.setInterval(mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt());
+    ourOverlayTimer.setInterval(pageTurnDelay);
     ourOverlayTimer.setSingleShot(true);
     connect(&ourOverlayTimer, &QTimer::timeout,
         [=]()
@@ -144,19 +150,19 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
         hp.setPen(Qt::NoPen);
         if(thisTransition == fullPageNow || thisTransition == fullPage)
         {
-            hp.drawRect(newX,newY,newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
-            hp.drawRect(newX,newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH);
-            hp.drawRect(newX,newY + newH-mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
-            hp.drawRect(newX + newW-mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH);
+            hp.drawRect(newX,newY,newW,pageHighlightHeight);
+            hp.drawRect(newX,newY,pageHighlightHeight,newH);
+            hp.drawRect(newX,newY + newH-pageHighlightHeight,newW,pageHighlightHeight);
+            hp.drawRect(newX + newW-pageHighlightHeight,newY,pageHighlightHeight,newH);
             if(thisTransition == fullPageNow)
             {
                 ourHighlightShowTimer.setInterval(1);
-                ourHighlightHideTimer.setInterval(1 + mParent->ourSettingsPtr->getSetting("pageHighlightDelay").toInt());
+                ourHighlightHideTimer.setInterval(1 + pageHighlightDelay);
             }
             else // fullPage
             {
-                ourHighlightShowTimer.setInterval(mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt());
-                ourHighlightHideTimer.setInterval(mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt() + mParent->ourSettingsPtr->getSetting("pageHighlightDelay").toInt());
+                ourHighlightShowTimer.setInterval(pageTurnDelay);
+                ourHighlightHideTimer.setInterval(pageTurnDelay + pageHighlightDelay);
             }
             ourHighlightOverlay.setGeometry(0,0,this->geometry().width(),this->geometry().height());   // lay over ourself
             ourHighlightOverlay.setPixmap(QPixmap::fromImage(frameImage));
@@ -166,12 +172,12 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
         else if (thisTransition == halfPage)
         {
             // First draw top half which appears immediately
-            hp.drawRect(newX,newY,newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());   // top left across
-            hp.drawRect(newX,newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH/2); // top left down
-            hp.drawRect(newX,newY + newH/2 -mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());  // bottom left across
-            hp.drawRect(newX + newW - mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newY,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH/2);  // top right down
+            hp.drawRect(newX,newY,newW,pageHighlightHeight);   // top left across
+            hp.drawRect(newX,newY,pageHighlightHeight,newH/2); // top left down
+            hp.drawRect(newX,newY + newH/2 -pageHighlightHeight,newW,pageHighlightHeight);  // bottom left across
+            hp.drawRect(newX + newW - pageHighlightHeight,newY,pageHighlightHeight,newH/2);  // top right down
             ourHighlightShowTimer.setInterval(1);
-            ourHighlightHideTimer.setInterval(1 + mParent->ourSettingsPtr->getSetting("pageHighlightDelay").toInt());
+            ourHighlightHideTimer.setInterval(1 + pageHighlightDelay);
             ourHighlightOverlay.setGeometry(0,0,this->geometry().width(),this->geometry().height());   // lay over ourself
             ourHighlightOverlay.setPixmap(QPixmap::fromImage(frameImage));
 
@@ -181,12 +187,12 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
             QPainter hp2(&frame2ndImage);
             hp2.setBrush(QBrush(Qt::green,Qt::Dense4Pattern));
             hp2.setPen(Qt::NoPen);
-            hp2.drawRect(newX,newY + newH/2,newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
-            hp2.drawRect(newX,newY + newH/2,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH/2);
-            hp2.drawRect(newX,newY + newH-mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newW,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt());
-            hp2.drawRect(newX + newW-mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newY + newH/2,mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt(),newH/2);
-            our2ndHighlightShowTimer.setInterval(mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt());
-            our2ndHighlightHideTimer.setInterval(mParent->ourSettingsPtr->getSetting("pageTurnDelay").toInt() + mParent->ourSettingsPtr->getSetting("pageHighlightDelay").toInt());
+            hp2.drawRect(newX,newY + newH/2,newW,pageHighlightHeight);
+            hp2.drawRect(newX,newY + newH/2,pageHighlightHeight,newH/2);
+            hp2.drawRect(newX,newY + newH-pageHighlightHeight,newW,pageHighlightHeight);
+            hp2.drawRect(newX + newW-pageHighlightHeight,newY + newH/2,pageHighlightHeight,newH/2);
+            our2ndHighlightShowTimer.setInterval(pageTurnDelay);
+            our2ndHighlightHideTimer.setInterval(pageTurnDelay + pageHighlightDelay);
             our2ndHighlightOverlay.setGeometry(0,0,this->geometry().width(),this->geometry().height());   // lay over ourself
             our2ndHighlightOverlay.setPixmap(QPixmap::fromImage(frame2ndImage));
 

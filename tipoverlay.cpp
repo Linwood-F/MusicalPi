@@ -90,10 +90,6 @@ TipOverlay::~TipOverlay()
     if(overlayAnimation) delete overlayAnimation;
     if(overlayFade) delete overlayFade;
 }
-void TipOverlay::paintEvent(QPaintEvent *)  // This is here so we can use styles
-{
-    QStyleOption opt;
-    opt.init(this);
-    QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
-}
+
+// Note the replacement paint event used in other routines cannot be used here -- probably needs something more sophisticated.
+
