@@ -31,7 +31,7 @@
 #define MUSICALPI_SETTINGS_MSG_MIN_WIDTH 400
 
 // Define this to get colored borders on key widgets (from stylesheet in main)
-#define MUSICALPI_DEBUG_WIDGET_BORDERS
+//#define MUSICALPI_DEBUG_WIDGET_BORDERS
 
 // SplashBackend seems to render better quality and only slightly slower.
 
