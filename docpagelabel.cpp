@@ -1,4 +1,4 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include "docpagelabel.h"
 #include "mainwindow.h"
@@ -21,6 +21,8 @@
 
 docPageLabel::docPageLabel(QWidget *parent,MainWindow* mp) : QLabel(parent)
 {
+    // Widget to display one page where/how we want it
+
     qDebug() << " in constructor";
 
     ourParent = parent;

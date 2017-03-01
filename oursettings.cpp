@@ -23,6 +23,7 @@ void ourSettings::getSaveValues()
     setPtr->setValue("calibreMusicTag",setPtr->value("calibreMusicTag","music").toString());                  // Tag must be setup in Calibre
     setPtr->setValue("logoPct",setPtr->value("logoPct",20).toInt());                                   // How wide should logo be on non-play window
     setPtr->setValue("pageBorderWidth",setPtr->value("pageBorderWidth",10).toInt());                          // Border around pages
+    setPtr->setValue("forceOnboardKeyboard",setPtr->value("forceOnboardKeyboard",true).toBool());  // should we do a dbus command to bring up onboard?
 
     // This one can be smaller than calculated below, but is set to allow twice the number of pages
     // ahead of, and the same number behind, the max "up" display, plus some slop, so page forward/back works.
@@ -43,6 +44,7 @@ void ourSettings::getSaveValues()
     setPtr->setValue("pageTurnDelay",setPtr->value("pageTurnDelay",3200).toInt());
     setPtr->setValue("pageHighlightDelay",setPtr->value("pageHighlightDelay",1500).toInt());
     setPtr->setValue("pageHighlightHeight",setPtr->value("pageHighlightHeight",10).toInt());
+    setPtr->setValue("pageTurnTipOverlay",setPtr->value("pageTurnTipOverlay",true).toBool());
 
     // ALSA Interface and player tuning
     setPtr->setValue("ALSAMidiQuashResetAll",setPtr->value("ALSAMidiQuashResetAll",true).toBool()); // Should we above sending ResetAll's (some devices may not handle, or may miss the first notes)

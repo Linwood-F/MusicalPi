@@ -4,8 +4,6 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QLabel>
-#include <QWidget>
-#include <QObject>
 
 class aboutWidget : public QLabel
 {

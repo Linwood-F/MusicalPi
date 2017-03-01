@@ -14,7 +14,10 @@
 
 renderThread::renderThread(PDFDocument *parent, int which, MainWindow* mp ): QThread(parent)
 {
+    // This routine is used for actual graphics page rendering, in separate threads
+
     // Note constructor is running in the parent thread
+
     qDebug() << "in constructor for thread " << which;
     abort = false;
     running = false;   // Used as a code logic sanity check, this does not control the loop, just aborts if inconsistent
@@ -31,7 +34,10 @@ renderThread::~renderThread()
     qDebug() << "In destructor";
     abort=true;
     condition.wakeOne();
+    qDebug() << "Entering wait";
     wait();  // Since constructor/destructor are in the parent thread, this waits for the worker thread to exit before the base class destructor is called;
+    mutex.unlock(); // Why is this needed?   Otherwise it gives warnings
+    qDebug() << "Wait finished, leaving destructor";
 }
 
 void renderThread::render(QImage** image, int thePage, int maxWidth, int maxHeight)
@@ -87,14 +93,16 @@ void renderThread::run()
             painter.drawText(QPoint(pageHighlightHeight + 10,pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }
         // critical section:  This interlock is with the parent thread for returning the image; the parent records we are not running afterwards
-        ((PDFDocument*)ourParent)->PDFMutex.lock();
+        ourParent->lockOrUnlockMutex(true);
         *targetImagePtr = theImage;
         emit renderedImage( mWhich, mPage, mWidth, mHeight);
         running = false;    // Mark we were done - note we do this inside parent's critical section to prevent race conditions
-        ((PDFDocument*)ourParent)->PDFMutex.unlock();
+        ourParent->lockOrUnlockMutex(false);
         // End of critical section
-        if(abort) return;   // will hit this one first if requested while running but
+        if(abort) { qDebug() << "Returning with abort"; return; }  // will hit this one first if requested while running but
+        mutex.lock();
         condition.wait(&mutex);
-        if(abort) return;   // will hit this one if requested while not running
+        mutex.unlock();
+        if(abort) { qDebug() << "Returning with abort"; return; };   // will hit this one if requested while not running
     }
 }

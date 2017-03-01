@@ -268,13 +268,13 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     }
     checkQueueVsCache();
     PDF->checkCaching();
-    if(playing) overlay->show();
+    if(playing && ourSettingsPtr->getSetting("pageTurnTipOverlay").toBool()) overlay->show();
 }
 
 void MainWindow::checkQueueVsCache()
 {
     PDF->adjustCache(leftmostPage);
-    PDF->PDFMutex.lock(); // Shouldn't need this but just make sure the ones we find are fully formed - this may be too broad, and we might want to put this just around the inner loop so it releases each time
+    PDF->lockOrUnlockMutex(true); // Shouldn't need this but just make sure the ones we find are fully formed - this may be too broad, and we might want to put this just around the inner loop so it releases each time
     int skipped = 0;
     for(int i = 0; i < MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS ; i++)
     {
@@ -292,7 +292,7 @@ void MainWindow::checkQueueVsCache()
         else if(loadPagePendingNumber[i]) skipped++;
         // else we just don't need it (yet)
     }
-    PDF->PDFMutex.unlock();
+    PDF->lockOrUnlockMutex(false);
 }
 
 void MainWindow::playingNextPage()

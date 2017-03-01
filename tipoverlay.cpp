@@ -15,6 +15,9 @@
 
 TipOverlay::TipOverlay(QWidget* p, MainWindow * mp) : QLabel(p)
 {
+    // Instructional overlay (optionally) showed during play mode to show areas of the screen
+    // where touches (clicks) turn pages or return to the library.
+
     qDebug() << "created";
     assert(p);
     assert(mp);

@@ -3,7 +3,6 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-
 #include <QImage>
 #include <QLabel>
 #include <QtConcurrent/QtConcurrent>
@@ -39,6 +38,7 @@ public:
     void checkCaching();
     void adjustCache(int leftmostPage);
     QMutex PDFMutex;
+    void lockOrUnlockMutex(bool lockFlag);
     MainWindow* mParent;
 
 private:

@@ -1,4 +1,4 @@
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QPainter>
 #include <QSqlQuery>
@@ -19,12 +19,13 @@
 #include "piconstants.h"
 #include <cassert>
 
-// Isolate specific librarydetails in this class so we could switch to different
-// calling process, also isolate formatting and population of the widget here.
-// Basically the caller can only load it, and gets a signal from selection.
 
 musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 {
+    // Isolate specific librarydetails in this class so we could switch to different
+    // calling process, also isolate formatting and population of the widget here.
+    // Basically the caller can only load it, and gets a signal from selection.
+
     ourParent = parent;
     mParent = mp;
     calibreMusicTag =  mParent->ourSettingsPtr->getSetting("calibreMusicTag").toString();
@@ -74,6 +75,7 @@ void musicLibrary::loadData()
     qDebug()<<"Starting to load data";
     lastRowSelected = -1;
     searchBox.setText("");  // Start fresh search with new library
+    forceOnboardKeyboard = mParent->ourSettingsPtr->getSetting("forceOnboardKeyboard").toBool();
     QSqlQuery queryBooks;
     QString sql =
         "select b.id as BookID, b.sort as Title, coalesce(max(s.name),'') as Collection, b.author_sort as Author, b.path || '/' ||  d.name || '.' || d.format as Path "
@@ -201,13 +203,15 @@ void musicLibrary::filterTable(QString filter)
 }
 void musicLibrary::showKeyboard()
 {
+    if(!forceOnboardKeyboard) return;
     qDebug() << "Firing show keyboard";
     QDBusMessage show = QDBusMessage::createMethodCall("org.onboard.Onboard","/org/onboard/Onboard/Keyboard","org.onboard.Onboard.Keyboard","Show");
     QDBusConnection::sessionBus().send(show);
 }
 void musicLibrary::hideKeyboard()
 {
-    qDebug() << "Firing show keyboard";
+    if(!forceOnboardKeyboard) return;
+    qDebug() << "Firing hide keyboard";
     QDBusMessage show = QDBusMessage::createMethodCall("org.onboard.Onboard","/org/onboard/Onboard/Keyboard","org.onboard.Onboard.Keyboard","Hide");
     QDBusConnection::sessionBus().send(show);
 }

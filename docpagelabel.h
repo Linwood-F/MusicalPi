@@ -43,7 +43,6 @@ private:
     int pageTurnDelay;
     int pageHighlightDelay;
     int pageHighlightHeight;
-
 };
 
 #endif // DOCPAGELABEL_H

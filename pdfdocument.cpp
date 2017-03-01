@@ -4,6 +4,7 @@
 #include <QBitmap>
 #include <QColor>
 #include <QFileInfo>
+#include <QThread>
 
 #include "pdfdocument.h"
 #include "mainwindow.h"
@@ -96,13 +97,13 @@ PDFDocument::~PDFDocument()
     }
     for (int i = 0; i<MUSICALPI_MAXPAGES; i++)
     {
-        PDFMutex.lock();
+        lockOrUnlockMutex(true);
         if (pageImagesAvailable[i])
         {
             DELETE_LOG(pageImages[i]);
             pageImagesAvailable[i]=false;
         }
-        PDFMutex.unlock();
+        lockOrUnlockMutex(false);
     }
     if(document) DELETE_LOG(document);
 }
@@ -143,7 +144,7 @@ void PDFDocument::checkCaching()
     // later but the most important pages are the first few.  From then on we just assume we will
     // keep up.
 
-    PDFMutex.lock();  // We don't want to delete something half delivered so lock out thread; this is a bit broad but this section is pretty fast.
+    lockOrUnlockMutex(true); // We don't want to delete something half delivered so lock out thread; this is a bit broad but this section is pretty fast.
     for(int i=0; i<numPages; i++)
     {
         if(i+1 < cacheRangeStart || i+1 > cacheRangeEnd)  // outside of caching range
@@ -191,7 +192,7 @@ void PDFDocument::checkCaching()
             }
         }
     }
-    PDFMutex.unlock();
+    lockOrUnlockMutex(false);
 }
 
 void PDFDocument::adjustCache(int leftmostPage)
@@ -224,7 +225,7 @@ void PDFDocument::checkResetImageSize(int width, int height)
     // Now see if any are smaller on BOTH dimensions (if longer/long-as on one we assume we are OK)
 
     qDebug() << "Reset cache, looking to see if any images need to go, needed = [" << width << "x" << height << "]";
-    PDFMutex.lock();
+    lockOrUnlockMutex(true);
     for(int i = 0; i < MUSICALPI_MAXPAGES; i++)
         if(pageImagesAvailable[i] && pageImages[i]->width() < width && pageImages[i]->height() < height)
         {
@@ -232,6 +233,21 @@ void PDFDocument::checkResetImageSize(int width, int height)
                 delete pageImages[i];
                 pageImagesAvailable[i]=false;
         }
-    PDFMutex.unlock();
+    lockOrUnlockMutex(false);
     checkCaching();
+}
+void PDFDocument::lockOrUnlockMutex(bool lockFlag)
+{
+    // Put this in a separate place so we can add debugging or other instrumentation if needed, but
+    // it is called too frequently to debug output all the time.
+    if(lockFlag)
+    {
+//        qDebug()<< "Locking mutex called from thread " << QThread::currentThreadId();
+        PDFMutex.lock();
+    }
+    else
+    {
+//        qDebug()<< "UnLocking mutex called from thread " << QThread::currentThreadId();
+        PDFMutex.unlock();
+    }
 }

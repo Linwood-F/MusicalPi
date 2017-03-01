@@ -1,7 +1,7 @@
 #ifndef DBCALIBRE_H
 #define DBCALIBRE_H
 
-// Copyright 2016 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QtSql/qtsqlglobal.h>
 #include <QSqlDatabase>
@@ -47,6 +47,7 @@ private:
     QString calibrePath;
     QString calibreDatabase;
     int lastRowSelected;       // Used to prevent mouse-bounce from doing a select twice while processing (reported by Stevend on raspberrypi.org 2/5/17 - thanks)
+    bool forceOnboardKeyboard;
 
 signals:
     void songSelected(QString, QString);

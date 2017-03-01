@@ -1,3 +1,5 @@
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QWidget>
 #include <QStyleOption>
 #include <QPainter>
@@ -10,6 +12,8 @@
 #include "oursettings.h"
 
 #include <cassert>
+
+// This provides individual widgets composed of a prompt, a value entry portion, and a message for validation messages
 
 /* int */     settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, int lower, int higher) : QWidget(parent)
 {

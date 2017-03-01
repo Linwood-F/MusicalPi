@@ -1,3 +1,5 @@
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QDebug>
 #include <QCoreApplication>
 
@@ -11,19 +13,17 @@
 #include <sys/types.h>
 #include <sys/syscall.h>
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
-
-// This object is created as soon as we know we need to play
-// The thread is also started as soon as we create the object and it just sits waiting
-
-// The thread plays after all data written into the events map, with
-// stop and abort available.
-
-// See http://www.alsa-project.org/main/index.php/SMP_Design
-// Basically all handle related operations need to be interlocked with the calling thread
-
 midiplayerV2Thread::midiplayerV2Thread(midiPlayerV2 *parent, MainWindow* mp): QThread(parent)
 {
+    // This object is created as soon as we know we need to play
+    // The thread is also started as soon as we create the object and it just sits waiting
+
+    // The thread plays after all data written into the events map, with
+    // stop and abort available.
+
+    // See http://www.alsa-project.org/main/index.php/SMP_Design
+    // Basically all handle related operations need to be interlocked with the calling thread
+
     qDebug() << "in constructor, tid = " << syscall(__NR_gettid) << ",currentThreadId()=" << currentThreadId();
     requestType = none;
     ourParent = parent; // the parent widget

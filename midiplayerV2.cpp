@@ -1,3 +1,5 @@
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QStyleOption>
 #include <QPainter>
 #include <QDebug>
@@ -15,14 +17,11 @@
 #include "MidiEventList.h"
 #include "MidiMessage.h"
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
-
-// This routine handles reading the file (well, it calls a library) and UI during play, but
-// depends on an independent thread to actually do the playing and interact with ALSA.
-
-
 midiPlayerV2::midiPlayerV2(MainWindow *parent, QString _midiFile, QString _titleName) : QWidget((QWidget*)parent)
 {
+    // This routine handles reading the file (well, it calls a library) and UI during play, but
+    // depends on an independent thread to actually do the playing and interact with ALSA.
+
     qDebug() << "Entered";
     setWindowTitle("Midi Player - " + _titleName);
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again

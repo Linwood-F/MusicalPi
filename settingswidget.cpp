@@ -1,4 +1,5 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include <QFileInfo>
 #include <QFont>
 #include <QHBoxLayout>
@@ -17,9 +18,6 @@
 // And not silent validation like QValidators are.  These could likely be encapsulated
 // into a widget that itself created the entry/message widget and be cleaner but I was
 // tired of typing after I did this.
-
-//        innerLayout->addWidget(si);
-//        values[name]=si;
 
 #define Heading(prompt) \
     { \
@@ -41,6 +39,8 @@
 
 settingsWidget::settingsWidget(QWidget* p, MainWindow* mp) : QWidget(p)
 {
+    // Basic UI to provide per-field range checking and per-screen validation prior to updates
+
     mParent = mp;
     containingWidget = NULL;
     this->setLayout(new QHBoxLayout()); // Always need some layout on ourselves
@@ -86,6 +86,8 @@ void settingsWidget::loadData()
 
     subHeading("Display and Page Turn Controls");
 
+    new settingsItem(this, containingWidget, "pageTurnTipOverlay","Show instructional overlay each play:");
+    new settingsItem(this, containingWidget, "forceOnboardKeyboard","Force dbus call to show OnBoard keyboard:");
     new settingsItem(this, containingWidget, "logoPct","Screen % width of logo:",10,50);
     new settingsItem(this, containingWidget, "overlayTopPortion","Screen % height of top area in play:",5,50);
     new settingsItem(this, containingWidget, "overlaySidePortion","Screen % height of top area in play:",5,50);
@@ -121,9 +123,11 @@ void settingsWidget::loadData()
         it->second->setPromptWidth(maxWidth);
 }
 
-
 bool settingsWidget::validateAll()
 {
+    // This routine should validate the overall settings (i.e. those which are inter-connected)
+    // before saving the data. As written there is not a lot added (yet).
+
     QFileInfo checkFile(values["calibrePath"]->toString() + "/" + values["calibreDatabase"]->toString());
     if(!checkFile.exists() || !checkFile.isFile())
     {
