@@ -1,8 +1,6 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QPainter>
-#include <QBitmap>
-#include <QColor>
 #include <QFileInfo>
 #include <QThread>
 

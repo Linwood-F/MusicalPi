@@ -1,11 +1,9 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QPainter>
-#include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlField>
 #include <QSqlError>
-#include <QTableWidgetItem>
 #include <QHeaderView>
 #include <QScroller>
 #include <QtDBus/QDBusConnection>
@@ -14,8 +12,6 @@
 #include "musiclibrary.h"
 #include "mainwindow.h"
 #include "oursettings.h"
-
-#include "debugmessages.h"
 #include "piconstants.h"
 #include <cassert>
 

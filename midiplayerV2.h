@@ -3,17 +3,9 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QObject>
-#include <QWidget>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QSlider>
-#include <QPushButton>
-#include <QTimer>
-
 // We use this for data structures here, actuall connections in the thread
+
+#include <QWidget>
 
 #include <alsa/asoundlib.h>
 #include <string>
@@ -21,6 +13,13 @@
 class midiplayerV2Thread;
 class MainWindow;
 class MidiFile;
+class QVBoxLayout;
+class QGridLayout;
+class QLabel;
+class QLineEdit;
+class QPushButton;
+class QSlider;
+
 
 class midiPlayerV2 : public QWidget
 {    Q_OBJECT

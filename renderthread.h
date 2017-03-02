@@ -5,15 +5,12 @@
 
 #include <QThread>
 #include <QMutex>
-#include <QImage>
 #include <QWaitCondition>
 #include "piconstants.h"
 
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
 #include <poppler/qt5/poppler-qt5.h>
 #endif
-
-
 
 class MainWindow;
 class PDFDocument;

@@ -4,13 +4,11 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QWidget>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QLabel>
-#include <QHBoxLayout>
 
 class MainWindow;
 class settingsWidget;
+class QLabel;
+class QHBoxLayout;
 
 class settingsItem : public QWidget
 {

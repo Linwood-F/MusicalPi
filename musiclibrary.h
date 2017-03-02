@@ -3,15 +3,13 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QtSql/qtsqlglobal.h>
-#include <QSqlDatabase>
-#include <QLabel>
+#include <QSqlQuery>
+#include <QTableWidgetItem>
 #include <QLineEdit>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QTimer>
-#include <QTableWidget>
-#include <QString>
-
+#include <QLabel>
 
 // This is a container widget that holds both a label, a search text box, and a table widget
 

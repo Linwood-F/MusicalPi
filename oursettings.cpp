@@ -1,5 +1,8 @@
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "oursettings.h"
 #include <QDebug>
+#include <QSettings>
 
 ourSettings::ourSettings(MainWindow* parent)
 {

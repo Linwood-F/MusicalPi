@@ -1,11 +1,9 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QFileInfo>
-#include <QFont>
 #include <QHBoxLayout>
 #include <QStyleOption>
 #include <QPainter>
-#include <QFrame>
 
 #include "settingswidget.h"
 #include "mainwindow.h"

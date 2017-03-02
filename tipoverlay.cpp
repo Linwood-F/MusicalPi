@@ -1,9 +1,10 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QTimer>
-#include <QDebug>
 #include <QPainter>
 #include <QStyleOption>
+#include <QPropertyAnimation>
+#include <QGraphicsOpacityEffect>
 
 #include <cassert>
 

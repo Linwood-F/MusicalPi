@@ -3,13 +3,12 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QSettings>
 #include <QVariant>
 
 #include "piconstants.h"
 
-
 class MainWindow;
+class QSettings;
 
 class ourSettings
 {

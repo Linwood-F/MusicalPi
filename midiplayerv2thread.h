@@ -10,7 +10,6 @@
 
 #include <alsa/asoundlib.h>
 
-
 class midiPlayerV2;
 class MainWindow;
 

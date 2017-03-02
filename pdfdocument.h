@@ -3,16 +3,13 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QImage>
-#include <QLabel>
-#include <QtConcurrent/QtConcurrent>
-#include <cassert>
-#include <QtDebug>
+#include <QMutex>
 
 #include "docpagelabel.h"
-
 #include "piconstants.h"
 #include <poppler/qt5/poppler-qt5.h>
+
+#include <cassert>
 
 class MainWindow;
 class renderThread;

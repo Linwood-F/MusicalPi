@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <QStyleOption>
 #include <QPainter>
+#include <QLineEdit>
+#include <QCheckBox>
 
 #include "settingsitem.h"
 #include "piconstants.h"

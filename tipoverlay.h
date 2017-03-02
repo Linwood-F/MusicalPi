@@ -3,13 +3,11 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-//#include <QObject>
 #include <QLabel>
-#include <QWidget>
-#include <QPropertyAnimation>
-#include <QGraphicsOpacityEffect>
 
 class MainWindow;
+class QPropertyAnimation;
+class QGraphicsOpacityEffect;
 
 class TipOverlay : public QLabel
 {

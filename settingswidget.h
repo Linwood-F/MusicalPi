@@ -3,18 +3,12 @@
 
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QWidget>
-#include <QLabel>
-#include <QGridLayout>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QMap>
-#include <QString>
-
 #include "settingsitem.h"
 
 class MainWindow;
+class QLineEdit;
+class QVBoxLayout;
+class QPushButton;
 
 class settingsWidget : public QWidget
 {

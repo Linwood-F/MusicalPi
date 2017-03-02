@@ -1,8 +1,5 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
-#include <QDebug>
-#include <QCoreApplication>
-
 #include "midiplayerv2thread.h"
 #include "mainwindow.h"
 #include "piconstants.h"

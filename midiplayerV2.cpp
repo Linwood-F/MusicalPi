@@ -2,8 +2,14 @@
 
 #include <QStyleOption>
 #include <QPainter>
-#include <QDebug>
-#include <QCloseEvent>
+
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QSlider>
+#include <QPushButton>
+#include <QTimer>
 
 #include "midiplayerV2.h"
 #include "mainwindow.h"
