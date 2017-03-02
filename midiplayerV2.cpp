@@ -10,6 +10,7 @@
 #include <QSlider>
 #include <QPushButton>
 #include <QTimer>
+#include <QCloseEvent>
 
 #include "midiplayerV2.h"
 #include "mainwindow.h"

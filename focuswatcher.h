@@ -2,8 +2,9 @@
 #define FOCUSWATCHER_H
 // Courtesy Emmanuel Lepage @  http://stackoverflow.com/questions/17818059/what-is-the-signal-for-when-a-widget-loses-focus/17819214
 
-#include <QEvent>
 #include <QObject>
+
+class QEvent;
 
 class FocusWatcher : public QObject
 {

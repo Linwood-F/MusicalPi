@@ -4,14 +4,8 @@
 // Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QMainWindow>
-#include <QLabel>
-#include <QImage>
-#include <QLayout>
-#include <QPushButton>
-#include <QMouseEvent>
 
 #include "docpagelabel.h"
-
 #include "piconstants.h"
 
 class midiPlayerV2;
@@ -23,6 +17,9 @@ class musicLibrary;
 class aboutWidget;
 class settingsWidget;
 class docPageLabel;
+class QHBoxLayout;
+class QVBoxLayout;
+class QPushButton;
 
 class MainWindow : public QMainWindow
 {

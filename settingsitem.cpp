@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 #include "settingsitem.h"
 #include "piconstants.h"
@@ -23,7 +25,7 @@
     valueWidget->setMinimumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
     valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
     thisType = int_t;
-    settingsItemShared(sw, parent, key, prompt);
+    settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
     connect(new FocusWatcher(valueWidget), &FocusWatcher::focusChanged, this, [this,lower, higher](){validateRange(lower,higher);});
 }
@@ -34,7 +36,7 @@
     valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
     valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
     thisType = uint_t;
-    settingsItemShared(sw, parent, key, prompt);
+    settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
     connect(new FocusWatcher(valueWidget), &FocusWatcher::focusChanged, this, [this, lower, higher](){validateRange(lower,higher);});
 }
@@ -44,20 +46,20 @@
     valueWidget->setMaximumWidth(length);
     valueWidget->setMinimumWidth(length);
     thisType = string_t;
-    settingsItemShared(sw, parent, key, prompt);
+    settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
 }
 /* bool */    settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt) : QWidget(parent)
 {
     valueWidget = new QCheckBox(this);
     thisType = bool_t;
-    settingsItemShared(sw, parent, key, prompt);
+    settingsItemShared(sw, key, prompt);
     ((QCheckBox*)valueWidget)->setChecked(mParent->ourSettingsPtr->getSetting(key).toBool());
 }
 
-/* shared */ void settingsItem::settingsItemShared(settingsWidget *sw, QWidget *parent, QString key, QString prompt)
+/* shared */ void settingsItem::settingsItemShared(settingsWidget *sw, QString key, QString prompt)
 {
-    ourParent = sw;   // This will be the setti8ngs
+    ourParent = sw;   // This will be the settings
     mParent = sw->mParent;  // we need a main window pointer
     sw->values[key] = this;  // Self-register in the map
     sw->innerLayout->addWidget(this); // and putourselves in the layout

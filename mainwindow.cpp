@@ -2,6 +2,8 @@
 
 #include <QColor>
 #include <QApplication>
+#include <QPushButton>
+#include <QMouseEvent>
 
 #include "mainwindow.h"
 #include "tipoverlay.h"

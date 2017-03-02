@@ -43,7 +43,7 @@ public:
     QWidget* valueWidget;   // Will contain one of data entry types
 
 private:
-    /* shared */ void settingsItemShared(settingsWidget *sw, QWidget *parent, QString key, QString prompt);
+    /* shared */ void settingsItemShared(settingsWidget *sw, QString key, QString prompt);
     settingsWidget* ourParent;
     MainWindow* mParent;
     int ourInt;

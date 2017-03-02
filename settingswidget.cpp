@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QStyleOption>
 #include <QPainter>
+#include <QPushButton>
 
 #include "settingswidget.h"
 #include "mainwindow.h"

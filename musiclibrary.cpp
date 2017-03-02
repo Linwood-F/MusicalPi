@@ -8,6 +8,7 @@
 #include <QScroller>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
+#include <QEvent>
 
 #include "musiclibrary.h"
 #include "mainwindow.h"
