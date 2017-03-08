@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QPushButton>
 #include <QMouseEvent>
+#include <QVBoxLayout>
 
 #include "mainwindow.h"
 #include "tipoverlay.h"
@@ -182,11 +183,10 @@ void MainWindow::setLibraryMode()
     nowMode = libraryMode;
     HideEverything();
     deletePDF(); // we'll create a new one if needed
-    libraryTable->loadData();
     menuLayoutWidget->show();
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
-    libraryTable->show();
+    libraryTable->show();  // Implicitly loads data
 }
 
 void MainWindow::setAboutMode()
@@ -216,6 +216,7 @@ void MainWindow::setSettingsMode()
 
 void MainWindow::startPlayMode(QString path, QString _titlePlaying)
 {
+    qDebug() << "Calling with " << path << ", " << _titlePlaying;
     if(PDF==NULL || PDF->filepath != path)
     {
         deletePDF();

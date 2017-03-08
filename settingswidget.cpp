@@ -75,8 +75,9 @@ void settingsWidget::loadData()
 
     new settingsItem(this, containingWidget, "calibreDatabase","Database file name (only):", MUSICALPI_SETTINGS_STRING_LEN);
     new settingsItem(this, containingWidget, "calibreMusicTag","Calibre tag for music items:",MUSICALPI_SETTINGS_STRING_LEN);
+    new settingsItem(this, containingWidget, "calibreListPrefix","Calibre tag for play lists items:",MUSICALPI_SETTINGS_STRING_LEN);
 
-    subHeading("Embedded Midi Player (only shows if files of type '.mid' accompany PDF's");
+    subHeading("Embedded Midi Player (only type '.mid' accompany PDF's)");
 
     new settingsItem(this, containingWidget, "midiPort","Port:",0,255);
     new settingsItem(this, containingWidget, "ALSAMidiQuashResetAll","Prevent sending Reset-All:");
@@ -113,13 +114,16 @@ void settingsWidget::loadData()
     innerLayout->addWidget(saveButton);
     connect(saveButton,&QPushButton::clicked, this, &settingsWidget::validateAll);
 
+    this->show(); // necessary for the calculations below to work
+
     // Find maximum prompt width in pixels
     int maxWidth = 0;
     for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
         maxWidth = std::max(maxWidth,it->second->getPromptWidth());
+    qDebug() << "Using prompt width of " << maxWidth;
     // Then go through and set them all to the same so the columns line up
     for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
-        it->second->setPromptWidth(maxWidth);
+        it->second->setPromptWidth(maxWidth * 1.05);  // The extra % is to give a bit of room for odd fonts, etc.
 }
 
 bool settingsWidget::validateAll()

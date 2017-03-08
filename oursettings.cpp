@@ -24,6 +24,7 @@ void ourSettings::getSaveValues()
     setPtr->setValue("calibrePath",setPtr->value("calibrePath","/mnt/lef/t/Calibre Library")); // Path must exist in OS ahead of time
     setPtr->setValue("calibreDatabase",setPtr->value("calibreDatabase","metadata.db").toString());             // Database file name
     setPtr->setValue("calibreMusicTag",setPtr->value("calibreMusicTag","music").toString());                  // Tag must be setup in Calibre
+    setPtr->setValue("calibreListPrefix",setPtr->value("calibreListPrefix","musicList_").toString());     // Prefix for any lists we maintain
     setPtr->setValue("logoPct",setPtr->value("logoPct",20).toInt());                                   // How wide should logo be on non-play window
     setPtr->setValue("pageBorderWidth",setPtr->value("pageBorderWidth",10).toInt());                          // Border around pages
     setPtr->setValue("forceOnboardKeyboard",setPtr->value("forceOnboardKeyboard",true).toBool());  // should we do a dbus command to bring up onboard?

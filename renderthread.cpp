@@ -79,8 +79,10 @@ void renderThread::run()
         document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
         assert(document && !document->isLocked());
         document->setRenderHint(Poppler::Document::Antialiasing);
+        document->setRenderHint(Poppler::Document::IgnorePaperColor);  // ?? Better??
 #else
         ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
+        ourParent->document->setRenderHint(Poppler::Document::IgnorePaperColor);  // ?? Better??
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);

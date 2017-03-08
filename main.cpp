@@ -6,8 +6,8 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
     qInstallMessageHandler(myMessageOutput);
+    QApplication a(argc, argv);
     a.setStyleSheet(QString(
         "QWidget"
            "{margin: 0px; "
