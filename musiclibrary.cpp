@@ -34,7 +34,9 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     // This widget (i.e. "this") is persistent and created once.  The inner widgets that
     // represent the data are deleted and rebuilt each time with the hide and show events
     // This overhead is relatively small, but since by design this program stays running
-    // all the time, it otherwise will not see new music (i.e. calibre books).
+    // all the time, it otherwise will not see new music (i.e. calibre books). Notice the
+    // database is opened each time it is read in case the share dropped out and came back
+    // at some point.
 
     ourParent = parent;
     mParent = mp;
@@ -81,9 +83,6 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     searchLayout->setAlignment(Qt::AlignLeft);
     searchBox->installEventFilter(search);  // So we can catch keystrokes and do as-you-type filter
 
-    // Get the database ready
-    m_db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
-    m_db->setDatabaseName(calibrePath + "/" + calibreDatabase);
 
     libTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     libTable->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -97,19 +96,24 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
 
     connect(libTable, SIGNAL(cellClicked(int,int)), this, SLOT(onChosen(int,int)));  // Maybe this should be double clicked?
     connect(searchBox, SIGNAL(textChanged(QString)), this, SLOT(filterTable(QString)));
+
+    m_db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
+    m_db->setDatabaseName(calibrePath + "/" + calibreDatabase);
+
 }
 
 musicLibrary::~musicLibrary()
 {
     qDebug() << "in destructor";
-    if(m_db->isOpen()) m_db->close();
 }
+
 
 void musicLibrary::loadPlayLists()
 {
     // Get a list of playlists and set it to active if we already had chosen it
     // Must have database open to call
 
+    qDebug() << "Entered";
     dropdown->clear();
     QSqlQuery queryLists;
     QString sql = "select id, name from tags where name like '" + calibreListPrefix + "%';";
@@ -131,6 +135,7 @@ void musicLibrary::loadPlayLists()
 
 void musicLibrary::loadBooks()
 {
+    // Must have database open to call
     lastRowSelected=-1; // None selected (yet)
     libTable->setRowCount(0);
     searchBox->setText("");  // Start fresh search each time
@@ -200,7 +205,6 @@ void musicLibrary::loadBooks()
 void musicLibrary::showEvent(QShowEvent *e)
 {
     qDebug() << "Entered";
-
     m_db->open();
     checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
     loadPlayLists();
@@ -210,6 +214,7 @@ void musicLibrary::showEvent(QShowEvent *e)
 
 void musicLibrary::changeList(QString newList)
 {
+    qDebug() << "Entered with " << newList;
     ActiveList = newList;
     m_db->open();
     checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
@@ -232,6 +237,7 @@ void musicLibrary::hideEvent(QHideEvent *e)
     // We can't delete this: DELETE_LOG(libTable);
     // as for some reason the slignal/slot segfaults, so just clear it out
     libTable->setRowCount(0);  // THis just saves some memory when we're not using it
+    disconnect(dropdown,SIGNAL(currentTextChanged(QString)),this,SLOT(changeList(QString))); // Need this so we don't signal when we reload it
 }
 
 void musicLibrary::onChosen(int row, int column)

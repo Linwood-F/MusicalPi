@@ -34,6 +34,7 @@ private:
     QSqlDatabase* m_db;
     QWidget* ourParent;
     MainWindow* mParent;
+
     int columnForPath;
     int columnForID;
     int columnForTitle;
