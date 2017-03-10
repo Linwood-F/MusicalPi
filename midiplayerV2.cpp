@@ -286,6 +286,9 @@ bool midiPlayerV2::openAndLoadFile()
 
 void midiPlayerV2::doPlayingLayout()
 {
+    this->setStyleSheet("QLabel       {background-color: " MUSICALPI_POPUP_BACKGROUND_COLOR "; }"
+                        "midiPlayerV2 {background-color: " MUSICALPI_POPUP_BACKGROUND_COLOR "; }"
+                        );
     outLayout = new QVBoxLayout(this);
     outLayout->setSpacing(15);
     gridLayout = new QGridLayout();
@@ -293,7 +296,6 @@ void midiPlayerV2::doPlayingLayout()
     outLayout->addLayout(gridLayout);
 
     measureGo = new QPushButton("???",this);
-    measureGo->setStyleSheet("padding: 2px;");
     connect(measureGo,&QPushButton::clicked, this, &midiPlayerV2::go);
 
     measureInLabel = new QLabel(this);
@@ -315,7 +317,6 @@ void midiPlayerV2::doPlayingLayout()
 
     tempoLabel = new QLabel("Tempo %: ",this);
     tempoSlider = new QSlider(Qt::Horizontal,this);
-    tempoSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey);");
     tempoSlider->setMaximum(200);  // Is this large enough?
     tempoSlider->setMinimum(30);   // Small enough
     connect(tempoSlider,SIGNAL(valueChanged(int)),this,SLOT(updateTempo()));
@@ -326,7 +327,6 @@ void midiPlayerV2::doPlayingLayout()
 
     volumeLabel = new QLabel("Volume %", this);
     volumeSlider = new QSlider(Qt::Horizontal,this);
-    volumeSlider->setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey); ");
     volumeValueLabel = new QLabel("???",this);
     volumeSlider->setMaximum(150);
     volumeSlider->setMinimum(1);
@@ -374,7 +374,7 @@ void midiPlayerV2::updatePlayStatus()
         measureGo->setText("Error");
         // Highlight and show error
         errorLabel->setText(errorEncountered);
-        errorLabel->setStyleSheet("color: red;");
+        errorLabel->setProperty("ErrorMessage",true);  // So we can style it
     }
     return;
 }

@@ -23,6 +23,7 @@
 #include "mainwindow.h"
 #include "oursettings.h"
 #include "piconstants.h"
+
 #include <cassert>
 
 
@@ -31,12 +32,10 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     // Isolate specific librarydetails in this class so we could switch to different
     // calling process, also isolate formatting and population of the widget here.
 
-    // This widget (i.e. "this") is persistent and created once.  The inner widgets that
-    // represent the data are deleted and rebuilt each time with the hide and show events
-    // This overhead is relatively small, but since by design this program stays running
-    // all the time, it otherwise will not see new music (i.e. calibre books). Notice the
-    // database is opened each time it is read in case the share dropped out and came back
-    // at some point.
+    // This widget (i.e. "this") is persistent and created once. Some items are persisted
+    // and available publically (e.g. the dropdown, which implicitly holds all playlists).
+    // The playLists class uses these, isolating the actual database part to this routine
+    // to hopefully make it easier if a different library database is used.
 
     ourParent = parent;
     mParent = mp;
@@ -46,9 +45,9 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     calibreListPrefix = mParent->ourSettingsPtr->getSetting("calibreListPrefix").toString();
     forceOnboardKeyboard = mParent->ourSettingsPtr->getSetting("forceOnboardKeyboard").toBool();
 
-    ActiveList = "All items";
+    ActiveListIndex = 0;  // Default for start -- choices are persisted against subsequent hide/show iterations.
 
-    m_db = NULL;
+    m_db = NULL;  // Be sure we know if it's been created.  We open/close it a lot, but do not delete it until this routine is deleted
 
     qDebug() << "in constructor with path " << calibrePath << " and file " << calibreDatabase;
 
@@ -83,7 +82,6 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     searchLayout->setAlignment(Qt::AlignLeft);
     searchBox->installEventFilter(search);  // So we can catch keystrokes and do as-you-type filter
 
-
     libTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     libTable->setSelectionMode(QAbstractItemView::SingleSelection);
     libTable->verticalHeader()->hide();
@@ -94,62 +92,60 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     libTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     libTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
-    connect(libTable, SIGNAL(cellClicked(int,int)), this, SLOT(onChosen(int,int)));  // Maybe this should be double clicked?
+    connect(libTable, SIGNAL(cellClicked(int,int)), this, SLOT(onChosen(int,int)));
     connect(searchBox, SIGNAL(textChanged(QString)), this, SLOT(filterTable(QString)));
 
     m_db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
     m_db->setDatabaseName(calibrePath + "/" + calibreDatabase);
-
 }
 
 musicLibrary::~musicLibrary()
 {
     qDebug() << "in destructor";
+    DELETE_LOG(m_db);
 }
-
 
 void musicLibrary::loadPlayLists()
 {
     // Get a list of playlists and set it to active if we already had chosen it
     // Must have database open to call
+    // These need to stay loaded as they are used in a separate widget (and indeed may be forced into a reload by it)
 
     qDebug() << "Entered";
     dropdown->clear();
     QSqlQuery queryLists;
-    QString sql = "select id, name from tags where name like '" + calibreListPrefix + "%';";
-    queryLists.prepare(sql);
-    checkSqlError("Prepared tag query " + sql, queryLists.lastError());
-    queryLists.exec();
+    QString sql = "select id, name from tags where name like '" + calibreListPrefix + "%' order by name;";
+    queryLists.exec(sql);
     checkSqlError("Executed tag query " + sql, queryLists.lastError());
     dropdown->addItem("All items",0);
     while(queryLists.next())
     {
-        qDebug()<<"read tags, id=" << queryLists.record().field(0).value().toString() << ", value=" << queryLists.record().field(0).value().toInt();
-        dropdown->addItem(queryLists.record().field(1).value().toString(),queryLists.record().field(1).value().toString());
+        qDebug()<<"read tags, id=" << queryLists.record().field(0).value().toInt() << ", value=" << queryLists.record().field(1).value().toString();
+        dropdown->addItem(queryLists.record().field(1).value().toString().replace(calibreListPrefix,""),queryLists.record().field(0).value().toInt());
     }
-    int index = dropdown->findData(ActiveList);
-    if(index == -1) index = 0;  // If the current active disappeareed reset to all
-    dropdown->setCurrentIndex(index);
-    connect(dropdown,SIGNAL(currentTextChanged(QString)),this,SLOT(changeList(QString)));
+    ActiveListIndex = dropdown->findText(ActiveList);  // We have to look it up in case they list changed so index may change
+    if(ActiveListIndex == -1) ActiveListIndex = 0;  // If the current active disappeareed reset to all
+    dropdown->setCurrentIndex(ActiveListIndex);
 }
 
 void musicLibrary::loadBooks()
 {
     // Must have database open to call
+    qDebug() << "Entered";
     lastRowSelected=-1; // None selected (yet)
     libTable->setRowCount(0);
     searchBox->setText("");  // Start fresh search each time
     QSqlQuery queryBooks;
     QString sql =
-        "select b.id as BookID, b.sort as Title, coalesce(max(s.name),'') as Collection, b.author_sort as Author, b.path || '/' ||  d.name || '.' || d.format as Path, group_concat(t2.name,',') as tags "
+        "select b.id as BookID, b.sort as Title, coalesce(max(s.name),'') as Collection, b.author_sort as Author, b.path || '/' ||  d.name || '.' || lower(d.format) as Path, group_concat(t2.name,',') as tags "
         "from books b "
         "inner join books_tags_link btl on btl.book = b.id "
         "inner join tags t on t.id = btl.tag "
         "inner join data d on d.book = b.id and d.format = 'PDF' " +
         (
-           ActiveList == "All items" ? "" :
+           ActiveListIndex == 0 ? "" :
               ( "inner join books_tags_link btl3 on btl3.book = b.id "
-                "inner join tags t3 on t3.id = btl3.tag and t3.name = '" + ActiveList + "' "
+                "inner join tags t3 on t3.id = btl3.tag and t3.name = '" + calibreListPrefix + ActiveList + "' "
               )
         ) +
         "left join books_series_link bsl on bsl.book = b.id "
@@ -159,14 +155,12 @@ void musicLibrary::loadBooks()
         "where t.name = '" + calibreMusicTag + "' "
         "group  by b.id, b.sort, b.author_sort, b.path, d.name "
         "order by b.sort;";
-    queryBooks.prepare(sql);
-    checkSqlError("Prepared book query " + sql, queryBooks.lastError());
-    queryBooks.exec();
+    queryBooks.exec(sql);
     checkSqlError("Executed book query " + sql, queryBooks.lastError());
     QSqlRecord rec = queryBooks.record();
     libTable->setFont(QFont("Arial",10,0,false));
     libTable->setColumnCount(rec.count());
-    // First run through the columns and code appropriately in the table
+    // First run through the columns and code appropriately in the table, hiding some fields, remembering position
     for(int field = 0; field < rec.count(); field++)
     {
         libTable->setHorizontalHeaderItem(field, new QTableWidgetItem(rec.fieldName(field)));
@@ -192,14 +186,12 @@ void musicLibrary::loadBooks()
         for(int field=0; field < rec.count(); field++)
         {
             libTable->setItem(row,field,new QTableWidgetItem(queryBooks.record().field(field).value().toString()));
-            if(rec.fieldName(field)=="Title") libTable->item(row,field)->setFont(QFont("Arial",14,1,false));
+            if(rec.fieldName(field)=="Title") libTable->item(row,field)->setFont(QFont("Arial",14,1,false)); // Do something to make this proportional to some constant???
         }
         row++;
     }
     libTable->resizeColumnsToContents();
-
     qDebug() << "Completed by book retrieval and build of table";
-
 }
 
 void musicLibrary::showEvent(QShowEvent *e)
@@ -210,25 +202,7 @@ void musicLibrary::showEvent(QShowEvent *e)
     loadPlayLists();
     loadBooks();
     m_db->close();
-}
-
-void musicLibrary::changeList(QString newList)
-{
-    qDebug() << "Entered with " << newList;
-    ActiveList = newList;
-    m_db->open();
-    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
-    loadBooks();
-    m_db->close();
-}
-
-void musicLibrary::checkSqlError(QString stage, QSqlError err)
-{
-    if(err.databaseText()!="" || err.driverText()!="")
-    {
-        qDebug() << stage << " resulted in error " << err;
-        assert(err.databaseText()=="" || err.driverText()=="");
-    }
+    connect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));
 }
 
 void musicLibrary::hideEvent(QHideEvent *e)
@@ -237,7 +211,28 @@ void musicLibrary::hideEvent(QHideEvent *e)
     // We can't delete this: DELETE_LOG(libTable);
     // as for some reason the slignal/slot segfaults, so just clear it out
     libTable->setRowCount(0);  // THis just saves some memory when we're not using it
-    disconnect(dropdown,SIGNAL(currentTextChanged(QString)),this,SLOT(changeList(QString))); // Need this so we don't signal when we reload it
+    disconnect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));     // Need this so we don't signal when we reload it or use it from other routines
+}
+
+void musicLibrary::changeList(int newListIndex)
+{
+    qDebug() << "Entered";
+    ActiveListIndex = newListIndex;
+    ActiveList = dropdown->itemText(ActiveListIndex);
+    qDebug() << "Entered with " << newListIndex << " which is " << ActiveList;
+    m_db->open();
+    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+    loadBooks();
+    m_db->close();
+}
+
+void musicLibrary::checkSqlError(QString stage, QSqlError err) // Aborts on error
+{
+    if(err.databaseText()!="" || err.driverText()!="")
+    {
+        qDebug() << stage << " resulted in error " << err;
+        assert(err.databaseText()=="" || err.driverText()=="");
+    }
 }
 
 void musicLibrary::onChosen(int row, int column)
@@ -248,16 +243,13 @@ void musicLibrary::onChosen(int row, int column)
         qDebug() << "doubleclicked on row " << row <<  " which looks like a duplicate so ignoring.";
         return;
     }
-    else
-    {
-        // Move these to local items since the following are going to disappear
-        pathSelected = tr("%1/%2").arg(calibrePath).arg(libTable->item(row,columnForPath)->text());
-        titleSelected = libTable->item(row,columnForTitle)->text();
-        qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << pathSelected;
-        lastRowSelected = row;
-        emit songSelected(pathSelected, titleSelected);
-    }
-    qDebug() << "exiting";
+    // Move these to local items since the following are going to disappear
+    pathSelected = tr("%1/%2").arg(calibrePath).arg(libTable->item(row,columnForPath)->text());
+    titleSelected = libTable->item(row,columnForTitle)->text();
+    qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << pathSelected;
+    lastRowSelected = row;
+    bookIDSelected = libTable->item(row,columnForID)->text().toInt();
+    emit songSelected(pathSelected, titleSelected);
 }
 
 void musicLibrary::filterTable(QString filter)
@@ -267,7 +259,7 @@ void musicLibrary::filterTable(QString filter)
     libTable->setUpdatesEnabled(false);
     for(int row = 0; row < libTable->rowCount(); row++)
     {
-        if(filter=="")  match=true; // With no filter show everything
+        if(filter=="")  match=true; // With no filter show everything (but go through loop in case it was previously hidden)
         else
         {  // see if any not-hidden field matches and show
             match = false;
@@ -309,10 +301,76 @@ bool musicLibrary::eventFilter(QObject *object, QEvent *event)
     return false;
 }
 
-void musicLibrary::paintEvent(QPaintEvent *)
+void musicLibrary::paintEvent(QPaintEvent *) // Allows style sheets to apply in some way
 {
     QStyleOption opt;
     opt.init(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+bool musicLibrary::bookInList(int tag)
+{
+    m_db->open();
+    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+    QSqlQuery queryList;
+    QString sql =
+        "select count(*) as Presence "
+        "from books_tags_link btl "
+        "where btl.book = " + QString::number(bookIDSelected) + " and btl.tag = " + QString::number(tag) + ";";
+    queryList.exec(sql);
+    checkSqlError("Executed book/tag query " + sql, queryList.lastError());
+    assert(queryList.next());
+    bool ret = queryList.record().field(0).value().toBool();
+    m_db->close();
+    qDebug() << "Checked tag id " << tag << " for book " << bookIDSelected << " and returning " << ret;
+    return ret;
+}
+
+QString musicLibrary::addBookToList(int index)
+{
+    // This aborts if we can't open the database but returns other errors back to the caller (or blank for none)
+    qDebug() << "Request to add book " << bookIDSelected << " to tag id " << dropdown->itemData(index).toInt() << " which is " << dropdown->itemText(index);
+    m_db->open();
+    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+    QSqlQuery insert;
+    QString sql = "insert into books_tags_link(tag, book) values (" + QString::number(dropdown->itemData(index).toInt()) + "," + QString::number(bookIDSelected) +  ");";
+    insert.exec(sql);
+    QString result = insert.lastError().databaseText() + " / " + insert.lastError().driverText();
+    m_db->close();
+    return (result == " / " ? "" : result);
+}
+QString musicLibrary::removeBookFromList(int index)
+{
+    // This aborts if we can't open the database but returns other errors back to the caller (or blank for none)
+    qDebug() << "Request to remove book " << bookIDSelected << " to tag id " << dropdown->itemData(index).toInt() << " which is " << dropdown->itemText(index);
+    m_db->open();
+    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+    QSqlQuery del;
+    QString sql = "delete from books_tags_link where tag = " + QString::number(dropdown->itemData(index).toInt()) + " and book = " + QString::number(bookIDSelected) +  ";";
+    del.exec(sql);
+    QString result = del.lastError().databaseText() + " / " + del.lastError().driverText();
+    m_db->close();
+    return (result == " / " ? "" : result);
+}
+QString musicLibrary::addNewList(QString name)
+{
+    // This aborts if we can't open the database but returns other errors back to the caller (or blank for none)
+    qDebug() << "Request to insert new playList " << name;
+    m_db->open();
+    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+    QSqlQuery insert;
+    QString sql = "insert into tags (name) values('" + name + "')";
+    insert.exec(sql);
+    QString result = insert.lastError().databaseText() + " / " + insert.lastError().driverText();
+    if(result == " / ")  // If no error then also add the current book to it
+    {
+        qint32 rowid = insert.lastInsertId().toInt();
+        sql = "insert into books_tags_link(tag, book) values (" + QString::number(rowid) + "," + QString::number(bookIDSelected) +  ");";
+        insert.exec(sql);
+        result = insert.lastError().databaseText() + " / " + insert.lastError().driverText();
+        loadPlayLists();  // Need to reload since we added one -- this does not change active list though
+    }
+    m_db->close();
+    return (result == " / " ? "" : result);
 }

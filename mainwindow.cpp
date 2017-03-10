@@ -14,6 +14,7 @@
 #include "settingswidget.h"
 #include "midiplayerV2.h"
 #include "oursettings.h"
+#include "playlists.h"
 
 
 MainWindow::MainWindow() : QMainWindow()
@@ -23,6 +24,7 @@ MainWindow::MainWindow() : QMainWindow()
     ourSettingsPtr = new ourSettings(this);  // Get all our defaults
     PDF = NULL;
     mp = NULL;
+    pl = NULL;
     pagesNowDown = 0;
     pagesNowAcross = 0;
     overlay = NULL;
@@ -41,7 +43,7 @@ MainWindow::~MainWindow()
 {
     qDebug() << "MainWindow::~MainWindow in destructor";
     deletePDF();
-    delete libraryTable;
+    DELETE_LOG(libraryTable);
 }
 
 void MainWindow::setupCoreWidgets()
@@ -139,6 +141,10 @@ void MainWindow::setupCoreWidgets()
     playMidiButton = new QPushButton("Play Midi");
     playerMenuLayout->addWidget(playMidiButton);
     connect(playMidiButton,&QPushButton::clicked, this, &MainWindow::doMidiPlayer);
+
+    playListButton = new QPushButton("PlayLists");
+    playerMenuLayout->addWidget(playListButton);
+    connect(playListButton,&QPushButton::clicked, this, &MainWindow::doPlayLists);
 
     // ALl details of this get filled in during use in play section; not all may be use, this is max.
     for (int i=0; i < (MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS); i++)
@@ -246,7 +252,9 @@ void MainWindow::setPlayMode(bool _playing, int pagesToShowAcross, int pagesToSh
     pagesNowDown = pagesToShowDown;
     // Change all widget backgrounds to the playing color, or normal color, as appropriate
 #ifndef MUSICALPI_DEBUG_WIDGET_BORDERS
-    this->setStyleSheet(QString("QWidget { background-color: ") + (playing ?  QString(MUSICALPI_BACKGROUND_COLOR_PLAYING) : QString(MUSICALPI_BACKGROUND_COLOR_NORMAL)) + "}  QPushButton { background-color: grey }");
+    QString playBackground = "background-color: " + QString((playing ?  MUSICALPI_BACKGROUND_COLOR_PLAYING : MUSICALPI_BACKGROUND_COLOR_NORMAL));
+    outerLayoutWidget->setStyleSheet("docPageLabel {" + playBackground + " } "
+                                     "#outerLayoutWidget {" + playBackground + "}" );
 #endif
     // These are placed in outerLayoutWidget reduced in height but the size of menuLayoutWidget if not playing
     QSize outerLayoutWidgetSize = outerLayoutWidget->size();
@@ -488,6 +496,13 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
         case Qt::Key_PageDown: qDebug() << "Received PageDown"; playingNextPage(); break;
         case Qt::Key_PageUp:   qDebug() << "Received PageUp";   playingPrevPage(); break;
     }
+}
+
+void MainWindow::doPlayLists()
+{
+    qDebug() << "Entered, bookID = " << libraryTable->bookIDSelected << ", title" << PDF->titleName << " Active list = " << libraryTable->ActiveList;
+    pl = new playLists(this, libraryTable,PDF->titleName, libraryTable->bookIDSelected);
+    pl->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
 }
 
 void MainWindow::doMidiPlayer()

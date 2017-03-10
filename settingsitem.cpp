@@ -75,9 +75,8 @@
     hb->addWidget(valueWidget);
     hb->addWidget(m);
     this->setObjectName(key);
-    p->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE * 0.8) + "px;");
-    valueWidget->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; font-style: bold;");
-    m->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_FORM_DATA_FONT_SIZE) + "px; color: darkRed;");
+    m->setProperty("ErrorMessage",true);
+
     hb->setContentsMargins(0,0,0,0);
 }
 

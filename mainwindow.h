@@ -20,6 +20,7 @@ class docPageLabel;
 class QHBoxLayout;
 class QVBoxLayout;
 class QPushButton;
+class playLists;
 
 class MainWindow : public QMainWindow
 {
@@ -62,6 +63,7 @@ private:
                 QPushButton* twoUpButton;
                 QPushButton* fourByTwoButton;
                 QPushButton* playMidiButton;
+                QPushButton* playListButton;
         QWidget* generalLayoutWidget;   // This is the main body under the menu and holds everything except play mode items
           QHBoxLayout* generalLayout;
             QLabel* logoLabel;
@@ -72,6 +74,7 @@ private:
        TipOverlay* overlay;                                                   // fits (briefly) over the whole window when play-playing mode starts.
 
     midiPlayerV2* mp; // This widget is a free floating window
+    playLists* pl;
 
     int loadPagePendingNumber[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS]; // 0 indicates none pending
     docPageLabel::docTransition loadPagePendingTransition[MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS];
@@ -95,6 +98,7 @@ private:
     void keyPressEvent(QKeyEvent* e);
     void doMidiPlayer();
     void closeMidiPlayer();
+    void doPlayLists();
 
 private slots:
     void startPlayMode(QString,QString);

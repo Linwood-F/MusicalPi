@@ -62,6 +62,8 @@ void ourSettings::getSaveValues()
     setPtr->setValue("debugMidiMeasureDetails",setPtr->value("debugMidiMeasureDetails",false).toBool());   // During file parse should measure contains be itemized
     setPtr->setValue("debugQueueInfoInterval",setPtr->value("debugQueueInfoInterval",500).toUInt());      // How often should queue status debugging be written (msec)
 
+    // Note this one is special as it caches the value for later use
+    setPtr->setValue("debugSettingsAsLoaded",debugSettingsAsLoaded = setPtr->value("debugSettingsAsLoaded",false).toBool());      // Show each settings file entry as loaded or written
 }
 ourSettings::~ourSettings()
 {
@@ -73,14 +75,14 @@ QVariant ourSettings::getSetting(QString key)
 {
     QVariant v;
     v = setPtr->value(key);
-    qDebug() << "Returning for " << key << " value = " << v.toString();
+    if(debugSettingsAsLoaded) qDebug() << "Returning for " << key << " value = " << v.toString();
     return v;
 }
 
 QVariant ourSettings::setSetting(QString key, QVariant value)
 {
     setPtr->setValue(key,value);
-    qDebug() << "Saving value for key " << key << ", value=" << value;
+    if(debugSettingsAsLoaded) qDebug() << "Saving value for key " << key << ", value=" << value;
     setPtr->sync();
     return value;  // Just in case it's syntactically easier to use the return as output
 }

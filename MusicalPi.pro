@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     midiplayerv2thread.cpp \
     oursettings.cpp \
     focuswatcher.cpp \
-    settingsitem.cpp
+    settingsitem.cpp \
+    playlists.cpp
 
 HEADERS  += mainwindow.h \
     pdfdocument.h \
@@ -46,7 +47,8 @@ HEADERS  += mainwindow.h \
     midiplayerv2thread.h \
     oursettings.h \
     focuswatcher.h \
-    settingsitem.h
+    settingsitem.h \
+    playlists.h
 
 DISTFILES += \
     MusicalPi.gif \

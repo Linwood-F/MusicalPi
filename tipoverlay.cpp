@@ -53,7 +53,7 @@ void TipOverlay::showEvent(QShowEvent* event)
     painter.setBrush(QBrush(Qt::green));
     painter.drawRect(forwardPlayRect);
     painter.setOpacity(1.0);
-    painter.setFont(QFont("Arial",MUSICALPI_SETTINGS_TIPOVERLAY_FONT_SIZE,1,false));
+    painter.setFont(QFont("Arial",QString(MUSICALPI_SETTINGS_TIPOVERLAY_FONT_SIZE).replace("px","").toInt(),1,false));  // ??? This breaks if we don't use pixels -- ??
     painter.setPen(QColor("red"));
     painter.drawText(endPlayRect,Qt::AlignCenter,"End Play");
     painter.setPen(QColor("blue"));

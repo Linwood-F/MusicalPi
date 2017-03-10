@@ -22,6 +22,7 @@ public:
 
 private:
     void getSaveValues();
+    bool debugSettingsAsLoaded;
 };
 
 #endif // OURSETTINGS_H

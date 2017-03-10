@@ -81,8 +81,7 @@ void renderThread::run()
         document->setRenderHint(Poppler::Document::Antialiasing);
         document->setRenderHint(Poppler::Document::IgnorePaperColor);  // ?? Better??
 #else
-        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
-        ourParent->document->setRenderHint(Poppler::Document::IgnorePaperColor);  // ?? Better??
+        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
@@ -90,7 +89,7 @@ void renderThread::run()
 
         { // Put in a block so it will remove the painter and not leave it attached to the passed-out QImage
             QPainter painter(theImage);
-            painter.setFont(QFont("Arial", MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE, 1, false));
+            painter.setFont(QFont("Arial", QString(MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE).replace("px","").toInt(), 1, false));  // This breaks if we aren't using pixels ???
             painter.setPen(QColor("green"));
             painter.drawText(QPoint(pageHighlightHeight + 10,pageHighlightHeight + 20),QString("%1").arg(mPage)); // extra space is room for number, in addition to highlight
         }

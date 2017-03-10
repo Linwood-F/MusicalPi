@@ -9,21 +9,17 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(myMessageOutput);
     QApplication a(argc, argv);
     a.setStyleSheet(QString(
-        "QWidget"
-           "{margin: 0px; "
-            "padding: 0px; "
-            "background-color: " MUSICALPI_BACKGROUND_COLOR_NORMAL
-           "}"
-        "QPushButton "
-           "{background-color: gray; "
-            "color: black; "
-            "border: 1px solid black; "
-            "border-radius: 4px; "
-            "height: 35px; "
-            "min-width: 60px; "
-            "max-width: 60px; "
-            "text-align: center;"
-            "} "
+        "QWidget                       {                background-color:" MUSICALPI_BACKGROUND_COLOR_NORMAL "; margin: 0px; padding: 0px; }"
+        "QPushButton                   {color: black;   background-color: gray                                ; font-size: 16px ; border: 1px solid black; border-radius: 4px; height: 35px; padding: 5px; min-width: 60px;  text-align: center;} "
+        "QComboBox                     {color: black;    font-size: 16px ; } "
+        "QListView                     {color: blue;    font-size: 16px ; } "
+        "QLineEdit                     {color: black;    font-size: 20px ; } "
+        "QLabel                        {color: black;    font-size: 16px ; } "
+        "QLabel[ErrorMessage=\"true\"] {color: darkred;                                                         font-size: 20px ; } "
+        "QLabel[Heading=\"true\"]      {color: blue;                                                            font-size: 30px ; } "
+        "QLabel[SubHeading=\"true\"]   {color: green;                                                           font-size: 20px ; } "
+        "QSlider                       {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 white, stop:1 Grey); } "
+
 #ifdef MUSICALPI_DEBUG_WIDGET_BORDERS
         "#settingsUI             {background-color: magenta; } "
         "#generalLayoutWidget    {background-color: red; } "

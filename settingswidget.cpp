@@ -23,7 +23,7 @@
         QLabel* l = new QLabel(containingWidget); \
         l->setText(prompt); \
         l->setAlignment(Qt::AlignCenter);  \
-        l->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: Bold; color: Green;"); \
+        l->setProperty("Heading",true);  \
         innerLayout->addWidget(l); \
     }
 
@@ -32,7 +32,7 @@
         QLabel* l = new QLabel(containingWidget); \
         l->setText(prompt); \
         l->setAlignment(Qt::AlignLeft);  \
-        l->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_SUBHEADING_FONT_SIZE) + "px; font-style: Italic; color: Blue;"); \
+        l->setProperty("SubHeading",true);  \
         innerLayout->addWidget(l); \
     }
 
@@ -104,14 +104,17 @@ void settingsWidget::loadData()
     new settingsItem(this, containingWidget, "debugMidiFileParseDetails","Debug output as file is parsed:");
     new settingsItem(this, containingWidget, "debugMidiMeasureDetails","Debug output for each midi measure parsed:");
     new settingsItem(this, containingWidget, "debugQueueInfoInterval","Debug output rate (ms) for queue info:",10,20000);
+    new settingsItem(this, containingWidget, "debugSettingsAsLoaded","Debug: output settings as read/written:");
 
     errorSubHeading = new QLabel(containingWidget);
-    errorSubHeading->setStyleSheet("font-size:" + QString::number(MUSICALPI_SETTINGS_HEADING_FONT_SIZE) + "px; font-style: Italic; color:darkRed;");
+    errorSubHeading->setProperty("ErrorMessage",true);
     innerLayout->addWidget(errorSubHeading);
 
     saveButton = new QPushButton(containingWidget);
+    saveButton->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
     saveButton->setText("Save");
     innerLayout->addWidget(saveButton);
+
     connect(saveButton,&QPushButton::clicked, this, &settingsWidget::validateAll);
 
     this->show(); // necessary for the calculations below to work
