@@ -409,7 +409,8 @@ void MainWindow::HideEverything()
     libraryTable->hide();
     aboutLabel->hide();
     settingsUI->hide();
-    if(mp != NULL) closeMidiPlayer();  // if it's open
+    DELETE_LOG(pl);  // if Playlists is there just get rid of it.
+    DELETE_LOG(mp);  // same with midi player
     for(int row=0; row < MUSICALPI_MAXROWS; row++)
         for(int column=0; column < MUSICALPI_MAXCOLUMNS; column++)
         {
@@ -501,23 +502,17 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
 void MainWindow::doPlayLists()
 {
     qDebug() << "Entered, bookID = " << libraryTable->bookIDSelected << ", title" << PDF->titleName << " Active list = " << libraryTable->ActiveList;
+    DELETE_LOG(pl); // Don't use the same one if they ask for another, delete it and create a new one
     pl = new playLists(this, libraryTable,PDF->titleName, libraryTable->bookIDSelected);
     pl->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
 }
 
 void MainWindow::doMidiPlayer()
 {
+    DELETE_LOG(mp); // Don't run same one, create a new one if it exists
     mp = new midiPlayerV2(this,PDF->midiFilePath, PDF->titleName);
     mp->show();
     qDebug() << "Position of this = (" << this->x() << "," << this->y() << "), maptoglobal=(" << mapToGlobal(this->pos()).x() << "," << mapToGlobal(this->pos()).y() << ")";
     mp->move(QWidget::mapToGlobal(this->pos()));  // Put this somewhere interesting -- ??
-    connect(mp,&midiPlayerV2::requestToClose,this,[this]{this->closeMidiPlayer();});
-}
-
-void MainWindow::closeMidiPlayer()
-{
-    qDebug() << "Request to close midi";
-    if(mp!=NULL) delete mp;
-    mp = NULL;
 }
 

@@ -38,7 +38,6 @@ aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
     this->setStyleSheet("background-color:" MUSICALPI_POPUP_BACKGROUND_COLOR ";");
 #endif
     this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
-    this->setFont(QFont("Arial",14));
 }
 
 aboutWidget::~aboutWidget()

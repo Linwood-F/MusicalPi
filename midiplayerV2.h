@@ -66,7 +66,6 @@ private:
     void doPlayingLayout();
     bool openAndLoadFile();
     void go();
-    void closeEvent(QCloseEvent*);
     bool parseFileForPlayables();
     void startOrStopUpdateSliderTimer(bool start);
     QString guessSpelling(int note, int keySigNum);
@@ -99,9 +98,6 @@ private slots:
     void updatePlayStatus();      // Updates screen with measure and dis/enables buttons
     void updateVolume();          // Updates slider value labels
     void updateTempo();           // Updates slider value labels
-
-signals:
-    void requestToClose();        // We ask the caller to delete us via this
 };
 
 #endif // MIDIPLAYER2_H

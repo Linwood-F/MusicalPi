@@ -22,8 +22,7 @@
 /* int */     settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, int lower, int higher) : QWidget(parent)
 {
     valueWidget = new QLineEdit(this);
-    valueWidget->setMinimumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
-    valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
+    valueWidget->setProperty("Number",true);
     thisType = int_t;
     settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
@@ -33,23 +32,22 @@
 /* uint */    settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, unsigned int lower, unsigned int higher) : QWidget(parent)
 {
     valueWidget = new QLineEdit(this);
-    valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
-    valueWidget->setMaximumWidth(MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH);
+    valueWidget->setProperty("Number",true);
     thisType = uint_t;
     settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
     connect(new FocusWatcher(valueWidget), &FocusWatcher::focusChanged, this, [this, lower, higher](){validateRange(lower,higher);});
 }
-/* string */  settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, int length) : QWidget(parent)
+/* string */  settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, QString property) : QWidget(parent)
 {
     valueWidget = new QLineEdit(this);
-    valueWidget->setMaximumWidth(length);
-    valueWidget->setMinimumWidth(length);
+    valueWidget->setProperty(property.toStdString().c_str(),true);
+
     thisType = string_t;
     settingsItemShared(sw, key, prompt);
     ((QLineEdit*)valueWidget)->setText(mParent->ourSettingsPtr->getSetting(key).toString());
 }
-/* bool */    settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt) : QWidget(parent)
+/* bool */    settingsItem::settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt) : QWidget(parent)  // junk parameter just to distinguish this from string
 {
     valueWidget = new QCheckBox(this);
     thisType = bool_t;
@@ -68,7 +66,7 @@
     hb->setAlignment(Qt::AlignBottom);
 
     m = new QLabel(this);  // starts blank
-    m->setMinimumWidth(MUSICALPI_SETTINGS_MSG_MIN_WIDTH);
+    m->setProperty("SettingMsg",true);
     p = new QLabel(prompt,this);
     p->setAlignment(Qt::AlignRight | Qt::AlignCenter);
     hb->addWidget(p);

@@ -78,8 +78,7 @@ void renderThread::run()
         document = Poppler::Document::load(ourParent->filepath);
         document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
         assert(document && !document->isLocked());
-        document->setRenderHint(Poppler::Document::Antialiasing);
-        document->setRenderHint(Poppler::Document::IgnorePaperColor);  // ?? Better??
+        document->setRenderHint(Poppler::Document::Antialiasing);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #else
         ourParent->document->setRenderHint(Poppler::Document::Antialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #endif

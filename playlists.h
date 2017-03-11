@@ -45,8 +45,6 @@ private:
 
     void loadDropdown();
 
-signals:
-
 public slots:
     void changeList(int);
     void newListChanged(QString);

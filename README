@@ -24,6 +24,10 @@ separate server, and the code as written does that, but changes are needed only 
 the path constant in piconstants.h (and in the setup do not set up the cifs mount
 for the server of course).
 
+Playlists can be maintained, for example to save music being practiced by individual(s).
+They are just a named group of music. A given song can be in more than one playlist (or
+none). You create a playlist by selecting a song first, and using the playlist button.
+
 Poppler is used for rendering the PDF documents. No changes were made in Poppler.
 
 ALSA is used as a Midi player if your piano is capable of accepting midi input.

@@ -97,7 +97,6 @@ private:
     void sizeLogo();
     void keyPressEvent(QKeyEvent* e);
     void doMidiPlayer();
-    void closeMidiPlayer();
     void doPlayLists();
 
 private slots:

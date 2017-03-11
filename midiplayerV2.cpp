@@ -411,12 +411,6 @@ void midiPlayerV2::go()
     }
 }
 
-void midiPlayerV2::closeEvent(QCloseEvent *event) // We don't close, we ask our parent to
-{
-    event->ignore();
-    emit requestToClose();
-}
-
 QString midiPlayerV2::guessSpelling(int note, int keySigNum)
 {
     // Get a reasonable spelling of the note based on key signature (e.g. give preference to flats if sig includes it, sharps if includes, etc.)

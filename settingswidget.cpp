@@ -71,11 +71,11 @@ void settingsWidget::loadData()
 
     subHeading("Calibre Music Library Integration");
 
-    new settingsItem(this, containingWidget, "calibrePath","Path to calibre library folder:",MUSICALPI_SETTINGS_PATH_WIDTH);
+    new settingsItem(this, containingWidget, "calibrePath","Path to calibre library folder:","Path");
 
-    new settingsItem(this, containingWidget, "calibreDatabase","Database file name (only):", MUSICALPI_SETTINGS_STRING_LEN);
-    new settingsItem(this, containingWidget, "calibreMusicTag","Calibre tag for music items:",MUSICALPI_SETTINGS_STRING_LEN);
-    new settingsItem(this, containingWidget, "calibreListPrefix","Calibre tag for play lists items:",MUSICALPI_SETTINGS_STRING_LEN);
+    new settingsItem(this, containingWidget, "calibreDatabase","Database file name (only):", "SettingStr");
+    new settingsItem(this, containingWidget, "calibreMusicTag","Calibre tag for music items:","SettingStr");
+    new settingsItem(this, containingWidget, "calibreListPrefix","Calibre tag for play lists items:","SettingStr");
 
     subHeading("Embedded Midi Player (only type '.mid' accompany PDF's)");
 

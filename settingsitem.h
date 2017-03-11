@@ -20,7 +20,7 @@ public:
 
     /* int */    explicit settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, int lower, int higher);
     /* uint */   explicit settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, unsigned int lower, unsigned int higher);
-    /* string */ explicit settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, int length);
+    /* string */ explicit settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt, QString property);
     /* bool */   explicit settingsItem(settingsWidget *sw, QWidget *parent, QString key, QString prompt);
 
     ~settingsItem();

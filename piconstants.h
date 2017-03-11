@@ -14,21 +14,12 @@
 
 #define MUSICALPI_THREADS 3
 
-// Normal and playing styles ?? need more styling here I think ??
-// These are not in settings file for need to coordinate the QT and English words.
-
 #define MUSICALPI_BACKGROUND_COLOR_NORMAL "white"
 #define MUSICALPI_BACKGROUND_COLOR_PLAYING "black"
 #define MUSICALPI_POPUP_BACKGROUND_COLOR "rgb(240,240,200)"
-#define MUSICALPI_BUTTON_BACKGROUND "gray"
 
 #define MUSICALPI_SETTINGS_TIPOVERLAY_FONT_SIZE  "36px"
 #define MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE  "16px"
-
-#define MUSICALPI_SETTINGS_NUMBERS_MIN_WIDTH 90
-#define MUSICALPI_SETTINGS_PATH_WIDTH 500
-#define MUSICALPI_SETTINGS_STRING_LEN 200
-#define MUSICALPI_SETTINGS_MSG_MIN_WIDTH 400
 
 // Define this to get colored borders on key widgets (from stylesheet in main)
 //#define MUSICALPI_DEBUG_WIDGET_BORDERS

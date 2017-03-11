@@ -1,3 +1,5 @@
+// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+
 #include "playlists.h"
 #include "musiclibrary.h"
 
@@ -17,6 +19,9 @@
 
 playLists::playLists(MainWindow* parent, musicLibrary* lib, QString thisTitle, int BookId)
 {
+    // Popup to allow adding and removing of a given title (the one displayed) from a playlist
+    // Also allows adding a new playlist
+
     qDebug() << "Entered";
     mParent = parent;
     mMusicLibrary = lib;
@@ -25,8 +30,6 @@ playLists::playLists(MainWindow* parent, musicLibrary* lib, QString thisTitle, i
     setWindowTitle("Playlists for - " + mTitle);
     this->setWindowFlags(Qt::Window|Qt::Dialog);
     this->setObjectName("playLists");
-
-    this->setProperty("Popup",true);  // Can I style all these from this???   All children? ??
 
     this->setStyleSheet("QLabel    {background-color: " MUSICALPI_POPUP_BACKGROUND_COLOR "}"
                         "QFrame    {background-color: " MUSICALPI_POPUP_BACKGROUND_COLOR "}"
