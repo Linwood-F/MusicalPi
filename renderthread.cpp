@@ -71,7 +71,7 @@ void renderThread::run()
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
         float scaleX = mWidth / (thisPageSize.width() / 72.0);
         float scaleY = mHeight / (thisPageSize.height() / 72.0);
-        float desiredScale = std::min(scaleX, scaleY);
+        float desiredScale = std::trunc(std::min(scaleX, scaleY));
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;

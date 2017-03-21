@@ -130,8 +130,9 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     // We do need need to recalculate scale with possibility we are scalling down
     float scale = std::min((float)(this->width())  / (float)(newImageBuffer->width()),
                            (float)(this->height()) / (float)(newImageBuffer->height()));
+    scale = std::min((float)1.0,scale);  // Never scale up
     qDebug() << "Scale of drawImage for new image = " << scale;
-    assert(scale<=1.0);
+//    assert(scale<=1.0);
     int newW = newImageBuffer->width() * scale;
     int newH = newImageBuffer->height() * scale;
     int newX = (this->width() - newW)/2;
