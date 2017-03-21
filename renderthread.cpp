@@ -81,6 +81,8 @@ void renderThread::run()
         document->setRenderHint(Poppler::Document::Antialiasing);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #else
         ourParent->document->setRenderHint(Poppler::Document::Antialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
