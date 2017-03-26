@@ -66,12 +66,13 @@ void renderThread::run()
     forever
     {
         running = true;
-        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);  // Document starts at page 0, we use 1
+        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);
         assert(tmpPage!=NULL);
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
-        float scaleX = mWidth / (thisPageSize.width() / 72.0);
-        float scaleY = mHeight / (thisPageSize.height() / 72.0);
-        float desiredScale = std::trunc(std::min(scaleX, scaleY));
+        double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
+        double scaleY = (double)mHeight / ((double)thisPageSize.height() / (double)72.0);
+        double desiredScale = std::trunc(std::min(scaleX, scaleY));
+//        double desiredScale = std::min(scaleX, scaleY);
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
@@ -80,9 +81,10 @@ void renderThread::run()
         assert(document && !document->isLocked());
         document->setRenderHint(Poppler::Document::Antialiasing);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
 #else
-        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
-        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
-        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);  // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
+        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing);
+        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);

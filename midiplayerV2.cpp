@@ -29,6 +29,12 @@ midiPlayerV2::midiPlayerV2(MainWindow *parent, QString _midiFile, QString _title
     // This routine handles reading the file (well, it calls a library) and UI during play, but
     // depends on an independent thread to actually do the playing and interact with ALSA.
 
+    // Note that the volume and tempo slider, as of this implementation, is active only when stopped.
+    // That's because the effect of these is baked into the midi commands sent to the alsa sequencer,
+    // so there is a possibly large amount of time before which a change purely in the sliders would be heard.
+    // It may be possible to starve the queue, keeping it just barely fed with a measure or so ahead, so
+    // slider changes would be quick, but this has not been tried.
+
     qDebug() << "Entered";
     setWindowTitle("Midi Player - " + _titleName);
     errorEncountered = "";  // Once set this cannot be unset in this routine - close and open again
