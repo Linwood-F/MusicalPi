@@ -72,7 +72,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
     // Default if not specified is 120 beats per minute (here QPM) and 4/4 time, and 480 ticks per beat (per quarter)
     // Set these here in case we get a file with no time/tempo signatures
     runningMeasureNumber = 1;
-    runningDisplayedMeasureNumber = -1;  // Will indicate not seen (yet)
+    runningDisplayedMeasureNumber = 0;  // Will indicate not seen (yet)
     runningTempoAsuSec = 0;
     runningTempoAsQPM = 120;
     runningTimeNumerator = 4;
