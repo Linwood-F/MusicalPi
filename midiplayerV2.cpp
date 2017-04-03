@@ -250,7 +250,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                         // None of these are sent while playing, though the Marker is checked to see if it has measure names
                         if(strncmp(msg,MUSICALPI_MEAURE_MARKER_TAG,strlen(MUSICALPI_MEAURE_MARKER_TAG)) == 0 )
                         {
-                            QString num(msg[strlen(MUSICALPI_MEAURE_MARKER_TAG)]);
+                            QString num(&msg[strlen(MUSICALPI_MEAURE_MARKER_TAG)]);
                             int newMeasure = num.toInt();
                             qDebug() << "Found measure " << msg << " pulled out " << num << " and converted to " << newMeasure;
                             runningDisplayedMeasureNumber = newMeasure;
