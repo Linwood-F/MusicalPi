@@ -72,6 +72,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
     // Default if not specified is 120 beats per minute (here QPM) and 4/4 time, and 480 ticks per beat (per quarter)
     // Set these here in case we get a file with no time/tempo signatures
     runningMeasureNumber = 1;
+    lastDisplayedMeasure = 0;
     runningDisplayedMeasureNumber = 0;  // Will indicate not seen (yet)
     runningTempoAsuSec = 0;
     runningTempoAsQPM = 120;
@@ -429,7 +430,7 @@ void midiPlayerV2::go()
     }
     else
     {
-        qDebug() << "Go: Playing, so changing to stopped, stopping queue ";
+        qDebug() << "Go: Playi7time2muchng, so changing to stopped, stopping queue ";
         playThread->stop();
         measureGo->setText("Play");
     }
