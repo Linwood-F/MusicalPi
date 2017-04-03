@@ -37,8 +37,11 @@
 #define MUSICALPI_ALSAQUEUECHUNKSIZE 50
 #define MUSICALPI_ALSAPACINGINTERVAL 10
 #define MUSICALPI_MIDIPLAYER_STATUSUPDATERATE 500
+#define MUSICALPI_MEAURE_MARKER_TAG "Measure "
 
 //#define MUSICALPI_OPEN_DOC_IN_THREAD
+// The following is a workaround which appears to keep some notes from being off by a pixel or so leaving them ambiguously on/between staff lines
+#define MUSICALPI_FORCE_SCALE_TO_INTEGER
 
 // Utility macro for managing pointers and logging
 

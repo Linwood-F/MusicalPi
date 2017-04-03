@@ -87,6 +87,7 @@ void midiplayerV2Thread::gooseThread() // Encourage it to run a loop if it's wai
 
 bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent thread but ONLY before play thread started
 {
+
 #define checkALSAreturn(ret,Msg) \
     if( (ret) < 0 )   \
     { \
@@ -94,6 +95,7 @@ bool midiplayerV2Thread::openSequencerInitialize()  // Can be called by parent t
        ourParent->errorEncountered = Msg + QString(", error=") + QString(snd_strerror(errno)); \
        return false; \
     }
+
     // See if we can open the sequencer - errors return false and pass out message
     checkALSAreturn(snd_seq_open(&handle,"hw",SND_SEQ_OPEN_OUTPUT,0),"Failed to open ALSO sequencer")
     checkALSAreturn(queue = snd_seq_alloc_queue(handle),"Failed to create ALSA queue")

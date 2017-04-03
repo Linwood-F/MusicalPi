@@ -197,6 +197,7 @@ void musicLibrary::loadBooks()
 void musicLibrary::showEvent(QShowEvent *e)
 {
     qDebug() << "Entered";
+    (void)e;
     m_db->open();
     checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
     loadPlayLists();
@@ -208,6 +209,7 @@ void musicLibrary::showEvent(QShowEvent *e)
 void musicLibrary::hideEvent(QHideEvent *e)
 {
     qDebug() << "Entered";
+    (void)e;
     // We can't delete this: DELETE_LOG(libTable);
     // as for some reason the slignal/slot segfaults, so just clear it out
     libTable->setRowCount(0);  // THis just saves some memory when we're not using it

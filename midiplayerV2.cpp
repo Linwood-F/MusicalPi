@@ -230,7 +230,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                 case 0x03: // Sequence/Track name
                 case 0x04: // Instrument name
                 case 0x05: // Lyric
-                case 0x06: // Marker
+                case 0x06: // Marker  == we use this for measures, but let it fall through to get the text
                 case 0x07: // Cue Point
                     {
                         int len = ptr->getP2();
@@ -238,8 +238,12 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                         memcpy(msg, &ptr->data()[3],len);
                         msg[len]=0;
                         midiDataText = textNames[max(0,min(textNames_count - 1,ptr->getMetaType()))] + " = '" + QString(msg) + "'";
+                        // None of these are sent while playing, though the Marker is checked to see if it has measure names
+                        if(strncmp(msg,MUSICALPI_MEAURE_MARKER_TAG,sizeof(MUSICALPI_MEAURE_MARKER_TAG)) == 0 )
+                        {
+                            qDebug() << "Found measure " << msg;
+                        }
                         free(msg);
-                        // None of these are sent while playing
                     }
                     break;
                 default:

@@ -71,8 +71,11 @@ void renderThread::run()
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
         double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
         double scaleY = (double)mHeight / ((double)thisPageSize.height() / (double)72.0);
+#ifdef MUSICALPI_FORCE_SCALE_TO_INTEGER
         double desiredScale = std::trunc(std::min(scaleX, scaleY));
-//        double desiredScale = std::min(scaleX, scaleY);
+#else
+        double desiredScale = std::min(scaleX, scaleY);
+#endif
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
@@ -84,7 +87,8 @@ void renderThread::run()
         // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
         ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
         ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing);
-        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);
+//        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);
+        ourParent->document->setRenderHint(Poppler::Document::ThinLineShape);
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
