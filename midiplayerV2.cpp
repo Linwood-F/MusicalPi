@@ -281,6 +281,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                  << ", ticks per measure = " << runningTicksPerMeasure
                  << ", uSec per tick = " << runninguSecPerTick;
     lastMeasure = runningMeasureNumber;
+    lastDisplayedMeasure = runningDisplayedMeasureNumber;
     return true; // This will set canPlay
 }
 
@@ -368,7 +369,7 @@ void midiPlayerV2::updatePlayStatus()
     // Depend on playing thread to keep current* variables updated
     if(canPlay)
     {
-        measureMax->setText(QString("of ") + QString::number(lastMeasure));
+        measureMax->setText(QString("of ") + QString::number(lastDisplayedMeasure < 1 ? lastMeasure : lastDisplayedMeasure));
         if (playThread->currentIsRunning)  // make go => stop
         {
             errorLabel->setText("Song is playing (stop to adjust sliders)");

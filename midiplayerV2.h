@@ -28,6 +28,7 @@ public:
     ~midiPlayerV2();
 
     unsigned int lastMeasure;  // Length of song, determined after parse, used to tell when we finish
+    unsigned int lastDisplayedMeasure;
     typedef struct
     {
         snd_seq_event_t snd_seq_event;
