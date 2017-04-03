@@ -254,6 +254,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                             int newMeasure = num.toInt();
                             qDebug() << "Found measure " << msg << " pulled out " << num << " and converted to " << newMeasure;
                             runningDisplayedMeasureNumber = newMeasure;
+                            lastDisplayedMeasure = std::max(lastDisplayedMeasure, runningDisplayedMeasureNumber);
                         }
                         free(msg);
                     }
@@ -281,7 +282,6 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                  << ", ticks per measure = " << runningTicksPerMeasure
                  << ", uSec per tick = " << runninguSecPerTick;
     lastMeasure = runningMeasureNumber;
-    lastDisplayedMeasure = std::max(lastDisplayedMeasure, runningDisplayedMeasureNumber);
     return true; // This will set canPlay
 }
 
