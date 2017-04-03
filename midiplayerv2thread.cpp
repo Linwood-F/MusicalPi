@@ -165,7 +165,8 @@ void midiplayerV2Thread::getQueueInfo() //  CALL ONLY FROM THREAD!!!!
     for(std::map<int,midiPlayerV2::playableEvent_t>::iterator thisEvent = ourParent->events.begin(); thisEvent != ourParent->events.end(); thisEvent++)
         if(currentQueueTick + startAtTick <= thisEvent->second.snd_seq_event.time.tick)
         {
-            currentMeasure = thisEvent->second.measureNum;
+            if(thisEvent->second.displayedMeasureNum >= 1) currentMeasure = thisEvent->second.displayedMeasureNum;
+            else currentMeasure = thisEvent->second.measureNum;
             break;
         }
 }

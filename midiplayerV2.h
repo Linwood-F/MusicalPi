@@ -32,6 +32,7 @@ public:
     {
         snd_seq_event_t snd_seq_event;
         int measureNum;
+        int displayedMeasureNum;
         bool containsTempo;   // implies we may need to scale velocity before sending
         bool containsNoteOn;  // implies we may need to scale tempbefore sending
     } playableEvent_t;
@@ -85,6 +86,7 @@ private:
 
     // Used in the parse only - not used in play - keeps up with timing structure
     unsigned int runningMeasureNumber;
+    unsigned int runningDisplayedMeasureNumber;
     unsigned int runningTempoAsuSec;
     unsigned int runningTempoAsQPM;
     unsigned int runningTimeNumerator;
