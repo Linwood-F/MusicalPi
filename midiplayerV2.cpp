@@ -281,7 +281,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
                  << ", ticks per measure = " << runningTicksPerMeasure
                  << ", uSec per tick = " << runninguSecPerTick;
     lastMeasure = runningMeasureNumber;
-    lastDisplayedMeasure = runningDisplayedMeasureNumber;
+    lastDisplayedMeasure = std::max(lastDisplayedMeasure, runningDisplayedMeasureNumber);
     return true; // This will set canPlay
 }
 
