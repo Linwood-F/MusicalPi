@@ -28,7 +28,7 @@ midiplayerV2Thread::midiplayerV2Thread(midiPlayerV2 *parent, MainWindow* mp): QT
     handle = 0;
     lastTickProcessed = -1;
     currentIsRunning = false;
-
+    debugMidiSendDetails = mParent->ourSettingsPtr->getSetting("debugMidiSendDetails").toBool();
     // This timer is used to wake the worker up to see if any new instructions or if the queue can accept more data
     // For example, when the queue is too full, the worker puts itself to sleep (indefinitely) and this is a wakeup to check if more room is available
     workTimer = new QTimer();
@@ -271,7 +271,7 @@ void midiplayerV2Thread::run()
                 }
                 if(playStartEvent->second.containsNoteOn)  ep.data.note.velocity = ep.data.note.velocity * m_volumeScale / 100;
                 ep.time.tick = ep.time.tick - startAtTick; // offset for where we started queue (queue is always 0 start)
-                if(mParent->ourSettingsPtr->getSetting("debugMidiSendDetails").toBool())
+                if(debugMidiSendDetails)
                     qDebug() << "Sending tick (w/offset)=" << ep.time.tick + startAtTick << ", source client=" << ep.source.client << ", dest client=" << ep.dest.client << ", type=" << ep.type;
                 assert(snd_seq_event_output(handle,&ep)>=0);
 
@@ -319,7 +319,7 @@ void midiplayerV2Thread::sendAllOff() // Used to stop any playing notes, pedals,
         ep.source = sourceAddress;
         ep.dest = destAddress;
         ep.type = SND_SEQ_EVENT_CONTROLLER;
-        ep.data.control.channel = 0;
+        ep.data.control.channel = channel;
         ep.data.control.param = MIDI_CTL_ALL_SOUNDS_OFF;
         ep.data.control.value = 0;
         assert(snd_seq_event_output(handle,&ep)>=0);
@@ -334,7 +334,7 @@ void midiplayerV2Thread::drainQueue()  //  Call from main or worker thread but s
     while(ret>0);
 }
 
-void midiplayerV2Thread::queueInfoDebugOutput() // Runs in arent thread but accesses only fixed location items so should be thread safe if not consistent
+void midiplayerV2Thread::queueInfoDebugOutput() // Runs in parent thread but accesses only fixed location items so should be thread safe if not consistent
 {
     if(handle)
         qDebug() << "Measure=" << currentMeasure << ", events="

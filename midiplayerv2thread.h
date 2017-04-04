@@ -67,6 +67,7 @@ private:
     int m_startAtMeasure;
     int m_volumeScale;
     int m_tempoScale;
+    bool debugMidiSendDetails;
 };
 
 #endif // MIDIPLAYERV2THREAD_H

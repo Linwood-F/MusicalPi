@@ -116,7 +116,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         if(ptr->isAftertouch()) // i.e. polyphonic key pressure
         {
             midiDataText = "Aftertouch channel " + QString::number(ptr->getChannel()) + " note " + QString::number(ptr->getP1()) + " to value " + QString::number(ptr->getP2());
-            snd_seq_ev_set_keypress(&ep, /* ptr->getChannel() */ 1, ptr->getP1(), ptr->getP2());
+            snd_seq_ev_set_keypress(&ep, /* ptr->getChannel() */ 0, ptr->getP1(), ptr->getP2());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
             events[thisEvent].containsTempo = false;
@@ -126,7 +126,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isPressure()) // channel aftertouch
         {
             midiDataText = "Pressure channel "   + QString::number(ptr->getChannel()) + " to value " + QString::number(ptr->getP1());
-            snd_seq_ev_set_chanpress(&ep, /* ptr->getChannel() */ 1, ptr->getP1());
+            snd_seq_ev_set_chanpress(&ep, /* ptr->getChannel() */ 0, ptr->getP1());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
             events[thisEvent].containsTempo = false;
@@ -152,7 +152,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             midiDataText = ctrlr + " on channel " + QString::number(ptr->getChannel()) + " to value " + QString::number(ptr->getP2());
             if(sendFlag)  // Send these (mostly pedals)
             {
-                snd_seq_ev_set_controller(&ep, /* ptr->getChannel() */ 1, ptr->getP1(), ptr->getP2());
+                snd_seq_ev_set_controller(&ep, /* ptr->getChannel() */ 0, ptr->getP1(), ptr->getP2());
                 events[thisEvent].measureNum = runningMeasureNumber;
                 events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
                 events[thisEvent].containsTempo = false;
@@ -164,7 +164,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isNoteOn())
         {
             midiDataText = "NoteOn " + guessSpelling(ptr->getKeyNumber(),keySig) + ", duration=" +  QString::number(ptr->getTickDuration());
-            snd_seq_ev_set_noteon(&ep, /* ptr->getChannel() */ 1, ptr->getKeyNumber(), ptr->getVelocity());
+            snd_seq_ev_set_noteon(&ep, /* ptr->getChannel() */ 0, ptr->getKeyNumber(), ptr->getVelocity());
             ep.data.note.duration = 0;  // we aren't linking notes so there's no calculated duration
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
@@ -175,7 +175,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isNoteOff())  // Note the underlying parse will set this with a noteon, velocity=0
         {
             midiDataText = "NoteOff " + guessSpelling(ptr->getKeyNumber(),keySig);
-            snd_seq_ev_set_noteoff(&ep, /* ptr->getChannel() */ 1, ptr->getKeyNumber(), 0);
+            snd_seq_ev_set_noteoff(&ep, /* ptr->getChannel() */ 0, ptr->getKeyNumber(), 0);
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
             events[thisEvent].containsTempo = false;
@@ -185,7 +185,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
         else if(ptr->isPatchChange())
         {
             midiDataText = "Patch Change channel " + QString::number(ptr->getChannel()) + " to " + QString::number(ptr->getP1());
-            snd_seq_ev_set_pgmchange(&ep, /* ptr->getChannel() */ 1, ptr->getP1());
+            snd_seq_ev_set_pgmchange(&ep, /* ptr->getChannel() */ 0, ptr->getP1());
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
             events[thisEvent].containsTempo = false;
@@ -197,7 +197,7 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
             int bend = ptr->getP2()<<7;
             bend = (bend << 7) | ptr->getP1();
             midiDataText = "Pitchbend adjust " + QString::number(bend);
-            snd_seq_ev_set_pitchbend(&ep, /* ptr->getChannel() */ 1, bend);
+            snd_seq_ev_set_pitchbend(&ep, /* ptr->getChannel() */ 0, bend);
             events[thisEvent].measureNum = runningMeasureNumber;
             events[thisEvent].displayedMeasureNum = runningDisplayedMeasureNumber;
             events[thisEvent].containsTempo = false;
