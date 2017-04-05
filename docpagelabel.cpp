@@ -143,6 +143,7 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     int newY = (this->height() - newH)/2;
     QPainter pNew(&newImage);
     pNew.setRenderHint(QPainter::SmoothPixmapTransform);
+    pNew.setRenderHint(QPainter::HighQualityAntialiasing);
     pNew.drawImage( QRectF (newX, newY, newW, newH), *newImageBuffer);  // This implicitly draws the whole from image, scaling if needed
 
     // While we have all the new image info, go ahead and build the highlight overlay(s)

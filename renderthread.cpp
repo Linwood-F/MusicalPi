@@ -66,21 +66,27 @@ void renderThread::run()
     forever
     {
         running = true;
-        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);
-        assert(tmpPage!=NULL);
-        QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
-        double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
-        double scaleY = (double)mHeight / ((double)thisPageSize.height() / (double)72.0);
-        double desiredScale = std::trunc(std::min(scaleX, scaleY));  // For notational scores integers seem to give better alignment, sometimes.
-        desiredScale *= MUSICALPI_TARGET_SCALE;
-
-        qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
         document = Poppler::Document::load(ourParent->filepath);
         document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
         assert(document && !document->isLocked());
+        Poppler::Page* tmpPage = document->page(mPage - 1);
+#else
+        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);
+#endif
+        assert(tmpPage!=NULL);
+        QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
+        double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
+        double scaleY = (double)mHeight / ((double)thisPageSize.height() / (double)72.0);
+        double desiredScale = std::trunc(std::min(scaleX, scaleY));  // For notational scores integers seem to give better alignment, sometimes.
+
+        qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
+#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         document->setRenderHint(Poppler::Document::Antialiasing);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        document->setRenderHint(Poppler::Document::TextAntialiasing);
+//        document->setRenderHint(Poppler::Document::ThinLineSolid);
+        document->setRenderHint(Poppler::Document::ThinLineShape);
 #else
         // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
         ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
