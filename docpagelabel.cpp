@@ -131,16 +131,10 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     float scale = std::min((float)(this->width())  / (float)(newImageBuffer->width()),
                            (float)(this->height()) / (float)(newImageBuffer->height()));
 
-    // In the following if we are forcing the scale (in the render thread) to an integer, we may see
-    // a need to scale up, so force it to one if we did that; otherwise it indicates a bug if
-    // we see a need to scale up.  Not scaling up (when it thinks we need to) causes the image to be
-    // a pixel or two too small, but isn't very noticable due to the border colors.
+    // If we aim for a scale of 1, generally scale at this point will be 1 or very slightly higher; but never
+    // scale up.  If we were doubling scale for precision on notational scores, this will come out at 1/2 or so, etc.
 
-#ifdef MUSICALPI_FORCE_SCALE_TO_INTEGER
     scale = std::min((float)1.0,scale);  // Never scale up
-#else
-    assert(scale<=1.0);
-#endif
 
     qDebug() << "Scale of drawImage for new image (should be <= 1, ideally == 1 in play mode for quality)  = " << scale;
     int newW = newImageBuffer->width() * scale;

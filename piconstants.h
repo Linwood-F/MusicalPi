@@ -21,6 +21,12 @@
 #define MUSICALPI_SETTINGS_TIPOVERLAY_FONT_SIZE  "36px"
 #define MUSICALPI_SETTINGS_PAGENUMBER_FONT_SIZE  "16px"
 
+// Normally 1, but if you have notational scores (with lots of little elements) that
+// are not playing properly, try 2.  This doubles the image from poppler then
+// downscales to display.
+
+#define MUSICALPI_TARGET_SCALE 2
+
 // Define this to get colored borders on key widgets (from stylesheet in main)
 //#define MUSICALPI_DEBUG_WIDGET_BORDERS
 
@@ -40,8 +46,6 @@
 #define MUSICALPI_MEAURE_MARKER_TAG "Measure "
 
 //#define MUSICALPI_OPEN_DOC_IN_THREAD
-// The following is a workaround which appears to keep some notes from being off by a pixel or so leaving them ambiguously on/between staff lines
-#define MUSICALPI_FORCE_SCALE_TO_INTEGER
 
 // Utility macro for managing pointers and logging
 

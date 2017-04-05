@@ -71,11 +71,9 @@ void renderThread::run()
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
         double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
         double scaleY = (double)mHeight / ((double)thisPageSize.height() / (double)72.0);
-#ifdef MUSICALPI_FORCE_SCALE_TO_INTEGER
-        double desiredScale = std::trunc(std::min(scaleX, scaleY));
-#else
-        double desiredScale = std::min(scaleX, scaleY);
-#endif
+        double desiredScale = std::trunc(std::min(scaleX, scaleY));  // For notational scores integers seem to give better alignment, sometimes.
+        desiredScale *= MUSICALPI_TARGET_SCALE;
+
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
