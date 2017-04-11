@@ -106,6 +106,9 @@ void renderThread::run()
         }
         // critical section:  This interlock is with the parent thread for returning the image; the parent records we are not running afterwards
         ourParent->lockOrUnlockMutex(true);
+#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
+        DELETE_LOG(document);  // also closes this copy
+#endif
         *targetImagePtr = theImage;
         emit renderedImage( mWhich, mPage, mWidth, mHeight);
         running = false;    // Mark we were done - note we do this inside parent's critical section to prevent race conditions

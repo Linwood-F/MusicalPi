@@ -60,6 +60,9 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
+#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
+    DELETE_LOG(document); // If we are letting the thread render we don't need this any more, close it
+#endif
 
     assert(numPages <= MUSICALPI_MAXPAGES);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
@@ -103,7 +106,7 @@ PDFDocument::~PDFDocument()
         }
         lockOrUnlockMutex(false);
     }
-    if(document) DELETE_LOG(document);
+    DELETE_LOG(document);
 }
 
 // Slot
