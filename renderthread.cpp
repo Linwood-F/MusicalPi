@@ -83,16 +83,19 @@ void renderThread::run()
 
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
 #ifdef MUSICALPI_OPEN_DOC_IN_THREAD
-        document->setRenderHint(Poppler::Document::Antialiasing);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
-        document->setRenderHint(Poppler::Document::TextAntialiasing);
-//        document->setRenderHint(Poppler::Document::ThinLineSolid);
-        document->setRenderHint(Poppler::Document::ThinLineShape);
+        document->setRenderHint(Poppler::Document::Antialiasing, true);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
+        document->setRenderHint(Poppler::Document::TextAntialiasing, true);
+        document->setRenderHint(Poppler::Document::TextHinting, false);
+        document->setRenderHint(Poppler::Document::OverprintPreview, false);
+        document->setRenderHint(Poppler::Document::ThinLineSolid,true);
+
 #else
         // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
-        ourParent->document->setRenderHint(Poppler::Document::Antialiasing);
-        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing);
-//        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid);
-        ourParent->document->setRenderHint(Poppler::Document::ThinLineShape);
+        ourParent->document->setRenderHint(Poppler::Document::Antialiasing,true);
+        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing,true);
+        ourParent->document->setRenderHint(Poppler::Document::TextHinting, false);
+        ourParent->document->setRenderHint(Poppler::Document::OverprintPreview, false);
+        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid,true);
 #endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);

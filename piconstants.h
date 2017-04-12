@@ -26,8 +26,8 @@
 
 // SplashBackend seems to render better quality and only slightly slower.
 
-#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
-//#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
+//#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
+#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
 
 // Midi Player queue and debug control information
 
