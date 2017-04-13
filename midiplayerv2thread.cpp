@@ -224,7 +224,8 @@ void midiplayerV2Thread::run()
             startAtTick = 0;  // will adjust this when we've found the first measure, and use it as a skew
             for(std::map<int,midiPlayerV2::playableEvent_t>::iterator thisEvent = ourParent->events.begin(); thisEvent != ourParent->events.end(); thisEvent++ )
             {
-                if(thisEvent->second.measureNum >= m_startAtMeasure) // If we are at start point, send any accumulated and leave queue running.
+                if( (thisEvent->second.displayedMeasureNum >= 1 && thisEvent->second.displayedMeasureNum >= m_startAtMeasure) ||
+                    (thisEvent->second.displayedMeasureNum < 1 && thisEvent->second.measureNum >= m_startAtMeasure) ) // If we are at start point, send any accumulated and leave queue running.
                 {
                     playStartEvent = thisEvent;
                     qDebug() << "Starting queue since it is stopped and we are playing";
