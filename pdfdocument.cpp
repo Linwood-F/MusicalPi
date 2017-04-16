@@ -183,14 +183,18 @@ void PDFDocument::checkCaching()
                         totalPagesRequested++;
                         pageThreadPageLoading[availableThread]=i+1;
                         pageThreadActive[availableThread]=true;
+                        //qDebug() << "Trying to render page " << i+1 << "on thread " << availableThread;
                         pageThreads[availableThread]->render(&pageImages[i],i+1,imageWidth,imageHeight);
                     }
                     else // we don't have available threads (and because !found we looked the whole way)
                     {
+                        //qDebug() << "Need to load page " << i + 1 << " but no threads (or first set).";
                         break;  // this will break the scan of pages (i)
                     }
                 } // we found it so just keep looking for another in outer loop
+                // else qDebug() << "Checking page " << i+1 << "showing it is loading now";
             }
+            //else qDebug() << "Checking page " << i+1 << " showing available.";
         }
     }
     lockOrUnlockMutex(false);

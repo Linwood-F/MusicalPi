@@ -296,11 +296,15 @@ void MainWindow::checkQueueVsCache()
         }
         else if(loadPagePendingNumber[i] && PDF->pageImagesAvailable[loadPagePendingNumber[i]-1])  // If it's needed and present
         {
-            qDebug() << "Found we should display page " << loadPagePendingNumber[i] << " for position " << i;
+            // qDebug() << "Found we should display page " << loadPagePendingNumber[i] << " for position " << i;
             visiblePages[i]->placeImage(loadPagePendingTransition[i], PDF->pageImages[loadPagePendingNumber[i]-1], playing ? MUSICALPI_BACKGROUND_COLOR_PLAYING : MUSICALPI_BACKGROUND_COLOR_NORMAL);
             loadPagePendingNumber[i]=0;
         }
-        else if(loadPagePendingNumber[i]) skipped++;
+        else if(loadPagePendingNumber[i])
+        {
+            // qDebug() << "Found we need a page but it isn't available, skipped for now page " << loadPagePendingNumber[i] << " for position " << i;
+            skipped++;
+        }
         // else we just don't need it (yet)
     }
     PDF->lockOrUnlockMutex(false);

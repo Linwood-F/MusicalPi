@@ -27,6 +27,7 @@ renderThread::renderThread(PDFDocument *parent, int which, MainWindow* mp ): QTh
     mWidth = 0;       // the target width we were asked to scale to (don't do anything with it zero)
     mHeight = 0;      // the target height we were asked to scale to (don't do anything with it zero)
     pageHighlightHeight = mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt();
+    mutex.unlock();   // make sure we are in an unlocked state
 }
 
 renderThread::~renderThread()
@@ -46,6 +47,7 @@ void renderThread::render(QImage** image, int thePage, int maxWidth, int maxHeig
 
     // Note that we never do another render call until any running one is done, so in
     // theory here running has to be false, check it with the assert, since if it fails we just screwed up the logic.
+    mutex.lock(); // just in case
     assert(!running);
 
     // Our local variables (because of the above) ar valid in thread and parent, since we synchronize with the parent's
@@ -58,6 +60,7 @@ void renderThread::render(QImage** image, int thePage, int maxWidth, int maxHeig
 
     if(this->isRunning()) condition.wakeOne(); // thread is sleeping (since !running) so wake it up.
     else start(QThread::LowPriority);          // first time through start thread
+    mutex.unlock();
     return;
 }
 
@@ -114,11 +117,11 @@ void renderThread::run()
 #endif
         *targetImagePtr = theImage;
         emit renderedImage( mWhich, mPage, mWidth, mHeight);
-        running = false;    // Mark we were done - note we do this inside parent's critical section to prevent race conditions
+        mutex.lock();
+        running = false;    // Mark we were done - note we do this inside parent's critical section AND this thread's to prevent race conditions
         ourParent->lockOrUnlockMutex(false);
         // End of critical section
         if(abort) { qDebug() << "Returning with abort"; return; }  // will hit this one first if requested while running but
-        mutex.lock();
         condition.wait(&mutex);
         mutex.unlock();
         if(abort) { qDebug() << "Returning with abort"; return; };   // will hit this one if requested while not running
