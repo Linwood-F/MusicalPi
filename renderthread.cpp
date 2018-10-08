@@ -9,6 +9,8 @@
 #include "oursettings.h"
 
 #include <cassert>
+#include <cmath>
+
 #include "piconstants.h"
 #include "poppler/qt5/poppler-qt5.h"
 

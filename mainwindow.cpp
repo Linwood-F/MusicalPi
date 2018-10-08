@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QMouseEvent>
 #include <QVBoxLayout>
+#include <cmath>
 
 #include "mainwindow.h"
 #include "tipoverlay.h"
