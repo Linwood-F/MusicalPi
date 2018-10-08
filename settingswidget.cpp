@@ -5,6 +5,8 @@
 #include <QStyleOption>
 #include <QPainter>
 #include <QPushButton>
+#include <QtDBus/QDBusConnection>
+#include <QtDBus/QDBusMessage>
 
 #include "settingswidget.h"
 #include "mainwindow.h"
@@ -127,6 +129,12 @@ void settingsWidget::loadData()
     // Then go through and set them all to the same so the columns line up
     for(rowMap_t::iterator it = values.begin(); it != values.end(); it++)
         it->second->setPromptWidth(maxWidth * 1.05);  // The extra % is to give a bit of room for odd fonts, etc.
+    // Mate flashes onboard if you don't do this, it needs to be explicitly not implicitly called
+    if(mParent->ourSettingsPtr->getSetting("forceOnboardKeyboard").toBool())
+    {
+        QDBusMessage show = QDBusMessage::createMethodCall("org.onboard.Onboard","/org/onboard/Onboard/Keyboard","org.onboard.Onboard.Keyboard","Show");
+        QDBusConnection::sessionBus().send(show);
+    }
 }
 
 bool settingsWidget::validateAll()

@@ -80,7 +80,6 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     searchBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     searchBox->setAlignment(Qt::AlignLeft);
     searchLayout->setAlignment(Qt::AlignLeft);
-    searchBox->installEventFilter(search);  // So we can catch keystrokes and do as-you-type filter
 
     libTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     libTable->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -204,6 +203,7 @@ void musicLibrary::showEvent(QShowEvent *e)
     loadBooks();
     m_db->close();
     connect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));
+    searchBox->installEventFilter(this);  // So we can catch keystrokes and do as-you-type filter
 }
 
 void musicLibrary::hideEvent(QHideEvent *e)
@@ -214,6 +214,7 @@ void musicLibrary::hideEvent(QHideEvent *e)
     // as for some reason the slignal/slot segfaults, so just clear it out
     libTable->setRowCount(0);  // THis just saves some memory when we're not using it
     disconnect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));     // Need this so we don't signal when we reload it or use it from other routines
+    searchBox->removeEventFilter(this);  // So we can catch keystrokes and do as-you-type filter
 }
 
 void musicLibrary::changeList(int newListIndex)
