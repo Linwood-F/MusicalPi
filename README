@@ -3,7 +3,7 @@ MusicalPi - Sheet music display
 This project is a Calibre-integrated, music display designed for a touch screen
 on a Raspberry Pi (only tested on 3B version).
 
-It is written in QT (version 5.8 as of this note), and dynamically linked (i.e.
+It is written in QT (version 5.9.5 as of this note), and dynamically linked (i.e.
 you must have a working QT install as described; this shows it being built from
 source). As far as I know it will work on the distro version as well.
 

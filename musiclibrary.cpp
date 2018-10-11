@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2018 by LE Ferguson, LLC, licensed under Apache 2.0
 
 #include <QPainter>
 #include <QSqlRecord>

@@ -54,7 +54,8 @@ DISTFILES += \
     MusicalPi.gif \
     MusicalPi.psd \
     LICENSE \
-    README
+    README \
+    rhythmbox-icon.png
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5
