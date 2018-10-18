@@ -38,6 +38,9 @@ MainWindow::MainWindow() : QMainWindow()
     setLibraryMode();
 
     showFullScreen(); // Since this fires resize it needs to be after things are initialized
+    // The above doesn't work frequently (notably wayland in 18.10), so force the window; the above still strips the decorations so is still needed
+    setFixedSize(ourSettingsPtr->getSetting("fullScreenWidth").toInt(),ourSettingsPtr->getSetting("fullScreenHeight").toInt());
+
 }
 
 MainWindow::~MainWindow()

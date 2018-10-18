@@ -50,6 +50,12 @@ void ourSettings::getSaveValues()
     setPtr->setValue("pageHighlightHeight",setPtr->value("pageHighlightHeight",10).toInt());
     setPtr->setValue("pageTurnTipOverlay",setPtr->value("pageTurnTipOverlay",true).toBool());
 
+    // Because SetFullPage will not always work, we hard code the size of the resulting window (well, soft-hard-code in settings)
+    // Normally set this to the full resolution of the window, though it could be smaller
+
+    setPtr->setValue("fullPageWidth",setPtr->value("fullPageWidth",1920).toInt());
+    setPtr->setValue("fullPageHeight",setPtr->value("fullPageHeight",1080).toInt());
+
     // ALSA Interface and player tuning
     setPtr->setValue("ALSAMidiQuashResetAll",setPtr->value("ALSAMidiQuashResetAll",true).toBool()); // Should we above sending ResetAll's (some devices may not handle, or may miss the first notes)
     setPtr->setValue("midiInitialVelocityScale",setPtr->value("midiInitialVelocityScale",20).toUInt()); // How loud do we play by default (% of full)
