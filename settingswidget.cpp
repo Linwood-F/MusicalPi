@@ -99,8 +99,8 @@ void settingsWidget::loadData()
     new settingsItem(this, containingWidget, "pageTurnDelay","Page turn, time to overwrite current page (ms):",0,5000);
     new settingsItem(this, containingWidget, "pageHighlightDelay","Page turn, time new page highlights:",0,5000);
     new settingsItem(this, containingWidget, "pageHighlightHeight","Page turn, highlight border width:",0,5000);
-    new settingsItem(this, containingWidget, "fullPageWidth","Screen overall width:",0,5000);
-    new settingsItem(this, containingWidget, "fullPageHeight","Screen overall height:",0,5000);
+    new settingsItem(this, containingWidget, "fullPageWidth","Screen overall width (rerun required):",0,5000);
+    new settingsItem(this, containingWidget, "fullPageHeight","Screen overall height (rerun required):",0,5000);
 
     subHeading("Debug output controls");
 

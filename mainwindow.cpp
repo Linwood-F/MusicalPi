@@ -39,8 +39,13 @@ MainWindow::MainWindow() : QMainWindow()
 
     showFullScreen(); // Since this fires resize it needs to be after things are initialized
     // The above doesn't work frequently (notably wayland in 18.10), so force the window; the above still strips the decorations so is still needed
-    setFixedSize(ourSettingsPtr->getSetting("fullScreenWidth").toInt(),ourSettingsPtr->getSetting("fullScreenHeight").toInt());
-
+    // It's also worth noting that sometimes a smaller value will get re-done during the resize event to the full screen (for reasons unclear) so
+    // Often it doesn't matter what the values of x/y are.  But when it does, set to the screen size.
+    int x,y;
+    x = ourSettingsPtr->getSetting("fullPageWidth").toInt();
+    y = ourSettingsPtr->getSetting("fullPageHeight").toInt();
+    qDebug() << "Setting full screen by using x=" << x << " x " << y;
+    setFixedSize(x,y);
 }
 
 MainWindow::~MainWindow()
