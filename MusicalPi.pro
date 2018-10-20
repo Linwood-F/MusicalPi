@@ -55,7 +55,10 @@ DISTFILES += \
     MusicalPi.psd \
     LICENSE \
     README \
-    rhythmbox.png
+    rhythmbox.png \
+    brcmfmac43455-sdio.txt \
+    onReboot \
+    brcmfmac43455-sdio.clm_blob
 
 unix|win32: LIBS += -lQt5DBus
 unix|win32: LIBS += -lpoppler-qt5

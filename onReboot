@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# This routine can be run on reboot to "encourage" connection to the network before
+# reboot completes. The Z83 (at least mine) frequently will not immediately connect, and
+# sometimes never connects.  I find a physical power off will generally fix this, while
+# a reboot, even a reboot power cycle (with the device still plugged in) will not function,
+# perhaps due to power still present for some powered-off feater (e.g. WOL?).
+#
+# Anyway, if all else fails, unplug for 10 seconds or so and power back up
+#
+LOG="/home/INSTALLACCOUNT/onReboot.log"
+MAX=10
+COUNTER=1
+DEVICE="wlan0"
+while [ $COUNTER -lt $MAX ]; do
+    echo "Beginning loop $COUNTER of $MAX"
+    let COUNTER=COUNTER+1
+    STATUS="$(ip link show $DEVICE)"
+    echo "    Current status return=$STATUS"
+    if [[ $STATUS == *"state DOWN"* ]]; then
+        echo "    Showing down, going to force unblock and force up"
+        rfkill unblock all
+        ip link set $DEVICE up
+        echo "    Waiting 10 seconds to check again"
+        sleep 10
+        if [ $COUNTER -eq $MAX ]; do
+            echo "   **** FAILED **** Consider a complete power off, and/or running "sudo netplan --debug apply" manually, check /etc/netplan also.
+        fi
+    else
+        COUNTER=$MAX
+        echo "    Now showing up - exiting"
+    fi
+done
+echo "Showing current status of all network devices"
+ip addr
+chown INSTALLACCOUNT:INSTALLACCOUNT $LOG

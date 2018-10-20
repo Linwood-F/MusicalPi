@@ -27,7 +27,7 @@ aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
            "play it, allowing one to hear the proper timing (and slow it down if desired)."
            "As of this writing I have not tried to hook (e.g. via JACK) a synthesizer to the "
            "embedded midi player, but it quite likely would work as under the covers it uses "
-           "ALSA.  It has been tested with qmidinet."
+           "ALSA.  It has been tested with qmidinet (though not on the Z83)."
         "<p>This software is provided under the Apache 2.0 license, and is Copyright(C) 2018 by "
         "LE Ferguson, LLC and all rights are reserved except as provided therein.</p>"
       );

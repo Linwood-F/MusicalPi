@@ -1,14 +1,17 @@
 MusicalPi - Sheet music display
 
-This project is a Calibre-integrated, music display designed for a touch screen
-on a Raspberry Pi (only tested on 3B version).
+This project is a Calibre-integrated, music display designed for a touch screen. It
+was originally written for the Raspberry Pi (3B) but due to performance of PDF rendering
+I have migrated onto the Z83 (intel Atom) platform as of October 2018. I am keeping the
+name because I liked it and there's just no interesting icon for "Z83".
 
-It is written in QT (version 5.9.5 as of this note), and dynamically linked (i.e.
-you must have a working QT install as described; this shows it being built from
-source). As far as I know it will work on the distro version as well.
+It is written in QT5 (version 5.11.1 as of this note), and dynamically linked (i.e.
+you must have a working QT install as described).  Unlike my first version this time
+I used QT from distro not source, since it was fairly current.
 
 The software is licensed for use under the Apache 2.0 license; QT is separately
-licensed as described in their distribution, as are Poppler and MidiFile as described.
+licensed as described in their distribution, as are Poppler and MidiFile as described. It
+is copyrighted by LE Ferguson, LLC with individual module publish dates as noted.
 
 This software is provided without any warranty or support, though I welcome comments
 and contributions.
@@ -16,9 +19,13 @@ and contributions.
 Please refer to the Wiki on Github for installation and setup instructions:
 https://github.com/Linwood-F/MusicalPi/wiki
 
+PLEASE BE AWARE I LEFT THE rPi versions there, I am no longer testing the rPi since Oct 2018,
+so if you try the rPi and find issues, review commits since then.  As of this writing
+I do not THINK I have done anything that will break the rPi.
+
 Music is stored as PDF's in the Calibre eBook software, and you must make the Calibre
 library database visible to this program directly - this does NOT use the Calibre server
-but accesses the SQLite database directly.  The Calibre library could be on the Pi
+but accesses the SQLite database directly.  The Calibre library could be on the MusicalPi
 as well, and you could use it for everything.  I prefer to keep my library on a
 separate server, and the code as written does that, but changes are needed only in
 the path constant in piconstants.h (and in the setup do not set up the cifs mount
