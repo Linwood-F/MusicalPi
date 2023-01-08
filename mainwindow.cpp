@@ -1,4 +1,4 @@
-// Copyright 2018 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QColor>
 #include <QApplication>
@@ -17,7 +17,6 @@
 #include "oursettings.h"
 #include "playlists.h"
 
-
 MainWindow::MainWindow() : QMainWindow()
 {
     qDebug() << "MainWindow::MainWindow() in constructor";
@@ -31,21 +30,22 @@ MainWindow::MainWindow() : QMainWindow()
     overlay = NULL;
     for(int i=0; i<MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS; i++) loadPagePendingNumber[i]=0; // flag as nothing yet to load
 
+    // The below determines the actual size of the screen, but in case it is not working the settings
+    // file can override it if set.
+    // Often it doesn't matter what the values of x/y are.  But when it does, set to the screen size.
+    if(!(screenWidth = ourSettingsPtr->getSetting("fullPageWidth").toInt()))   screenWidth = QGuiApplication::primaryScreen()->size().width();
+    if(!(screenHeight= ourSettingsPtr->getSetting("fullPageHeight").toInt()))  screenHeight= QGuiApplication::primaryScreen()->size().height();
+    qDebug() << "Setting full screen by using x=" << screenWidth << " y " << screenHeight;
+    setFixedSize(screenWidth,screenHeight);
+
+
     // Because this is a QMainWindow we have to put the layout inside a
     // widget which is the central widget, the rest works as normal in the layout.
 
     setupCoreWidgets(); // These are widgets that are always there and change visibility
     setLibraryMode();
 
-    showFullScreen(); // Since this fires resize it needs to be after things are initialized
-    // The above doesn't work frequently (notably wayland in 18.10), so force the window; the above still strips the decorations so is still needed
-    // It's also worth noting that sometimes a smaller value will get re-done during the resize event to the full screen (for reasons unclear) so
-    // Often it doesn't matter what the values of x/y are.  But when it does, set to the screen size.
-    int x,y;
-    x = ourSettingsPtr->getSetting("fullPageWidth").toInt();
-    y = ourSettingsPtr->getSetting("fullPageHeight").toInt();
-    qDebug() << "Setting full screen by using x=" << x << " x " << y;
-    setFixedSize(x,y);
+    showFullScreen(); // Since this fires resize it needs to be after things are initialized, it doesn't really resize it strips the decorations.
 }
 
 MainWindow::~MainWindow()
@@ -178,10 +178,10 @@ void MainWindow::setupCoreWidgets()
     generalLayout->addWidget(libraryTable);
     generalLayout->setAlignment(generalLayout,Qt::AlignTop | Qt::AlignLeft);
 
-    aboutLabel = new aboutWidget(generalLayoutWidget);
-    aboutLabel->setObjectName("aboutLabel");
-    generalLayout->addWidget(aboutLabel);
-    generalLayout->setAlignment(aboutLabel,Qt::AlignTop | Qt::AlignLeft);
+    aboutBox = new aboutWidget(generalLayoutWidget);
+    aboutBox->setObjectName("aboutBox");
+    generalLayout->addWidget(aboutBox);
+    generalLayout->setAlignment(aboutBox,Qt::AlignTop | Qt::AlignLeft);
 
     settingsUI = new settingsWidget(generalLayoutWidget, this);
     settingsUI->setObjectName("settingsUI");
@@ -213,7 +213,7 @@ void MainWindow::setAboutMode()
     menuLayoutWidget->show();
     mainMenuLayoutWidget->show();
     generalLayoutWidget->show();
-    aboutLabel->show();
+    aboutBox->show();
 }
 
 void MainWindow::setSettingsMode()
@@ -295,7 +295,6 @@ void MainWindow::checkQueueVsCache()
 {
     PDF->adjustCache(leftmostPage);
     PDF->lockOrUnlockMutex(true); // Shouldn't need this but just make sure the ones we find are fully formed - this may be too broad, and we might want to put this just around the inner loop so it releases each time
-    int skipped = 0;
     for(int i = 0; i < MUSICALPI_MAXCOLUMNS * MUSICALPI_MAXROWS ; i++)
     {
         if(loadPagePendingNumber[i] > PDF->numPages)
@@ -311,8 +310,7 @@ void MainWindow::checkQueueVsCache()
         }
         else if(loadPagePendingNumber[i])
         {
-            // qDebug() << "Found we need a page but it isn't available, skipped for now page " << loadPagePendingNumber[i] << " for position " << i;
-            skipped++;
+            qDebug() << "Found we need a page but it isn't available, skipped for now page " << loadPagePendingNumber[i] << " for position " << i;
         }
         // else we just don't need it (yet)
     }
@@ -420,7 +418,7 @@ void MainWindow::HideEverything()
     playerMenuLayoutWidget->hide();
     generalLayoutWidget->hide();
     libraryTable->hide();
-    aboutLabel->hide();
+    aboutBox->hide();
     settingsUI->hide();
     DELETE_LOG(pl);  // if Playlists is there just get rid of it.
     DELETE_LOG(mp);  // same with midi player
@@ -445,7 +443,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     // This is only used at present if we are in play mode, and actually playing
     qDebug() << "event " << ((event->button() == Qt::LeftButton) ? "left" : "other")
-             << ", location=(" << event->x() << "," << event->y() << ")";
+             << ", location=(" << event->position().x() << "," << event->position().y() << ")";
     if(nowMode == playMode && playing)
     {
         if(overlay)
@@ -453,17 +451,17 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
             qDebug() << "We still have an overlay - hide it";
             overlay->hide();
         }
-        if(event->y()< ourSettingsPtr->getSetting("overlayTopPortion").toInt() * this->height() / 100)  // How will I know where with it a class ???
+        if(event->position().y()< ourSettingsPtr->getSetting("overlayTopPortion").toInt() * this->height() / 100)  // How will I know where with it a class ???
         {
             qDebug() << "MainWindow::mouseReleaseEvent ending play mode";
             setPlayMode(false,pagesNowAcross,pagesNowDown);
         }
-        else if (event->x() < ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
+        else if (event->position().x() < ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing previous page";
             playingPrevPage();
         }
-        else if (event->x() > this->width() - ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
+        else if (event->position().x() > this->width() - ourSettingsPtr->getSetting("overlaySidePortion").toInt() * this->width() / 100)
         {
             qDebug() << "MainWindow::mouseReleaseEvent doing next page";
             playingNextPage();
@@ -493,11 +491,12 @@ void MainWindow::sizeLogo()
 {
     qDebug() << "Sizing logo";
     QPixmap pm;
-    pm.load("/home/ferguson/MusicalPi/MusicalPi.gif");
+    pm.load("MusicalPi.gif");
     logoLabel->setPixmap(pm.scaledToWidth(outerLayoutWidget->width() * ourSettingsPtr->getSetting("logoPct").toInt() / 100)); // ?? move to resize
     logoLabel->setScaledContents(false);
     logoLabel->setAlignment(Qt::AlignTop);
     logoLabel->setContentsMargins(20,20,20,20);
+    logoLabel->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* e)

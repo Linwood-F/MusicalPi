@@ -1,7 +1,7 @@
 #ifndef DBCALIBRE_H
 #define DBCALIBRE_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QString>
 #include <QWidget>
@@ -81,6 +81,7 @@ private:          QListView* listDropdown;      // Used to view the combo
 
     void showEvent(QShowEvent *e);  // Overriden so we know when to load or release our data
     void hideEvent(QHideEvent *e);
+    bool screenLoaded;    // We will only load it once, so keep track (this means we won't see library changes without exit)
 
 
 signals:

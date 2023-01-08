@@ -1,4 +1,4 @@
-// Copyright 2018 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QPainter>
 #include <QDebug>
@@ -12,7 +12,7 @@
 #include <cmath>
 
 #include "piconstants.h"
-#include "poppler/qt5/poppler-qt5.h"
+#include "poppler/qt6/poppler-qt6.h"
 
 renderThread::renderThread(PDFDocument *parent, int which, MainWindow* mp ): QThread(parent)
 {
@@ -29,7 +29,7 @@ renderThread::renderThread(PDFDocument *parent, int which, MainWindow* mp ): QTh
     mWidth = 0;       // the target width we were asked to scale to (don't do anything with it zero)
     mHeight = 0;      // the target height we were asked to scale to (don't do anything with it zero)
     pageHighlightHeight = mParent->ourSettingsPtr->getSetting("pageHighlightHeight").toInt();
-    mutex.unlock();   // make sure we are in an unlocked state
+    //  mutex.unlock();   // make sure we are in an unlocked state
 }
 
 renderThread::~renderThread()
@@ -39,7 +39,7 @@ renderThread::~renderThread()
     condition.wakeOne();
     qDebug() << "Entering wait";
     wait();  // Since constructor/destructor are in the parent thread, this waits for the worker thread to exit before the base class destructor is called;
-    mutex.unlock(); // Why is this needed?   Otherwise it gives warnings
+//    mutex.unlock(); // Why is this needed?   Otherwise it gives warnings
     qDebug() << "Wait finished, leaving destructor";
 }
 
@@ -71,15 +71,11 @@ void renderThread::run()
     forever
     {
         running = true;
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         qDebug()<<"Opening PDF document inside of thread now " << ourParent->filepath;
         document = Poppler::Document::load(ourParent->filepath);
         document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
         assert(document && !document->isLocked());
-        Poppler::Page* tmpPage = document->page(mPage - 1);
-#else
-        Poppler::Page* tmpPage = ((PDFDocument*)ourParent)->document->page(mPage - 1);
-#endif
+        std::unique_ptr<Poppler::Page> tmpPage = document->page(mPage - 1);
         assert(tmpPage!=NULL);
         QSizeF thisPageSize = tmpPage->pageSizeF();  // in 72's of inch
         double scaleX = (double)mWidth / ((double)thisPageSize.width() / (double)72.0);
@@ -87,21 +83,11 @@ void renderThread::run()
         double desiredScale = std::trunc(std::min(scaleX, scaleY));  // For notational scores integers seem to give better alignment, sometimes.
 
         qDebug() << "Starting render on thread " << mWhich << " id " << currentThreadId() << " for page " << mPage << ", pt size " << thisPageSize.width() << "x" << thisPageSize.height() << " at scale " << desiredScale << " targeting " << mWidth << "x" << mHeight;
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
         document->setRenderHint(Poppler::Document::Antialiasing, true);    // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
         document->setRenderHint(Poppler::Document::TextAntialiasing, true);
         document->setRenderHint(Poppler::Document::TextHinting, false);
         document->setRenderHint(Poppler::Document::OverprintPreview, false);
         document->setRenderHint(Poppler::Document::ThinLineSolid,true);
-
-#else
-        // Note you can't ignore paper color as some PDF's apparently come up black backgrounds
-        ourParent->document->setRenderHint(Poppler::Document::Antialiasing,true);
-        ourParent->document->setRenderHint(Poppler::Document::TextAntialiasing,true);
-        ourParent->document->setRenderHint(Poppler::Document::TextHinting, false);
-        ourParent->document->setRenderHint(Poppler::Document::OverprintPreview, false);
-        ourParent->document->setRenderHint(Poppler::Document::ThinLineSolid,true);
-#endif
         QImage* theImage = new QImage(tmpPage->renderToImage(desiredScale,desiredScale));
         assert(theImage);
         qDebug() << "Page " << mPage << " was rendered on thread " << mWhich << " produced size " << theImage->width() << "x" << theImage->height();
@@ -114,9 +100,7 @@ void renderThread::run()
         }
         // critical section:  This interlock is with the parent thread for returning the image; the parent records we are not running afterwards
         ourParent->lockOrUnlockMutex(true);
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
-        DELETE_LOG(document);  // also closes this copy
-#endif
+        // not needed to delete as managed now >> DELETE_LOG(document);  // also closes this copy
         *targetImagePtr = theImage;
         emit renderedImage( mWhich, mPage, mWidth, mHeight);
         mutex.lock();

@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include "debugmessages.h"
 #include <QTime>
@@ -8,31 +8,43 @@
 #include <stdlib.h>
 #include <exception>
 
+
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    static QTime t;
-    static int msElapsed = -1;
-    int msThisTime = 0;
-    QMutex mutex;
+    // Note this just won't be accurate in terms of time across midnight but who cares it's just debug output.
+
+    static bool initdone;
+    static int msStartTime;
+    static int msLastTime;
+    int msElapsed;
+    int msThisTime;
+    QTime t;
+    static QMutex mutex;
+    const static QRegularExpression re = QRegularExpression("\\(.+\\).*");
 
     mutex.lock();
-    if(msElapsed<0)
+    if(!initdone)
     {
-        t.start();
+        t = QTime::currentTime();
         msElapsed=0;
         msThisTime=0;
+        msLastTime = t.msecsSinceStartOfDay();
+        msStartTime = msLastTime;
         fprintf(stderr, "Elapsed - this : Message (Times are in milliseconds, elapsed time not CPU\n");
+        initdone=1;
     }
     else
     {
-        msThisTime = t.elapsed() - msElapsed;
-        msElapsed = t.elapsed();
+        t = QTime::currentTime();
+        msThisTime = t.msecsSinceStartOfDay() - msLastTime;
+        msElapsed  = t.msecsSinceStartOfDay() - msStartTime;
+        msLastTime = t.msecsSinceStartOfDay();
     }
     mutex.unlock();
 
     QByteArray localMsg = msg.toLocal8Bit();
     QString qfunc = context.function;
-    qfunc.remove(QRegularExpression("\\(.+\\).*"));
+    qfunc.remove(re);
     std::string sfunc(qfunc.toStdString());
     const char* func = sfunc.c_str();
     switch (type)

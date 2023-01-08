@@ -1,4 +1,4 @@
-// Copyright 2018 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QPainter>
 #include <QSqlRecord>
@@ -90,12 +90,14 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     QScroller::grabGesture(libTable,QScroller::LeftMouseButtonGesture);  // so a touch-drag will work, otherwise need two finger drag
     libTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     libTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    libTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     connect(libTable, SIGNAL(cellClicked(int,int)), this, SLOT(onChosen(int,int)));
     connect(searchBox, SIGNAL(textChanged(QString)), this, SLOT(filterTable(QString)));
 
     m_db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
     m_db->setDatabaseName(calibrePath + "/" + calibreDatabase);
+    screenLoaded=false;
 }
 
 musicLibrary::~musicLibrary()
@@ -197,22 +199,24 @@ void musicLibrary::showEvent(QShowEvent *e)
 {
     qDebug() << "Entered";
     (void)e;
-    m_db->open();
-    checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
-    loadPlayLists();
-    loadBooks();
-    m_db->close();
+    if(!screenLoaded) // don't redo unless we need to
+    {
+        m_db->open();
+        checkSqlError("Opening SQL database " + m_db->databaseName(), m_db->lastError());
+        loadPlayLists();
+        loadBooks();
+        m_db->close();
+    }
     connect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));
     searchBox->installEventFilter(this);  // So we can catch keystrokes and do as-you-type filter
+    screenLoaded=true;
 }
 
 void musicLibrary::hideEvent(QHideEvent *e)
 {
+    // Note we have just hidden it, the contents stays the same.
     qDebug() << "Entered";
     (void)e;
-    // We can't delete this: DELETE_LOG(libTable);
-    // as for some reason the slignal/slot segfaults, so just clear it out
-    libTable->setRowCount(0);  // THis just saves some memory when we're not using it
     disconnect(dropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(changeList(int)));     // Need this so we don't signal when we reload it or use it from other routines
     searchBox->removeEventFilter(this);  // So we can catch keystrokes and do as-you-type filter
 }
@@ -247,7 +251,7 @@ void musicLibrary::onChosen(int row, int column)
         return;
     }
     // Move these to local items since the following are going to disappear
-    pathSelected = tr("%1/%2").arg(calibrePath).arg(libTable->item(row,columnForPath)->text());
+    pathSelected = calibrePath + "/" + libTable->item(row,columnForPath)->text();
     titleSelected = libTable->item(row,columnForTitle)->text();
     qDebug() << "doubleclicked on row " << row <<  " column " << column << ", value=" << pathSelected;
     lastRowSelected = row;
@@ -307,7 +311,7 @@ bool musicLibrary::eventFilter(QObject *object, QEvent *event)
 void musicLibrary::paintEvent(QPaintEvent *) // Allows style sheets to apply in some way
 {
     QStyleOption opt;
-    opt.init(this);
+    opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
@@ -354,6 +358,7 @@ QString musicLibrary::removeBookFromList(int index)
     del.exec(sql);
     QString result = del.lastError().databaseText() + " / " + del.lastError().driverText();
     m_db->close();
+    changeList(ActiveListIndex);
     return (result == " / " ? "" : result);
 }
 QString musicLibrary::addNewList(QString name)

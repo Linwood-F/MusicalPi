@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QWidget>
 #include <QStyleOption>
@@ -9,7 +9,6 @@
 #include <QHBoxLayout>
 
 #include "settingsitem.h"
-#include "piconstants.h"
 #include "mainwindow.h"
 #include "settingswidget.h"
 #include "focuswatcher.h"
@@ -141,7 +140,7 @@ bool settingsItem::validateRange(int bottom, int top)
 void settingsItem::paintEvent(QPaintEvent *)  // This is here so we can use stylesheet styling if needed
 {
     QStyleOption opt;
-    opt.init(this);
+    opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }

@@ -1,16 +1,38 @@
 #--------------------------------------------------------------------
 #
-# Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+# Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 #
 #--------------------------------------------------------------------
 
-QT       += core gui
+QT       += core gui dbus
 QT       += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = MusicalPi
+defineTest(copyToDestDir) {
+    files = $$1
+
+    for(FILE, files) {
+        DDIR = $$DESTDIR
+                    FILE = $$absolute_path($$FILE)
+
+        # Replace slashes in paths with backslashes for Windows
+        win32:FILE ~= s,/,\\,g
+        win32:DDIR ~= s,/,\\,g
+
+        QMAKE_POST_LINK += $$QMAKE_COPY $$quote($$FILE) $$quote($$DDIR) $$escape_expand(\\n\\t)
+    }
+
+    export(QMAKE_POST_LINK)
+}
+
 TEMPLATE = app
+
+TARGET = MusicalPi
+
+DESTDIR = ../junkTarget
+
+copyToDestDir(LICENSE MusicalPi.gif)
 
 DEFINES += QT_MESSAGELOGCONTEXT
 
@@ -60,11 +82,11 @@ DISTFILES += \
     onReboot \
     brcmfmac43455-sdio.clm_blob
 
-unix|win32: LIBS += -lQt5DBus
-unix|win32: LIBS += -lpoppler-qt5
+unix|win32: LIBS += -lpoppler-qt6
 unix|win32: LIBS += -L../midifile/lib -lmidifile
 unix|win32: LIBS += -lasound
 
 INCLUDEPATH += ../midifile/include
+INCLUDEPATH += ../poppler/src/
 
 

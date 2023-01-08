@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QStyleOption>
 #include <QPainter>
@@ -489,7 +489,7 @@ QString midiPlayerV2::guessSpelling(int note, int keySigNum)
 void midiPlayerV2::paintEvent(QPaintEvent *)
 {
     QStyleOption opt;
-    opt.init(this);
+    opt.initFrom(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }

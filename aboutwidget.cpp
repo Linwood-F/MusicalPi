@@ -1,19 +1,23 @@
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include "aboutwidget.h"
 #include <QFont>
+#include <QFile>
 #include <QDebug>
+#include "mainwindow.h"
 #include "piconstants.h"
+#include <algorithm>
 
-aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
+aboutWidget::aboutWidget(QWidget* parent): QTextEdit(parent)
 {
-    this->setText(
+    QString tmpstr;
+    tmpstr =
         "<h1>MusicalPi</h1>"
         "<p>MusicalPi is a QT programming project partly to learn QT, and partly "
            "to solve a problem of clutter atop our piano, and difficulty in turning pages "
            "in thick books. It is designed to run on a small computer (originally a Raspberry "
-           "Pi, hence the name, but lately a Z83 Mini-PC for better performance) "
+           "Pi, hence the name, but lately a Mini-PC for better performance) "
            "with a touch screen monitor (which from the OS will have a touch keyboard). "
            "The design concept has a screen large enough to show two sheets of music clearly, "
            "but the program is written so any number can show including 1 page.</p>"
@@ -28,17 +32,34 @@ aboutWidget::aboutWidget(QWidget* parent): QLabel(parent)
            "As of this writing I have not tried to hook (e.g. via JACK) a synthesizer to the "
            "embedded midi player, but it quite likely would work as under the covers it uses "
            "ALSA.  It has been tested with qmidinet (though not on the Z83)."
-        "<p>This software is provided under the Apache 2.0 license, and is Copyright(C) 2018 by "
-        "LE Ferguson, LLC and all rights are reserved except as provided therein.</p>"
-      );
-    this->setAlignment(Qt::AlignLeft);
-    this->setAlignment(Qt::AlignTop);
-    this->setWordWrap(true);
+        "<p>This software comes with ABSOLUTELY NO WARRANTY; for details on the license "
+            "refer to the LICENSE document that accompanied the source code.</p>"
+        "<p> Copyright Linwood Ferguson 2023 licensed under the GNU General Public License V3.0</p>"
+                "<p><hr/></p>"
+                "<pre>";
+
+
+    QFile file("./LICENSE");
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            tmpstr = tmpstr + in.readLine() + "<br/>";
+        }
+    }
+    tmpstr += "</pre>";
+
+    this->setText(tmpstr);
+    this->setReadOnly(true);
     this->setContentsMargins(10,10,10,10);
+    // We stased the size of the main window, and can use this for a width setting
+    MainWindow* mw = (MainWindow*)this->parent()->parent()->parent();
+    this->setFixedSize(std::max((int)(mw->screenWidth*.5),800),mw->screenHeight*0.9);
+    this->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+
 #ifndef MUSICALPI_DEBUG_WIDGET_BORDERS
     this->setStyleSheet("background-color:" MUSICALPI_POPUP_BACKGROUND_COLOR ";");
 #endif
-    this->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
 }
 
 aboutWidget::~aboutWidget()

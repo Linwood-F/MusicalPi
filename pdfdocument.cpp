@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QPainter>
 #include <QFileInfo>
@@ -6,7 +6,6 @@
 
 #include "pdfdocument.h"
 #include "mainwindow.h"
-#include "docpagelabel.h"
 #include "renderthread.h"
 #include "mainwindow.h"
 #include "oursettings.h"
@@ -42,8 +41,8 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     for(int i=0; i<MUSICALPI_THREADS; i++)
     {
         pageThreads[i] = new renderThread(this, i, mParent);
-        connect(pageThreads[i], SIGNAL(renderedImage(int, int, int, int)),
-                this,               SLOT(updateImage(int, int, int, int)));
+        connect(pageThreads[i], SIGNAL(renderedImage(int,int,int,int)),
+                this,               SLOT(updateImage(int,int,int,int)));
         pageThreadActive[i]=false;
         pageThreadPageLoading[i]=0;
     }
@@ -60,9 +59,7 @@ PDFDocument::PDFDocument(MainWindow* parent, QString _filePath, QString _titleNa
     document->setRenderBackend(MUSICALPI_POPPLER_BACKEND);
     assert(document && !document->isLocked());
     numPages = document->numPages();   // Count of pages in document
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
-    DELETE_LOG(document); // If we are letting the thread render we don't need this any more, close it
-#endif
+    // not needed to delete as managed now >> DELETE_LOG(document); // If we are letting the thread render we don't need this any more, close it
 
     assert(numPages <= MUSICALPI_MAXPAGES);
     cacheRangeStart = 1;  // Start at the beginning, then adjust as we get asked for images
@@ -106,7 +103,7 @@ PDFDocument::~PDFDocument()
         }
         lockOrUnlockMutex(false);
     }
-    DELETE_LOG(document);
+    // not needed to delete as managed now >> DELETE_LOG(document);
 }
 
 // Slot

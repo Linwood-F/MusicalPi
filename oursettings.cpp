@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include "oursettings.h"
 #include <QDebug>
@@ -8,7 +8,7 @@ ourSettings::ourSettings(MainWindow* parent)
 {
     qDebug()<< "Entered";
     mParent = parent;
-    setPtr = new QSettings("LE Ferguson LLC","MusicalPi",(QObject*)parent);
+    setPtr = new QSettings("Linwood Ferguson","MusicalPi",(QObject*)parent);
     qDebug() << "Settings file=" << setPtr->fileName() << ", Format=" << setPtr->format() << ", status=" << setPtr->status();
     getSaveValues();
 }
@@ -50,11 +50,11 @@ void ourSettings::getSaveValues()
     setPtr->setValue("pageHighlightHeight",setPtr->value("pageHighlightHeight",10).toInt());
     setPtr->setValue("pageTurnTipOverlay",setPtr->value("pageTurnTipOverlay",true).toBool());
 
-    // Because SetFullPage will not always work, we hard code the size of the resulting window (well, soft-hard-code in settings)
-    // Normally set this to the full resolution of the window, though it could be smaller
+    // Because we might not always deterimned pagesize, this allows you to override it.
+    // Normally set to zero, but if needed set this to the full resolution of the window, though it could be smaller
 
-    setPtr->setValue("fullPageWidth",setPtr->value("fullPageWidth",1920).toInt());
-    setPtr->setValue("fullPageHeight",setPtr->value("fullPageHeight",1080).toInt());
+    setPtr->setValue("fullPageWidth",setPtr->value("fullPageWidth",0).toInt());
+    setPtr->setValue("fullPageHeight",setPtr->value("fullPageHeight",0).toInt());
 
     // ALSA Interface and player tuning
     setPtr->setValue("ALSAMidiQuashResetAll",setPtr->value("ALSAMidiQuashResetAll",true).toBool()); // Should we above sending ResetAll's (some devices may not handle, or may miss the first notes)

@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QMainWindow>
 
@@ -33,6 +33,7 @@ public:
     int pagesNowAcross;
     int pagesNowDown;
     ourSettings* ourSettingsPtr;
+    int screenWidth, screenHeight; // size derived from real window, or possibly settings file.
 
 private:
     PDFDocument* PDF;
@@ -68,7 +69,7 @@ private:
           QHBoxLayout* generalLayout;
             QLabel* logoLabel;
             musicLibrary* libraryTable;
-            aboutWidget* aboutLabel;
+            aboutWidget* aboutBox;
             settingsWidget* settingsUI;
        docPageLabel* visiblePages[MUSICALPI_MAXROWS * MUSICALPI_MAXCOLUMNS];  // used for play mode panes; layout is ignored for these and explicitly positioned
        TipOverlay* overlay;                                                   // fits (briefly) over the whole window when play-playing mode starts.

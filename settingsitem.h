@@ -1,7 +1,7 @@
 #ifndef SETTINGSITEM_H
 #define SETTINGSITEM_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QWidget>
 

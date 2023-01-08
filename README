@@ -9,9 +9,9 @@ It is written in QT5 (version 5.11.1 as of this note), and dynamically linked (i
 you must have a working QT install as described).  Unlike my first version this time
 I used QT from distro not source, since it was fairly current.
 
-The software is licensed for use under the Apache 2.0 license; QT is separately
+The software is licensed for use under the GNU GPLv3 license; QT is separately
 licensed as described in their distribution, as are Poppler and MidiFile as described. It
-is copyrighted by LE Ferguson, LLC with individual module publish dates as noted.
+is copyrighted by Linwood Ferguson with individual module publish dates as noted.
 
 This software is provided without any warranty or support, though I welcome comments
 and contributions.

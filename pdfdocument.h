@@ -1,13 +1,13 @@
 #ifndef PDFDOCUMENT_H
 #define PDFDOCUMENT_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QMutex>
 
 #include "docpagelabel.h"
 #include "piconstants.h"
-#include <poppler/qt5/poppler-qt5.h>
+#include <poppler/qt6/poppler-qt6.h>
 
 #include <cassert>
 
@@ -28,7 +28,7 @@ public:
     int numPages;  // Number of pages in document
     int imageWidth;  // Current width of image window we are using (adjusted for roomForMenu if needed)
     int imageHeight;   // Current height of image window we are using
-    Poppler::Document* document;   // Document (or null)
+    std::unique_ptr<Poppler::Document> document;   // Document (or null)
     void checkResetImageSize(int width, int height);
     QImage *pageImages[MUSICALPI_MAXPAGES];
     bool pageImagesAvailable[MUSICALPI_MAXPAGES]; // do not use image unless true

@@ -1,7 +1,7 @@
 #ifndef MIDIPLAYER2_H
 #define MIDIPLAYER2_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 // We use this for data structures here, actuall connections in the thread
 

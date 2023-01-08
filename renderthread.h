@@ -1,16 +1,14 @@
 #ifndef RENDERTHREAD_H
 #define RENDERTHREAD_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
 #include "piconstants.h"
 
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
-#include <poppler/qt5/poppler-qt5.h>
-#endif
+#include <poppler/qt6/poppler-qt6.h>
 
 class MainWindow;
 class PDFDocument;
@@ -45,9 +43,7 @@ private:
     int mWidth;
     int mHeight;
     int pageHighlightHeight;
-#ifdef MUSICALPI_OPEN_DOC_IN_THREAD
-    Poppler::Document* document;   // Document (or null) - this is experimental to see if opening the document in the thread is better
-#endif
+    std::unique_ptr<Poppler::Document> document;   // Document (or null) - this is experimental to see if opening the document in the thread is better
 
 };
 

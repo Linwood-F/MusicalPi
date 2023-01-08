@@ -1,7 +1,11 @@
 #ifndef PICONSTANTS
 #define PICONSTANTS
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
+
+// These are real constants used at compile time.
+
+// The settable items' defaults are in outsettings.cpp as defaults in the setups.
 
 #define MUSICALPI_MAXPAGES 1000   // Maximum pages in any PDF -- minimal impact to make bigger
 
@@ -24,10 +28,10 @@
 // Define this to get colored borders on key widgets (from stylesheet in main)
 //#define MUSICALPI_DEBUG_WIDGET_BORDERS
 
-// SplashBackend seems to render better quality and only slightly slower.
+// SplashBackend seems to render better quality and only slightly slower (based on 2017 testing -- may be different now)
 
-//#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
-#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::ArthurBackend
+#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::SplashBackend
+//#define MUSICALPI_POPPLER_BACKEND Poppler::Document::RenderBackend::QPainterBackend
 
 // Midi Player queue and debug control information
 
@@ -38,8 +42,6 @@
 #define MUSICALPI_ALSAPACINGINTERVAL 10
 #define MUSICALPI_MIDIPLAYER_STATUSUPDATERATE 500
 #define MUSICALPI_MEAURE_MARKER_TAG "Measure "
-
-#define MUSICALPI_OPEN_DOC_IN_THREAD
 
 // Utility macro for managing pointers and logging
 

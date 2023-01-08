@@ -1,4 +1,4 @@
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 #include "docpagelabel.h"
 #include "mainwindow.h"
@@ -11,7 +11,6 @@
 
 #include <cassert>
 
-#include "piconstants.h"
 #include "oursettings.h"
 
 // Note terminology:
@@ -143,7 +142,7 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     int newY = (this->height() - newH)/2;
     QPainter pNew(&newImage);
     pNew.setRenderHint(QPainter::SmoothPixmapTransform);
-    pNew.setRenderHint(QPainter::HighQualityAntialiasing);
+    pNew.setRenderHint(QPainter::Antialiasing);
     pNew.drawImage( QRectF (newX, newY, newW, newH), *newImageBuffer);  // This implicitly draws the whole from image, scaling if needed
 
     // While we have all the new image info, go ahead and build the highlight overlay(s)
@@ -215,10 +214,10 @@ void docPageLabel::placeImage(docPageLabel::docTransition thisTransition, QImage
     // This is the OLD image, the new image is always placed inside "this", so to show it
     // we just remove the ourOverlay at the right time.
 
-    if((thisTransition != noTransition && thisTransition != fullPageNow) && this->pixmap() && !oldImageIsBlank) // this latter is still the old image; if none no transition regardless
+    if((thisTransition != noTransition && thisTransition != fullPageNow) && !this->pixmap().isNull() && !oldImageIsBlank) // this latter is still the old image; if none no transition regardless
     {
         ourOverlay.setGeometry(0,0,this->geometry().width(),this->geometry().height());  // Position directly over
-        QPixmap tmpPixmap = this->pixmap()->copy();  // grab the old image -- the overlay is what is OLD not new, new will be underneath
+        QPixmap tmpPixmap = this->pixmap().copy();  // grab the old image -- the overlay is what is OLD not new, new will be underneath
         if(thisTransition == halfPage)  // we have to replace the top half
         {
             // For overlay just divide it in half do not rescale, and paint new over old

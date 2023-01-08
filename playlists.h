@@ -1,7 +1,7 @@
 #ifndef PLAYLISTS_H
 #define PLAYLISTS_H
 
-// Copyright 2017 by LE Ferguson, LLC, licensed under Apache 2.0
+// Copyright 2023 by Linwood Ferguson, licensed under GNU GPLv3
 
 // Responsible for modifying playlists contents and/or creating a playlist
 // based on the now-current title (only).
