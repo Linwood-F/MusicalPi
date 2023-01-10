@@ -30,7 +30,7 @@ TEMPLATE = app
 
 TARGET = MusicalPi
 
-DESTDIR = ../junkTarget
+DESTDIR = ../MusicalPi_Kit
 
 copyToDestDir(LICENSE MusicalPi.gif)
 
