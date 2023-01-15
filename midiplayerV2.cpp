@@ -89,8 +89,8 @@ bool midiPlayerV2::parseFileForPlayables() // Only build map, no actual play in 
 
     MidiEvent *ptr;
 
- // #define CHANNEL ptr->getChannel()    // Previously we accepted what Musescore sent, now just force to 1
- #define CHANNEL 1
+ // #define CHANNEL ptr->getChannel()    // Previously we accepted what Musescore sent, now just force to 1 (which is zero)
+ #define CHANNEL 0
 
     for (int thisEvent = 0; thisEvent < mfi->getEventCount(0); thisEvent++)  // Always starting at zero, just don't send unless we need to
     {
