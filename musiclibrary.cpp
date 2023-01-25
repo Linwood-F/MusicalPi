@@ -86,6 +86,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     libTable->verticalHeader()->hide();
     libTable->setAlternatingRowColors(true);
     libTable->setSortingEnabled(true);
+    libTable->setEditTriggers(QAbstractItemView::NoEditTriggers);  // this makes the table read-only so you don't accidentally end up editing inside a cell.
 
     QScroller::grabGesture(libTable,QScroller::LeftMouseButtonGesture);  // so a touch-drag will work, otherwise need two finger drag
     libTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -98,6 +99,7 @@ musicLibrary::musicLibrary(QWidget *parent, MainWindow* mp) : QWidget(parent)
     m_db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
     m_db->setDatabaseName(calibrePath + "/" + calibreDatabase);
     screenLoaded=false;
+    lastTimeSelected = QTime::currentTime();
 }
 
 musicLibrary::~musicLibrary()
@@ -244,12 +246,15 @@ void musicLibrary::checkSqlError(QString stage, QSqlError err) // Aborts on erro
 
 void musicLibrary::onChosen(int row, int column)
 {
+    QTime nowTime = QTime::currentTime();
     qDebug() << "Entered";
-    if(lastRowSelected == row)
+
+    if( (lastRowSelected == row) && (lastTimeSelected.secsTo(nowTime) <= 2 ) )
     {
-        qDebug() << "doubleclicked on row " << row <<  " which looks like a duplicate so ignoring.";
+        qDebug() << "doubleclicked on row " << row <<  " which looks like a duplicate within 2 seconds so ignoring.";
         return;
     }
+    lastTimeSelected = nowTime;
     // Move these to local items since the following are going to disappear
     pathSelected = calibrePath + "/" + libTable->item(row,columnForPath)->text();
     titleSelected = libTable->item(row,columnForTitle)->text();

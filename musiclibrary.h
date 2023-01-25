@@ -5,6 +5,7 @@
 
 #include <QString>
 #include <QWidget>
+#include <QTime>
 
 // This is a container widget that holds both a label, a search text box, the playlist drop down and a table widget with the library
 
@@ -70,6 +71,7 @@ private:          QListView* listDropdown;      // Used to view the combo
     bool forceOnboardKeyboard;
 
     int lastRowSelected;       // Used to prevent mouse-bounce from doing a select twice while processing (reported by Stevend on raspberrypi.org 2/5/17 - thanks)
+    QTime lastTimeSelected;    // Ignore the last row selected if it's been over a few seconds (not bounch, just reselect)
 
     QString pathSelected;
     QString titleSelected;

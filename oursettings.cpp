@@ -58,7 +58,7 @@ void ourSettings::getSaveValues()
 
     // ALSA Interface and player tuning
     setPtr->setValue("ALSAMidiQuashResetAll",setPtr->value("ALSAMidiQuashResetAll",true).toBool()); // Should we above sending ResetAll's (some devices may not handle, or may miss the first notes)
-    setPtr->setValue("midiInitialVelocityScale",setPtr->value("midiInitialVelocityScale",20).toUInt()); // How loud do we play by default (% of full)
+    setPtr->setValue("midiInitialVelocityScale",setPtr->value("midiInitialVelocityScale",35).toUInt()); // How loud do we play by default (% of full)
     setPtr->setValue("midiInitialTempoScale",setPtr->value("midiInitialTempoScale",100).toUInt());   // How fast do we play by default (% of full)
 
     // Debugging control
